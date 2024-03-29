@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package llmoperator.job_manager.server.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/llm-operator/job-manager/api/v1";
+
+message Job {
+  string uid = 1;
+}
+
+message CreateJobRequest {
+  message JobSpec {
+    string name = 1;
+  }
+  JobSpec spec = 1;
+}
+
+message ListJobRequest {
+}
+
+message ListJobsResponse {
+	repeated Job jobs = 1;
+}
+
+message DeleteJobRequest {
+	string uid = 1;
+}
+
+service JobManagerService {
+  rpc CreateJob(CreateJobRequest) returns (Job) {}
+
+  rpc ListJobs(ListJobRequest) returns (ListJobsResponse) {}
+
+  rpc DeleteJob(DeleteJobRequest) returns (google.protobuf.Empty) {}
+}
