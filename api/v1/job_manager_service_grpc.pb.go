@@ -7,7 +7,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,158 +14,158 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// JobManagerServiceClient is the client API for JobManagerService service.
+// FineTuningServiceClient is the client API for FineTuningService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type JobManagerServiceClient interface {
+type FineTuningServiceClient interface {
 	CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*Job, error)
 	ListJobs(ctx context.Context, in *ListJobRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
-	DeleteJob(ctx context.Context, in *DeleteJobRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*Job, error)
 }
 
-type jobManagerServiceClient struct {
+type fineTuningServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewJobManagerServiceClient(cc grpc.ClientConnInterface) JobManagerServiceClient {
-	return &jobManagerServiceClient{cc}
+func NewFineTuningServiceClient(cc grpc.ClientConnInterface) FineTuningServiceClient {
+	return &fineTuningServiceClient{cc}
 }
 
-func (c *jobManagerServiceClient) CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*Job, error) {
+func (c *fineTuningServiceClient) CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*Job, error) {
 	out := new(Job)
-	err := c.cc.Invoke(ctx, "/llmoperator.job_manager.server.v1.JobManagerService/CreateJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *jobManagerServiceClient) ListJobs(ctx context.Context, in *ListJobRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
+func (c *fineTuningServiceClient) ListJobs(ctx context.Context, in *ListJobRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
 	out := new(ListJobsResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.job_manager.server.v1.JobManagerService/ListJobs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *jobManagerServiceClient) DeleteJob(ctx context.Context, in *DeleteJobRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/llmoperator.job_manager.server.v1.JobManagerService/DeleteJob", in, out, opts...)
+func (c *fineTuningServiceClient) CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*Job, error) {
+	out := new(Job)
+	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// JobManagerServiceServer is the server API for JobManagerService service.
-// All implementations must embed UnimplementedJobManagerServiceServer
+// FineTuningServiceServer is the server API for FineTuningService service.
+// All implementations must embed UnimplementedFineTuningServiceServer
 // for forward compatibility
-type JobManagerServiceServer interface {
+type FineTuningServiceServer interface {
 	CreateJob(context.Context, *CreateJobRequest) (*Job, error)
 	ListJobs(context.Context, *ListJobRequest) (*ListJobsResponse, error)
-	DeleteJob(context.Context, *DeleteJobRequest) (*emptypb.Empty, error)
-	mustEmbedUnimplementedJobManagerServiceServer()
+	CancelJob(context.Context, *CancelJobRequest) (*Job, error)
+	mustEmbedUnimplementedFineTuningServiceServer()
 }
 
-// UnimplementedJobManagerServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedJobManagerServiceServer struct {
+// UnimplementedFineTuningServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedFineTuningServiceServer struct {
 }
 
-func (UnimplementedJobManagerServiceServer) CreateJob(context.Context, *CreateJobRequest) (*Job, error) {
+func (UnimplementedFineTuningServiceServer) CreateJob(context.Context, *CreateJobRequest) (*Job, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateJob not implemented")
 }
-func (UnimplementedJobManagerServiceServer) ListJobs(context.Context, *ListJobRequest) (*ListJobsResponse, error) {
+func (UnimplementedFineTuningServiceServer) ListJobs(context.Context, *ListJobRequest) (*ListJobsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListJobs not implemented")
 }
-func (UnimplementedJobManagerServiceServer) DeleteJob(context.Context, *DeleteJobRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteJob not implemented")
+func (UnimplementedFineTuningServiceServer) CancelJob(context.Context, *CancelJobRequest) (*Job, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelJob not implemented")
 }
-func (UnimplementedJobManagerServiceServer) mustEmbedUnimplementedJobManagerServiceServer() {}
+func (UnimplementedFineTuningServiceServer) mustEmbedUnimplementedFineTuningServiceServer() {}
 
-// UnsafeJobManagerServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to JobManagerServiceServer will
+// UnsafeFineTuningServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FineTuningServiceServer will
 // result in compilation errors.
-type UnsafeJobManagerServiceServer interface {
-	mustEmbedUnimplementedJobManagerServiceServer()
+type UnsafeFineTuningServiceServer interface {
+	mustEmbedUnimplementedFineTuningServiceServer()
 }
 
-func RegisterJobManagerServiceServer(s grpc.ServiceRegistrar, srv JobManagerServiceServer) {
-	s.RegisterService(&JobManagerService_ServiceDesc, srv)
+func RegisterFineTuningServiceServer(s grpc.ServiceRegistrar, srv FineTuningServiceServer) {
+	s.RegisterService(&FineTuningService_ServiceDesc, srv)
 }
 
-func _JobManagerService_CreateJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FineTuningService_CreateJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateJobRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(JobManagerServiceServer).CreateJob(ctx, in)
+		return srv.(FineTuningServiceServer).CreateJob(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.job_manager.server.v1.JobManagerService/CreateJob",
+		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(JobManagerServiceServer).CreateJob(ctx, req.(*CreateJobRequest))
+		return srv.(FineTuningServiceServer).CreateJob(ctx, req.(*CreateJobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _JobManagerService_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _FineTuningService_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListJobRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(JobManagerServiceServer).ListJobs(ctx, in)
+		return srv.(FineTuningServiceServer).ListJobs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.job_manager.server.v1.JobManagerService/ListJobs",
+		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(JobManagerServiceServer).ListJobs(ctx, req.(*ListJobRequest))
+		return srv.(FineTuningServiceServer).ListJobs(ctx, req.(*ListJobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _JobManagerService_DeleteJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteJobRequest)
+func _FineTuningService_CancelJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelJobRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(JobManagerServiceServer).DeleteJob(ctx, in)
+		return srv.(FineTuningServiceServer).CancelJob(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.job_manager.server.v1.JobManagerService/DeleteJob",
+		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(JobManagerServiceServer).DeleteJob(ctx, req.(*DeleteJobRequest))
+		return srv.(FineTuningServiceServer).CancelJob(ctx, req.(*CancelJobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// JobManagerService_ServiceDesc is the grpc.ServiceDesc for JobManagerService service.
+// FineTuningService_ServiceDesc is the grpc.ServiceDesc for FineTuningService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var JobManagerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.job_manager.server.v1.JobManagerService",
-	HandlerType: (*JobManagerServiceServer)(nil),
+var FineTuningService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "llmoperator.fine_tuning.server.v1.FineTuningService",
+	HandlerType: (*FineTuningServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateJob",
-			Handler:    _JobManagerService_CreateJob_Handler,
+			Handler:    _FineTuningService_CreateJob_Handler,
 		},
 		{
 			MethodName: "ListJobs",
-			Handler:    _JobManagerService_ListJobs_Handler,
+			Handler:    _FineTuningService_ListJobs_Handler,
 		},
 		{
-			MethodName: "DeleteJob",
-			Handler:    _JobManagerService_DeleteJob_Handler,
+			MethodName: "CancelJob",
+			Handler:    _FineTuningService_CancelJob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

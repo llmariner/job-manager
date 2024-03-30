@@ -1,37 +1,87 @@
 syntax = "proto3";
 
-package llmoperator.job_manager.server.v1;
+package llmoperator.fine_tuning.server.v1;
 
-import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/llm-operator/job-manager/api/v1";
 
+// The API specification fllows OpenAPI API specification (https://platform.openai.com/docs/api-reference/fine-tuning/jobs).
+
 message Job {
-  string uid = 1;
+  string id = 1;
+  int32 created_at = 2;
+  message Error {
+    string code = 1;
+    string message = 2;
+    string param = 3;
+  }
+  Error error = 3;
+  string fine_tuned_model = 4;
+  int32 finished_at = 5;
+  message HyperParameter {
+    // Note: OpenAI API supports string or interger.
+    string n_epochs = 1;
+  }
+  HyperParameter hyperparameters = 6;
+  string model = 7;
+  string object = 8;
+  string organization_id = 9;
+  repeated string result_files = 10;
+  string status = 11;
+  int32 trained_tokens = 12;
+  string training_file = 13;
+  string validation_file = 14;
 }
 
 message CreateJobRequest {
-  message JobSpec {
-    string name = 1;
+  string model = 1;
+  string training_file = 2;
+  message HyperParameter {
+    // Note: OpenAI API supports string or interger.
+    string batch_size = 1;
+    // Note: OpenAI API supports string or number.
+    string learning_rate_multiplier = 2;
+    // Note: OpenAI API supports string or interger.
+    string n_epochs = 3;
   }
-  JobSpec spec = 1;
+  HyperParameter hyperparameters = 3;
+  string suffix = 4;
+  string validation_file = 5;
 }
 
 message ListJobRequest {
+  string after = 1;
+  int32 limit = 2;
 }
 
 message ListJobsResponse {
-	repeated Job jobs = 1;
+  string object = 1;
+  repeated Job data = 2;
+  bool has_more = 3;
 }
 
-message DeleteJobRequest {
-	string uid = 1;
+message CancelJobRequest {
+  string id = 1;
 }
 
-service JobManagerService {
-  rpc CreateJob(CreateJobRequest) returns (Job) {}
+service FineTuningService {
+  rpc CreateJob(CreateJobRequest) returns (Job) {
+    option (google.api.http) = {
+      post: "/v1/fine_tuning/jobs"
+      body: "*"
+    };
+  }
 
-  rpc ListJobs(ListJobRequest) returns (ListJobsResponse) {}
+  rpc ListJobs(ListJobRequest) returns (ListJobsResponse) {
+    option (google.api.http) = {
+      get: "/v1/fine_tuning/jobs"
+    };
+  }
 
-  rpc DeleteJob(DeleteJobRequest) returns (google.protobuf.Empty) {}
+  rpc CancelJob(CancelJobRequest) returns (Job) {
+    option (google.api.http) = {
+      get: "/v1/fine_tuning/jobs/{id}/cancel"
+    };
+  }
 }

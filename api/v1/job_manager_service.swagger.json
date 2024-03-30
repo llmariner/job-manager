@@ -6,7 +6,7 @@
   },
   "tags": [
     {
-      "name": "JobManagerService"
+      "name": "FineTuningService"
     }
   ],
   "consumes": [
@@ -15,12 +15,116 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v1/fine_tuning/jobs": {
+      "get": {
+        "operationId": "FineTuningService_ListJobs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListJobsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "FineTuningService"
+        ]
+      },
+      "post": {
+        "operationId": "FineTuningService_CreateJob",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Job"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateJobRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FineTuningService"
+        ]
+      }
+    },
+    "/v1/fine_tuning/jobs/{id}/cancel": {
+      "get": {
+        "operationId": "FineTuningService_CancelJob",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Job"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FineTuningService"
+        ]
+      }
+    }
+  },
   "definitions": {
-    "CreateJobRequestJobSpec": {
+    "JobError": {
       "type": "object",
       "properties": {
-        "name": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "param": {
           "type": "string"
         }
       }
@@ -52,22 +156,119 @@
         }
       }
     },
+    "v1CreateJobRequest": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "trainingFile": {
+          "type": "string"
+        },
+        "hyperparameters": {
+          "$ref": "#/definitions/v1CreateJobRequestHyperParameter"
+        },
+        "suffix": {
+          "type": "string"
+        },
+        "validationFile": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateJobRequestHyperParameter": {
+      "type": "object",
+      "properties": {
+        "batchSize": {
+          "type": "string",
+          "description": "Note: OpenAI API supports string or interger."
+        },
+        "learningRateMultiplier": {
+          "type": "string",
+          "description": "Note: OpenAI API supports string or number."
+        },
+        "nEpochs": {
+          "type": "string",
+          "description": "Note: OpenAI API supports string or interger."
+        }
+      }
+    },
     "v1Job": {
       "type": "object",
       "properties": {
-        "uid": {
+        "id": {
           "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "error": {
+          "$ref": "#/definitions/JobError"
+        },
+        "fineTunedModel": {
+          "type": "string"
+        },
+        "finishedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "hyperparameters": {
+          "$ref": "#/definitions/v1JobHyperParameter"
+        },
+        "model": {
+          "type": "string"
+        },
+        "object": {
+          "type": "string"
+        },
+        "organizationId": {
+          "type": "string"
+        },
+        "resultFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "trainedTokens": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "trainingFile": {
+          "type": "string"
+        },
+        "validationFile": {
+          "type": "string"
+        }
+      }
+    },
+    "v1JobHyperParameter": {
+      "type": "object",
+      "properties": {
+        "nEpochs": {
+          "type": "string",
+          "description": "Note: OpenAI API supports string or interger."
         }
       }
     },
     "v1ListJobsResponse": {
       "type": "object",
       "properties": {
-        "jobs": {
+        "object": {
+          "type": "string"
+        },
+        "data": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1Job"
           }
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     }
