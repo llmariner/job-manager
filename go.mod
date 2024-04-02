@@ -6,6 +6,7 @@ toolchain go1.21.2
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80
