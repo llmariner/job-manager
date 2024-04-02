@@ -8,11 +8,14 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/server"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const flagConfig = "config"
@@ -43,7 +46,15 @@ var runCmd = &cobra.Command{
 }
 
 func run(ctx context.Context, c *config.Config) error {
-	errCh := make(chan error)
+	// TODO(kenji): Replace sqlite with a real database.
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+	st := store.New(db)
+	if err := st.AutoMigrate(); err != nil {
+		return err
+	}
 
 	mux := runtime.NewServeMux()
 	addr := fmt.Sprintf("localhost:%d", c.GRPCPort)
@@ -51,13 +62,15 @@ func run(ctx context.Context, c *config.Config) error {
 	if err := v1.RegisterFineTuningServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
 		return err
 	}
+
+	errCh := make(chan error)
 	go func() {
 		log.Printf("Starting HTTP server on port %d", c.HTTPPort)
 		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", c.HTTPPort), mux)
 	}()
 
 	go func() {
-		s := server.New()
+		s := server.New(st)
 		errCh <- s.Run(c.GRPCPort)
 	}()
 

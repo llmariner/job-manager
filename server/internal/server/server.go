@@ -6,13 +6,16 @@ import (
 	"net"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/job-manager/common/pkg/store"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 // New creates a server.
-func New() *S {
-	return &S{}
+func New(store *store.S) *S {
+	return &S{
+		store: store,
+	}
 }
 
 // S is a server.
@@ -20,6 +23,8 @@ type S struct {
 	v1.UnimplementedFineTuningServiceServer
 
 	srv *grpc.Server
+
+	store *store.S
 }
 
 // Run starts the gRPC server.
