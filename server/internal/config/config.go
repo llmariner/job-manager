@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/llm-operator/job-manager/common/pkg/db"
 	"gopkg.in/yaml.v3"
 )
 
@@ -11,6 +12,8 @@ import (
 type Config struct {
 	GRPCPort int `yaml:"grpcPort"`
 	HTTPPort int `yaml:"httpPort"`
+
+	Database db.Config `yaml:"database"`
 }
 
 // Validate validates the configuration.

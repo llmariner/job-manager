@@ -8,3 +8,9 @@ data:
   config.yaml: |
     grpcPort: {{ .Values.grpcPort }}
     httpPort: {{ .Values.httpPort }}
+    database:
+      host: {{ .Values.database.host }}
+      port: {{ .Values.database.port }}
+      database: {{ .Values.database.database }}
+      username: {{ .Values.database.username }}
+      passwordEnvName: {{ .Values.database.passwordEnvName }}

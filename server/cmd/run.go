@@ -8,14 +8,13 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/server"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 const flagConfig = "config"
@@ -46,12 +45,12 @@ var runCmd = &cobra.Command{
 }
 
 func run(ctx context.Context, c *config.Config) error {
-	// TODO(kenji): Replace sqlite with a real database.
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	dbInst, err := db.OpenDB(c.Database)
 	if err != nil {
 		return err
 	}
-	st := store.New(db)
+
+	st := store.New(dbInst)
 	if err := st.AutoMigrate(); err != nil {
 		return err
 	}

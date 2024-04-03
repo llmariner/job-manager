@@ -1,5 +1,17 @@
 grpcPort: 8081
 httpPort: 8080
+
+database:
+  host:
+  port: 5432
+  database: job_manager
+  username:
+  passwordEnvName: DB_PASSWORD
+
+databaseSecret:
+  name:
+  key:
+
 replicaCount: 1
 image:
   repository: job-manager-server

@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 
+	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
 	"github.com/spf13/cobra"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 const flagConfig = "config"
@@ -39,12 +38,12 @@ var runCmd = &cobra.Command{
 }
 
 func run(ctx context.Context, c *config.Config) error {
-	// TODO(kenji): Replace sqlite with a real database.
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	dbInst, err := db.OpenDB(c.Database)
 	if err != nil {
 		return err
 	}
-	st := store.New(db)
+
+	st := store.New(dbInst)
 	if c.Debug.AutoMigrate {
 		if err := st.AutoMigrate(); err != nil {
 			return err

@@ -19,3 +19,11 @@ build-server:
 .PHONY: build-dispatcher
 build-dispatcher:
 	go build -o ./bin/dispatcher ./dispatcher/cmd/
+
+.PHONY: build-docker-server
+build-docker-server:
+	docker build --build-arg TARGETARCH=amd64 -t job-manager-server:latest -f build/server/Dockerfile .
+
+.PHONY: build-docker-dispatcher
+build-docker-dispatcher:
+	docker build --build-arg TARGETARCH=amd64 -t job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .

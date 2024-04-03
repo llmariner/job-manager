@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/llm-operator/job-manager/common/pkg/db"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,6 +17,8 @@ type DebugConfig struct {
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
+
+	Database db.Config `yaml:"database"`
 
 	Debug DebugConfig `yaml:"debug"`
 }
