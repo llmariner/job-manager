@@ -8,6 +8,9 @@ import (
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const flagConfig = "config"
@@ -50,8 +53,33 @@ func run(ctx context.Context, c *config.Config) error {
 		}
 	}
 
-	d := dispatcher.New(st)
+	k8sClient, err := newK8sClient(c.Debug.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	pc := dispatcher.NewPodCreator(k8sClient, c.JobNamespace)
+	d := dispatcher.New(st, pc)
 	return d.Run(ctx, c.JobPollingInterval)
+}
+
+func newK8sClient(kubeconfigPath string) (kubernetes.Interface, error) {
+	var config *rest.Config
+	var err error
+	if kubeconfigPath != "" {
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	} else {
+		config, err = rest.InClusterConfig()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 func init() {

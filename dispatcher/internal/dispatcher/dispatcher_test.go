@@ -34,7 +34,7 @@ func TestProcessPendingJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	d := New(st)
+	d := New(st, &noopPodCreator{})
 	err := d.processPendingJobs(context.Background())
 	assert.NoError(t, err)
 
@@ -48,4 +48,11 @@ func TestProcessPendingJobs(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, want, got.State)
 	}
+}
+
+type noopPodCreator struct {
+}
+
+func (n *noopPodCreator) createPod(ctx context.Context, job *store.Job) error {
+	return nil
 }

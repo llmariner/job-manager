@@ -11,12 +11,14 @@ import (
 
 // DebugConfig is the debug configuration.
 type DebugConfig struct {
-	AutoMigrate bool `yaml:"autoMigrate"`
+	AutoMigrate    bool   `yaml:"autoMigrate"`
+	KubeconfigPath string `yaml:"kubeconfigPath"`
 }
 
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
+	JobNamespace       string        `yaml:"jobNamespace"`
 
 	Database db.Config `yaml:"database"`
 
