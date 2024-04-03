@@ -26,8 +26,8 @@ type Job struct {
 	// Message is the marshaled proto message of v1.Job.
 	Message []byte
 
-	TenantID string   `gorm:"index:idx_job_tenant_id_state"`
-	State    JobState `gorm:"index:idx_job_tenant_id_state"`
+	State    JobState `gorm:"index:idx_job_state_tenant_id"`
+	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
 
 	Version int
 }
@@ -40,8 +40,26 @@ func (s *S) CreateJob(job *Job) error {
 	return nil
 }
 
-// FindPendingJobs finds peending jobs.
-func (s *S) FindPendingJobs(tenantID string) ([]*Job, error) {
+// GetJobByJobID gets a job.
+func (s *S) GetJobByJobID(jobID string) (*Job, error) {
+	var job Job
+	if err := s.db.Where("job_id = ?", jobID).Take(&job).Error; err != nil {
+		return nil, err
+	}
+	return &job, nil
+}
+
+// ListPendingJob finds pending jobs.
+func (s *S) ListPendingJobs() ([]*Job, error) {
+	var jobs []*Job
+	if err := s.db.Where("state = ?", JobStatePending).Order("job_id").Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+	return jobs, nil
+}
+
+// ListPendingJobsByTenantID finds pending jobs.
+func (s *S) ListPendingJobsByTenantID(tenantID string) ([]*Job, error) {
 	var jobs []*Job
 	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, JobStatePending).Order("job_id").Find(&jobs).Error; err != nil {
 		return nil, err
@@ -49,8 +67,8 @@ func (s *S) FindPendingJobs(tenantID string) ([]*Job, error) {
 	return jobs, nil
 }
 
-// FindJobs finds jobs.
-func (s *S) FindJobs(tenantID string) ([]*Job, error) {
+// ListJobsByTenantID finds jobs.
+func (s *S) ListJobsByTenantID(tenantID string) ([]*Job, error) {
 	var jobs []*Job
 	if err := s.db.Where("tenant_id = ?", tenantID).Find(&jobs).Error; err != nil {
 		return nil, err

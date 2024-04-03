@@ -42,7 +42,7 @@ func (s *S) ListJobs(
 	ctx context.Context,
 	req *v1.ListJobRequest,
 ) (*v1.ListJobsResponse, error) {
-	jobs, err := s.store.FindJobs(fakeTenantID)
+	jobs, err := s.store.ListJobsByTenantID(fakeTenantID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "find jobs: %s", err)
 	}
