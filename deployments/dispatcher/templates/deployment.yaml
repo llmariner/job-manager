@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "job-manager-dispatcher.fullname" . }}
+  labels:
+    {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "job-manager-dispatcher.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "job-manager-dispatcher.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: job-manager-dispatcher
+        image: "{{ .Values.image.repository }}:{{ .Values.version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - run
+        - --config
+        - /etc/config/config.yaml
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "job-manager-dispatcher.fullname" . }}
