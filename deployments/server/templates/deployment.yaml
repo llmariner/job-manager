@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "job-manager-server.fullname" . }}
+  labels:
+    {{- include "job-manager-server.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "job-manager-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "job-manager-server.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: job-manager-server
+        image: "{{ .Values.image.repository }}:{{ .Values.version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - run
+        - --config
+        - /etc/config/config.yaml
+        ports:
+        - name: grpc
+          containerPort: {{ .Values.grpcPort }}
+          protocol: TCP
+        - name: http
+          containerPort: {{ .Values.httpPort }}
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "job-manager-server.fullname" . }}

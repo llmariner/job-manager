@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "job-manager-server.fullname" . }}-grpc
+  labels:
+    {{- include "job-manager-server.labels" . | nindent 4 }}
+  annotations:
+    konghq.com/protocol: grpc
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: {{ .Values.grpcPort }}
+    protocol: TCP
+    targetPort: grpc
+  selector:
+    {{- include "job-manager-server.selectorLabels" . | nindent 4 }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "job-manager-server.fullname" . }}-http
+  labels:
+    {{- include "job-manager-server.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.httpPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "job-manager-server.selectorLabels" . | nindent 4 }}
