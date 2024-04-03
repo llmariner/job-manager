@@ -15,3 +15,7 @@ generate: buf-generate-all
 .PHONY: build-server
 build-server:
 	go build -o ./bin/server ./server/cmd/
+
+.PHONY: build-dispatcher
+build-dispatcher:
+	go build -o ./bin/dispatcher ./dispatcher/cmd/
