@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 
+	"github.com/google/uuid"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
-	"github.com/oklog/ulid/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -71,5 +71,5 @@ func (s *S) CancelJob(
 }
 
 func newJobID() string {
-	return ulid.Make().String()
+	return uuid.New().String()
 }
