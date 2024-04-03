@@ -2,13 +2,6 @@
 
 Job Manage manages fine-tuning jobs.
 
-The following commands build Docker images.
-
-```bash
-docker build --build-arg TARGETARCH=amd64 -t job-manager-server:latest -f build/server/Dockerfile .
-docker build --build-arg TARGETARCH=amd64 -t job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
-```
-
 # TODO
 - Implement a simple dipatcher/executor for running a fine-tuning job
 - Design integratation with the model registry

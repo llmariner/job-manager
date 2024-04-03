@@ -1,5 +1,16 @@
 jobPollingInterval: 10s
 
+database:
+  host:
+  port: 5432
+  database: job_manager
+  username:
+  passwordEnvName: DB_PASSWORD
+
+databaseSecret:
+  name:
+  key:
+
 debug:
   autoMigrate: false
 

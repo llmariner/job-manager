@@ -26,6 +26,12 @@ spec:
         - name: config
           mountPath: /etc/config
           readOnly: true
+        env:
+        - name: {{ .Values.database.passwordEnvName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.databaseSecret.name }}
+              key: {{ .Values.databaseSecret.key }}
       volumes:
       - name: config
         configMap:

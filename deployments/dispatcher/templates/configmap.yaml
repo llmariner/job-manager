@@ -7,5 +7,11 @@ metadata:
 data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
+    database:
+      host: {{ .Values.database.host }}
+      port: {{ .Values.database.port }}
+      database: {{ .Values.database.database }}
+      username: {{ .Values.database.username }}
+      passwordEnvName: {{ .Values.database.passwordEnvName }}
     debug:
       autoMigrate: {{ .Values.debug.autoMigrate }}
