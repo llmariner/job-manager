@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "job-manager-dispatcher.fullname" . }}
+  labels:
+    {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    jobPollingInterval: {{ .Values.jobPollingInterval }}
+    debug:
+      autoMigrate: {{ .Values.debug.autoMigrate }}

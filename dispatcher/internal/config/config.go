@@ -8,9 +8,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// DebugConfig is the debug configuration.
+type DebugConfig struct {
+	AutoMigrate bool `yaml:"autoMigrate"`
+}
+
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
+
+	Debug DebugConfig `yaml:"debug"`
 }
 
 // Validate validates the configuration.

@@ -45,7 +45,11 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	st := store.New(db)
-	// Do not run the DB migrate as it is done by the server.
+	if c.Debug.AutoMigrate {
+		if err := st.AutoMigrate(); err != nil {
+			return err
+		}
+	}
 
 	d := dispatcher.New(st)
 	return d.Run(ctx, c.JobPollingInterval)
