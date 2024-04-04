@@ -123,8 +123,6 @@ python lora.py \
 
 Link: https://localai.io/docs/advanced/fine-tuning/
 
-(This hasn't been tested yet.)
-
 ```bash
 git clone http://github.com/mudler/LocalAI
 cd LocalAI/examples/e2e-fine-tuning
@@ -137,6 +135,8 @@ pushd axolotl && pip install -e '.[flash-attn,deepspeed]' && popd
 # https://github.com/oobabooga/text-generation-webui/issues/4238
 pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.3.0/flash_attn-2.3.0+cu117torch2.0cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 
+pip install accelerate
+
 accelerate config default
 
 # Optional pre-tokenize (run only if big dataset)
@@ -148,13 +148,12 @@ accelerate launch -m axolotl.cli.train axolotl.yaml
 # Merge lora
 python3 -m axolotl.cli.merge_lora axolotl.yaml --lora_model_dir="./qlora-out" --load_in_8bit=False --load_in_4bit=False
 
-
 # Convert to gguf
 git clone https://github.com/ggerganov/llama.cpp.git
 pushd llama.cpp && make LLAMA_CUBLAS=1 && popd
 
 # We need to convert the pytorch model into ggml for quantization
-# It crates 'ggml-model-f16.bin' in the 'merged' directory.
+# It creates 'ggml-model-f16.bin' in the 'merged' directory.
 pushd llama.cpp && python convert.py --outtype f16 \
     ../qlora-out/merged/pytorch_model-00001-of-00002.bin && popd
 
