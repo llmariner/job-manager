@@ -1,0 +1,8 @@
+transformers==4.38.1
+torch
+bitsandbytes
+accelerate
+datasets
+rich
+trl
+peft
