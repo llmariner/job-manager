@@ -38,7 +38,7 @@ spec:
     - --output_dir=gemma-finetuned-openassistant
     env:
     - name: HUGGING_FACE_HUB_TOKEN
-      value: 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
+      value: <Hugging Face Access Token>
     resources:
       limits:
         nvidia.com/gpu: 1
