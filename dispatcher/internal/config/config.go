@@ -23,6 +23,8 @@ type Config struct {
 
 	InferenceManagerAddr string `yaml:"inferenceManagerAddr"`
 
+	ModelStorePath string `yaml:"modelStorePath"`
+
 	Database db.Config `yaml:"database"`
 
 	Debug DebugConfig `yaml:"debug"`

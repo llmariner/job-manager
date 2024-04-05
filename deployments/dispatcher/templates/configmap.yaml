@@ -8,6 +8,8 @@ data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
     jobNamespace: {{ .Values.jobNamespace }}
+    inferenceManagerAddr: {{ .Values.inferenceManagerAddr }}
+    modelStorePath: {{ .Values.modelStore.mountPath }}
     database:
       host: {{ .Values.database.host }}
       port: {{ .Values.database.port }}
