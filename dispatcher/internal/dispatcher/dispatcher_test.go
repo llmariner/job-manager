@@ -34,7 +34,7 @@ func TestProcessPendingJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	d := New(st, &noopPodCreator{})
+	d := New(st, &noopPodCreator{}, &NoopModelRegisterClient{})
 	err := d.processPendingJobs(context.Background())
 	assert.NoError(t, err)
 

@@ -14,8 +14,7 @@ You can run `dispatcher` locally.
 
 ```bash
 make build-dispatcher
-kubectl port-forward -n postgres service/postgres 5432:5432 &
-DB_PASSWORD=ps_password ./bin/dispatcher run --config config.yaml
+./bin/dispatcher run --config config.yaml
 ```
 
 `config.yaml` has the following content:
@@ -25,13 +24,18 @@ jobPollingInterval: 10s
 jobNamespace: default
 
 debug:
-  autoMigrate: true
   kubeconfigPath: /Users/kenji/.kube/config
+  standalone: true
+  sqlitePath: /tmp/job_manager.db
+```
 
-database:
-  host: localhost
-  port: 5432
-  database: job_manager
-  username: ps_user
-  passwordEnvName: DB_PASSWORD
+You can then connect to the DB and create a job.
+
+```bash
+sqlite3 /tmp/job_manager.db
+# Run the query inside the database.
+insert into jobs
+  (job_id, message, state, tenant_id, version, created_at, updated_at)
+values
+  ('my-job', '', 'pending', 'my-tenant', 0, time('now'), time('now'));
 ```
