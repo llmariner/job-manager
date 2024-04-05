@@ -27,3 +27,7 @@ build-docker-server:
 .PHONY: build-docker-dispatcher
 build-docker-dispatcher:
 	docker build --build-arg TARGETARCH=amd64 -t llm-operator/job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
+
+.PHONY: build-docker-experiments-fine-tuning
+build-docker-experiments-fine-tuning:
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/experiments-fine-tuning:latest -f build/experiments/fine-tuning/Dockerfile build/experiments/fine-tuning

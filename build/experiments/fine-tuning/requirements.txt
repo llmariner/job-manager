@@ -6,3 +6,4 @@ datasets
 rich
 trl
 peft
+gguf
