@@ -24,6 +24,11 @@ debug:
   kubeconfigPath:
 
 replicaCount: 1
+
+serviceAccount:
+  create: true
+  serviceAccountName: job-manager-dispatcher
+
 image:
   repository: llm-operator/job-manager-dispatcher
   # TODO(kenji): Change this to IfNotPresent. Currently we set the pullPolicy

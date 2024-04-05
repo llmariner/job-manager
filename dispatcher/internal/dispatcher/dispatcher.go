@@ -98,7 +98,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 		// TODO(kenji): Fix this.
 		ModelName:   "gemma:2b-fine-tuned",
 		BaseModel:   "gemma:2b",
-		AdapterPath: "/adapter/ggml-adapter-model.bin",
+		AdapterPath: "/models/adapter/ggml-adapter-model.bin",
 	}); err != nil {
 		return err
 	}

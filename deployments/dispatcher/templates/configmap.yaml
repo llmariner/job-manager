@@ -9,7 +9,10 @@ data:
     jobPollingInterval: {{ .Values.jobPollingInterval }}
     jobNamespace: {{ .Values.jobNamespace }}
     inferenceManagerAddr: {{ .Values.inferenceManagerAddr }}
-    modelStorePath: {{ .Values.modelStore.mountPath }}
+    modelStore:
+      enable: {{ .Values.modelStore.enable }}
+      mountPath: {{ .Values.modelStore.mountPath }}
+      pvClaimName: {{ .Values.modelStore.pvClaimName }}
     database:
       host: {{ .Values.database.host }}
       port: {{ .Values.database.port }}

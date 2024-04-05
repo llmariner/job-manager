@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "job-manager-dispatcher.fullname" . }}
+  labels:
+    {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "job-manager-dispatcher.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "job-manager-dispatcher.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
