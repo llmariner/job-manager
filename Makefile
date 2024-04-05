@@ -22,8 +22,8 @@ build-dispatcher:
 
 .PHONY: build-docker-server
 build-docker-server:
-	docker build --build-arg TARGETARCH=amd64 -t job-manager-server:latest -f build/server/Dockerfile .
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/job-manager-server:latest -f build/server/Dockerfile .
 
 .PHONY: build-docker-dispatcher
 build-docker-dispatcher:
-	docker build --build-arg TARGETARCH=amd64 -t job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
