@@ -30,6 +30,7 @@ type D struct {
 // Run runs the dispatcher.
 func (d *D) Run(ctx context.Context, interval time.Duration) error {
 	// TODO(kenji): Reconcile running jobs.
+	// This is necessary to handle the case where the dispatcher is restarted or the informer misses some events.
 
 	if err := d.processPendingJobs(ctx); err != nil {
 		return err
@@ -73,7 +74,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 		return err
 	}
 
-	// TODO(kenji): Watch pods and update job state.
+	// TODO(kenji): Watch pods and update job state. The code should be changed to check the completion of the job in an async fashion.
 
 	log.Printf("Finished processing job (ID: %s)\n", job.JobID)
 	if err := d.store.UpdateJobState(job.JobID, job.Version, store.JobStateCompleted); err != nil {
