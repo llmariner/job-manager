@@ -27,14 +27,16 @@ func NewPodCreator(
 // PodCreator creates a pod for a job.
 type PodCreator struct {
 	k8sClient kubernetes.Interface
+	// TODO(kenji): Be able to specify the namespace per tenant.
 	namespace string
 }
 
 func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
+	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
+	// TODO(kenji): Be able to easily switch between real impl and fake impl. We'd like to run this code in a non-GPU node for testing.
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("job-%s", job.JobID),
-			//Labels:    job.Labels,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -47,6 +49,7 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	}
 	if _, err := p.k8sClient.CoreV1().Pods(p.namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
 		if apierrors.IsAlreadyExists(err) {
+			// TODO(kenji): Revisit this error handling.
 			log.Printf("Pod %s already exists\n", job.JobID)
 			return nil
 		}
