@@ -93,7 +93,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 	}
 
 	// TODO(kenji): Watch pods and update job state. The code should be changed to check the completion of the job in an async fashion.
-
+	log.Printf("Registering genereated fine-tuned model\n")
 	if _, err := d.modelRegisterClient.RegisterModel(ctx, &iv1.RegisterModelRequest{
 		// TODO(kenji): Fix this.
 		ModelName:   "gemma:2b-fine-tuned",
