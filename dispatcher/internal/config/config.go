@@ -16,6 +16,12 @@ type DebugConfig struct {
 	SqlitePath     string `yaml:"sqlitePath"`
 }
 
+type ModelStoreConfig struct {
+	Enable      bool   `yaml:"enable"`
+	MountPath   string `yaml:"mountPath"`
+	PVClaimName string `yaml:"pvClaimName"`
+}
+
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
@@ -23,7 +29,7 @@ type Config struct {
 
 	InferenceManagerAddr string `yaml:"inferenceManagerAddr"`
 
-	ModelStorePath string `yaml:"modelStorePath"`
+	ModelStore ModelStoreConfig `yaml:"modelStore"`
 
 	Database db.Config `yaml:"database"`
 

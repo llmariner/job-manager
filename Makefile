@@ -31,3 +31,7 @@ build-docker-dispatcher:
 .PHONY: build-docker-experiments-fine-tuning
 build-docker-experiments-fine-tuning:
 	docker build --build-arg TARGETARCH=amd64 -t llm-operator/experiments-fine-tuning:latest -f build/experiments/fine-tuning/Dockerfile build/experiments/fine-tuning
+
+.PHONY: build-docker-experiments-fake-job
+build-docker-experiments-fake-job:
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/experiments-fake-job:latest -f build/experiments/fake-job/Dockerfile build/experiments/fake-job

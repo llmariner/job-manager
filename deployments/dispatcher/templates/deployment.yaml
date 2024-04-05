@@ -14,6 +14,7 @@ spec:
       labels:
         {{- include "job-manager-dispatcher.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "job-manager-dispatcher.serviceAccountName" . }}
       containers:
       - name: job-manager-dispatcher
         image: "{{ .Values.image.repository }}:{{ .Values.version }}"
