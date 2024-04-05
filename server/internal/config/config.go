@@ -24,6 +24,9 @@ func (c *Config) Validate() error {
 	if c.HTTPPort <= 0 {
 		return fmt.Errorf("httpPort must be greater than 0")
 	}
+	if err := c.Database.Validate(); err != nil {
+		return fmt.Errorf("database: %s", err)
+	}
 	return nil
 }
 

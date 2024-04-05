@@ -11,14 +11,17 @@ import (
 
 // DebugConfig is the debug configuration.
 type DebugConfig struct {
-	AutoMigrate    bool   `yaml:"autoMigrate"`
 	KubeconfigPath string `yaml:"kubeconfigPath"`
+	Standalone     bool   `yaml:"standalone"`
+	SqlitePath     string `yaml:"sqlitePath"`
 }
 
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
 	JobNamespace       string        `yaml:"jobNamespace"`
+
+	InferenceManagerAddr string `yaml:"inferenceManagerAddr"`
 
 	Database db.Config `yaml:"database"`
 
@@ -29,6 +32,21 @@ type Config struct {
 func (c *Config) Validate() error {
 	if c.JobPollingInterval <= 0 {
 		return fmt.Errorf("job polling interval must be greater than 0")
+	}
+	if c.JobNamespace == "" {
+		return fmt.Errorf("job namespace must be set")
+	}
+	if c.Debug.Standalone {
+		if c.Debug.SqlitePath == "" {
+			return fmt.Errorf("sqlite path must be set")
+		}
+	} else {
+		if c.InferenceManagerAddr == "" {
+			return fmt.Errorf("inference manager address must be set")
+		}
+		if err := c.Database.Validate(); err != nil {
+			return fmt.Errorf("database: %s", err)
+		}
 	}
 	return nil
 }
