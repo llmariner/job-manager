@@ -46,7 +46,7 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	var image, cmd string
 	if p.fakeJob {
 		image = "llm-operator/experiments-fake-job:latest"
-		cmd = "mkdir /models/adapter ; cp ./ggml-adapter-model.bin /models/adapter/ggml-adapter-model.bin"
+		cmd = "mkdir /models/adapter; cp ./ggml-adapter-model.bin /models/adapter/ggml-adapter-model.bin"
 	} else {
 		image = "llm-operator/experiments-fine-tuning:latest"
 		cmd = `
@@ -69,7 +69,6 @@ accelerate launch \
   --load_in_4bit \
   --output_dir=./output &&
   python ./convert-lora-to-ggml.py /models/adapter/
-
 `
 	}
 
