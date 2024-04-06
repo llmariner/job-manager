@@ -23,6 +23,7 @@ debug:
   autoMigrate: false
   kubeconfigPath:
   useFakeJob: false
+  huggingFaceAccessToken:
 
 replicaCount: 1
 

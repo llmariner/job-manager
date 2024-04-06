@@ -15,6 +15,8 @@ type DebugConfig struct {
 	Standalone     bool   `yaml:"standalone"`
 	SqlitePath     string `yaml:"sqlitePath"`
 	UseFakeJob     bool   `yaml:"useFakeJob"`
+
+	HuggingFaceAccessToken string `yaml:"huggingFaceAccessToken"`
 }
 
 type ModelStoreConfig struct {
