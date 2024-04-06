@@ -72,7 +72,7 @@ func run(ctx context.Context, c *config.Config) error {
 		return fmt.Errorf("new k8s client: %s", err)
 	}
 
-	pc := dispatcher.NewPodCreator(k8sClient, c.JobNamespace, &c.ModelStore)
+	pc := dispatcher.NewPodCreator(k8sClient, c.JobNamespace, &c.ModelStore, c.Debug.UseFakeJob)
 
 	var iclient dispatcher.ModelRegisterClient
 	if c.Debug.Standalone {

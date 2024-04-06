@@ -14,6 +14,7 @@ type DebugConfig struct {
 	KubeconfigPath string `yaml:"kubeconfigPath"`
 	Standalone     bool   `yaml:"standalone"`
 	SqlitePath     string `yaml:"sqlitePath"`
+	UseFakeJob     bool   `yaml:"useFakeJob"`
 }
 
 type ModelStoreConfig struct {
