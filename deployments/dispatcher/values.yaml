@@ -22,6 +22,7 @@ databaseSecret:
 debug:
   autoMigrate: false
   kubeconfigPath:
+  useFakeJob: false
 
 replicaCount: 1
 
