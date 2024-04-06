@@ -124,7 +124,7 @@ python ./convert-lora-to-ggml.py ./output &&
 cp ./output/ggml-adapter-model.bin /models/adapter/
 `
 		res = corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
+			Limits: corev1.ResourceList{
 				"nvidia.com/gpu": *resource.NewQuantity(1, resource.DecimalSI),
 			},
 		}
