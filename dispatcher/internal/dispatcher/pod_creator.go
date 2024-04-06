@@ -22,12 +22,14 @@ func NewPodCreator(
 	namespace string,
 	modelStoreConfig *config.ModelStoreConfig,
 	useFakeJob bool,
+	huggingFaceAccessToken string,
 ) *PodCreator {
 	return &PodCreator{
-		k8sClient:        k8sClient,
-		namespace:        namespace,
-		modelStoreConfig: modelStoreConfig,
-		useFakeJob:       useFakeJob,
+		k8sClient:              k8sClient,
+		namespace:              namespace,
+		modelStoreConfig:       modelStoreConfig,
+		useFakeJob:             useFakeJob,
+		huggingFaceAccessToken: huggingFaceAccessToken,
 	}
 }
 
@@ -35,9 +37,10 @@ func NewPodCreator(
 type PodCreator struct {
 	k8sClient kubernetes.Interface
 	// TODO(kenji): Be able to specify the namespace per tenant.
-	namespace        string
-	modelStoreConfig *config.ModelStoreConfig
-	useFakeJob       bool
+	namespace              string
+	modelStoreConfig       *config.ModelStoreConfig
+	useFakeJob             bool
+	huggingFaceAccessToken string
 }
 
 func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
@@ -156,6 +159,12 @@ cp ./output/ggml-adapter-model.bin /models/adapter/
 				Command:         []string{"/bin/bash", "-c", cmd},
 				Resources:       res,
 				VolumeMounts:    volumeMounts,
+				Env: []corev1.EnvVar{
+					{
+						Name:  "HUGGING_FACE_HUB_TOKEN",
+						Value: p.huggingFaceAccessToken,
+					},
+				},
 			},
 		},
 		Volumes:       volumes,
