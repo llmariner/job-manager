@@ -3,7 +3,6 @@
 Job Manage manages fine-tuning jobs.
 
 # TODO
-- Implement a simple dipatcher/executor for running a fine-tuning job
 - Design integratation with the model registry
 - Design dataset management
 - Design GPU management & scheduling
