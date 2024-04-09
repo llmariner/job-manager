@@ -4,21 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+const (
+	managedPodAnnotationKey = "llm-operator/managed-pod"
+	jobIDAnnotationKey      = "llm-operator/job-id"
 )
 
 // NewPodCreator returns a new PodCreator.
 func NewPodCreator(
-	k8sClient kubernetes.Interface,
+	k8sClient client.Client,
 	namespace string,
 	modelStoreConfig *config.ModelStoreConfig,
 	useFakeJob bool,
@@ -35,7 +38,7 @@ func NewPodCreator(
 
 // PodCreator creates a pod for a job.
 type PodCreator struct {
-	k8sClient kubernetes.Interface
+	k8sClient client.Client
 	// TODO(kenji): Be able to specify the namespace per tenant.
 	namespace              string
 	modelStoreConfig       *config.ModelStoreConfig
@@ -50,11 +53,16 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	podName := fmt.Sprintf("job-%s", job.JobID)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: podName,
+			Name:      podName,
+			Namespace: p.namespace,
+			Annotations: map[string]string{
+				managedPodAnnotationKey: "true",
+				jobIDAnnotationKey:      job.JobID,
+			},
 		},
 		Spec: p.podSpec(),
 	}
-	if _, err := p.k8sClient.CoreV1().Pods(p.namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
+	if err := p.k8sClient.Create(ctx, pod); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			// TODO(kenji): Revisit this error handling.
 			log.Printf("Pod %s already exists\n", job.JobID)
@@ -62,34 +70,6 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 		}
 		return err
 	}
-
-	log.Printf("Waiting for the pod to complete\n")
-	ticker := time.NewTicker(10 * time.Second)
-	var completed bool
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			pod, err := p.k8sClient.CoreV1().Pods(p.namespace).Get(ctx, podName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-
-			if pod.Status.Phase == corev1.PodSucceeded {
-				completed = true
-				break
-			}
-
-			log.Printf("Pod is still running. Check later\n")
-		}
-
-		if completed {
-			break
-		}
-	}
-
-	log.Printf("Pod finished running\n")
 	return nil
 }
 
@@ -170,4 +150,8 @@ cp ./output/ggml-adapter-model.bin /models/adapter/
 		Volumes:       volumes,
 		RestartPolicy: corev1.RestartPolicyOnFailure,
 	}
+}
+
+func isManagedPod(annotations map[string]string) bool {
+	return annotations[managedPodAnnotationKey] == "true"
 }

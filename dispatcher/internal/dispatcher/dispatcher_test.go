@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestProcessPendingJobs(t *testing.T) {
 		},
 		{
 			JobID:    "job1",
-			State:    store.JobStateRunning,
+			State:    store.JobStateCompleted,
 			TenantID: "tid0",
 		},
 		{
@@ -34,25 +35,30 @@ func TestProcessPendingJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	d := New(st, &noopPodCreator{}, &NoopModelRegisterClient{})
+	pc := &noopPodCreator{}
+	d := New(st, pc, time.Second)
 	err := d.processPendingJobs(context.Background())
 	assert.NoError(t, err)
 
 	wants := map[string]store.JobState{
-		jobs[0].JobID: store.JobStateCompleted,
-		jobs[1].JobID: store.JobStateRunning,
-		jobs[2].JobID: store.JobStateCompleted,
+		jobs[0].JobID: store.JobStateRunning,
+		jobs[1].JobID: store.JobStateCompleted,
+		jobs[2].JobID: store.JobStateRunning,
 	}
 	for jobID, want := range wants {
 		got, err := st.GetJobByJobID(jobID)
 		assert.NoError(t, err)
 		assert.Equal(t, want, got.State)
 	}
+	const wantCounter = 2
+	assert.Equal(t, wantCounter, pc.counter)
 }
 
 type noopPodCreator struct {
+	counter int
 }
 
 func (n *noopPodCreator) createPod(ctx context.Context, job *store.Job) error {
+	n.counter++
 	return nil
 }

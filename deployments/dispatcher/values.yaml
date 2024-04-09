@@ -19,6 +19,12 @@ databaseSecret:
   name:
   key:
 
+kubernetesManager:
+  enableLeaderElection: false
+  metricsBindAddress: :8080
+  healthBindAddress: :8081
+  pprofBindAddress:
+
 debug:
   autoMigrate: false
   kubeconfigPath:
