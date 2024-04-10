@@ -8,7 +8,7 @@ data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
     jobNamespace: {{ .Values.jobNamespace }}
-    inferenceManagerAddr: {{ .Values.inferenceManagerAddr }}
+    modelManagerServerAddr: {{ .Values.modelManagerServerAddr }}
     modelStore:
       enable: {{ .Values.modelStore.enable }}
       mountPath: {{ .Values.modelStore.mountPath }}
