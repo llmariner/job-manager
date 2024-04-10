@@ -50,7 +50,7 @@ message CreateJobRequest {
   string validation_file = 5;
 }
 
-message ListJobRequest {
+message ListJobsRequest {
   string after = 1;
   int32 limit = 2;
 }
@@ -73,7 +73,7 @@ service FineTuningService {
     };
   }
 
-  rpc ListJobs(ListJobRequest) returns (ListJobsResponse) {
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {
     option (google.api.http) = {
       get: "/v1/fine_tuning/jobs"
     };
