@@ -5,11 +5,11 @@ import (
 	"log/slog"
 
 	"github.com/go-logr/logr"
-	iv1 "github.com/llm-operator/inference-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
+	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -103,22 +103,22 @@ func run(ctx context.Context, c *config.Config) error {
 		c.Debug.HuggingFaceAccessToken,
 	)
 
-	var iclient dispatcher.ModelRegisterClient
+	var mclient dispatcher.ModelCreatorClient
 	if c.Debug.Standalone {
-		iclient = &dispatcher.NoopModelRegisterClient{}
+		mclient = &dispatcher.NoopModelCreatorClient{}
 	} else {
-		conn, err := grpc.Dial(c.InferenceManagerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(c.ModelManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
-		iclient = iv1.NewInferenceEngineInternalServiceClient(conn)
+		mclient = mv1.NewModelsInternalServiceClient(conn)
 	}
 
 	if err := dispatcher.New(st, pc, c.JobPollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
-	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), iclient).
+	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), mclient).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}

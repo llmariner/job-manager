@@ -40,7 +40,7 @@ type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
 	JobNamespace       string        `yaml:"jobNamespace"`
 
-	InferenceManagerAddr string `yaml:"inferenceManagerAddr"`
+	ModelManagerServerAddr string `yaml:"modelManagerServerAddr"`
 
 	ModelStore ModelStoreConfig `yaml:"modelStore"`
 
@@ -64,7 +64,7 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("sqlite path must be set")
 		}
 	} else {
-		if c.InferenceManagerAddr == "" {
+		if c.ModelManagerServerAddr == "" {
 			return fmt.Errorf("inference manager address must be set")
 		}
 		if err := c.Database.Validate(); err != nil {

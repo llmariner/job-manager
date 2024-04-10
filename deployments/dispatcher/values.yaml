@@ -1,7 +1,7 @@
 jobPollingInterval: 10s
 jobNamespace: default
 
-inferenceManagerAddr:
+modelManagerServerAddr:
 
 modelStore:
   enable: false

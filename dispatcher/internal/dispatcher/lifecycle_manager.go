@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	iv1 "github.com/llm-operator/inference-manager/api/v1"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -16,38 +18,38 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// ModelRegisterClient is the client for the model register service.
-type ModelRegisterClient interface {
-	RegisterModel(ctx context.Context, in *iv1.RegisterModelRequest, opts ...grpc.CallOption) (*iv1.RegisterModelResponse, error)
+// ModelCreatorClient is the client for the model creation service.
+type ModelCreatorClient interface {
+	CreateModel(ctx context.Context, in *mv1.CreateModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
-// NoopModelRegisterClient is a no-op implementation of ModelRegisterClient.
-type NoopModelRegisterClient struct {
+// NoopModelCreatorlient is a no-op implementation of ModelCreatorClient.
+type NoopModelCreatorClient struct {
 }
 
-// RegisterModel is a no-op implementation of RegisterModel.
-func (c *NoopModelRegisterClient) RegisterModel(ctx context.Context, in *iv1.RegisterModelRequest, opts ...grpc.CallOption) (*iv1.RegisterModelResponse, error) {
-	return &iv1.RegisterModelResponse{}, nil
+// CreateModel is a no-op implementation of CreateModel.
+func (c *NoopModelCreatorClient) CreateModel(ctx context.Context, in *mv1.CreateModelRequest, opts ...grpc.CallOption) (*mv1.Model, error) {
+	return &mv1.Model{}, nil
 }
 
 // NewLifecycleManager returns a new LifecycleManager.
 func NewLifecycleManager(
 	store *store.S,
 	client client.Client,
-	modelRegisterClient ModelRegisterClient,
+	modelCreatorClient ModelCreatorClient,
 ) *LifecycleManager {
 	return &LifecycleManager{
-		store:               store,
-		k8sClient:           client,
-		modelRegisterClient: modelRegisterClient,
+		store:              store,
+		k8sClient:          client,
+		modelCreatorClient: modelCreatorClient,
 	}
 }
 
 // LifecycleManager manages job lifecycle and sync status.
 type LifecycleManager struct {
-	store               *store.S
-	k8sClient           client.Client
-	modelRegisterClient ModelRegisterClient
+	store              *store.S
+	k8sClient          client.Client
+	modelCreatorClient ModelCreatorClient
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -111,13 +113,20 @@ func (s *LifecycleManager) Reconcile(
 	log.Info("Pod successfully completed")
 
 	log.Info("Registering genereated fine-tuned model")
-	if _, err := s.modelRegisterClient.RegisterModel(ctx, &iv1.RegisterModelRequest{
-		// TODO: Set the base model and the model name from the job spec.
-		ModelName:   "gemma:2b-fine-tuned",
-		BaseModel:   "gemma:2b",
-		AdapterPath: "/models/adapter/ggml-adapter-model.bin",
+	// TODO(kenji): Currently the model is generated at /models/adapter/ggml-adapter-model.bin. We
+	// neeed to put this to a location where inference engine can retrieve.
+
+	var jobProto v1.Job
+	if err := proto.Unmarshal(job.Message, &jobProto); err != nil {
+		log.Error(err, "Failed to unmarshal job")
+		return ctrl.Result{}, err
+	}
+	if _, err := s.modelCreatorClient.CreateModel(ctx, &mv1.CreateModelRequest{
+		BaseModel: jobProto.Model,
+		Suffix:    job.Suffix,
+		TenantId:  job.TenantID,
 	}); err != nil {
-		log.Error(err, "Failed to register model")
+		log.Error(err, "Failed to create model")
 		return ctrl.Result{}, err
 	}
 
