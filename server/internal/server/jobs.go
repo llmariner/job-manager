@@ -40,7 +40,7 @@ func (s *S) CreateJob(
 // ListJobs lists all jobs.
 func (s *S) ListJobs(
 	ctx context.Context,
-	req *v1.ListJobRequest,
+	req *v1.ListJobsRequest,
 ) (*v1.ListJobsResponse, error) {
 	jobs, err := s.store.ListJobsByTenantID(fakeTenantID)
 	if err != nil {

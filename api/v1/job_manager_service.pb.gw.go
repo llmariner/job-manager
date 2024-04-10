@@ -70,7 +70,7 @@ var (
 )
 
 func request_FineTuningService_ListJobs_0(ctx context.Context, marshaler runtime.Marshaler, client FineTuningServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListJobRequest
+	var protoReq ListJobsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -86,7 +86,7 @@ func request_FineTuningService_ListJobs_0(ctx context.Context, marshaler runtime
 }
 
 func local_request_FineTuningService_ListJobs_0(ctx context.Context, marshaler runtime.Marshaler, server FineTuningServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListJobRequest
+	var protoReq ListJobsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
