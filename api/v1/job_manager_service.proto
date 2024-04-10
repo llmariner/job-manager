@@ -27,7 +27,6 @@ message Job {
   HyperParameter hyperparameters = 6;
   // The base model that is being fine-tuned.
   string model = 7;
-  //
   string object = 8;
   string organization_id = 9;
   repeated string result_files = 10;
