@@ -26,20 +26,23 @@ type Job struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id              string              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreatedAt       int32               `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	Error           *Job_Error          `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Id        string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	CreatedAt int64      `protobuf:"varint,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Error     *Job_Error `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	// The name of the fine-tuned model that is being created. The value will be null if the fine-tuning job is still running.
 	FineTunedModel  string              `protobuf:"bytes,4,opt,name=fine_tuned_model,json=fineTunedModel,proto3" json:"fine_tuned_model,omitempty"`
-	FinishedAt      int32               `protobuf:"varint,5,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	FinishedAt      int64               `protobuf:"varint,5,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
 	Hyperparameters *Job_HyperParameter `protobuf:"bytes,6,opt,name=hyperparameters,proto3" json:"hyperparameters,omitempty"`
-	Model           string              `protobuf:"bytes,7,opt,name=model,proto3" json:"model,omitempty"`
-	Object          string              `protobuf:"bytes,8,opt,name=object,proto3" json:"object,omitempty"`
-	OrganizationId  string              `protobuf:"bytes,9,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	ResultFiles     []string            `protobuf:"bytes,10,rep,name=result_files,json=resultFiles,proto3" json:"result_files,omitempty"`
-	Status          string              `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
-	TrainedTokens   int32               `protobuf:"varint,12,opt,name=trained_tokens,json=trainedTokens,proto3" json:"trained_tokens,omitempty"`
-	TrainingFile    string              `protobuf:"bytes,13,opt,name=training_file,json=trainingFile,proto3" json:"training_file,omitempty"`
-	ValidationFile  string              `protobuf:"bytes,14,opt,name=validation_file,json=validationFile,proto3" json:"validation_file,omitempty"`
+	// The base model that is being fine-tuned.
+	Model string `protobuf:"bytes,7,opt,name=model,proto3" json:"model,omitempty"`
+	Object         string   `protobuf:"bytes,8,opt,name=object,proto3" json:"object,omitempty"`
+	OrganizationId string   `protobuf:"bytes,9,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ResultFiles    []string `protobuf:"bytes,10,rep,name=result_files,json=resultFiles,proto3" json:"result_files,omitempty"`
+	// The current status of the fine-tuning job, which can be either validating_files, queued, running, succeeded, failed, or cancelled.
+	Status         string `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
+	TrainedTokens  int32  `protobuf:"varint,12,opt,name=trained_tokens,json=trainedTokens,proto3" json:"trained_tokens,omitempty"`
+	TrainingFile   string `protobuf:"bytes,13,opt,name=training_file,json=trainingFile,proto3" json:"training_file,omitempty"`
+	ValidationFile string `protobuf:"bytes,14,opt,name=validation_file,json=validationFile,proto3" json:"validation_file,omitempty"`
 }
 
 func (x *Job) Reset() {
@@ -81,7 +84,7 @@ func (x *Job) GetId() string {
 	return ""
 }
 
-func (x *Job) GetCreatedAt() int32 {
+func (x *Job) GetCreatedAt() int64 {
 	if x != nil {
 		return x.CreatedAt
 	}
@@ -102,7 +105,7 @@ func (x *Job) GetFineTunedModel() string {
 	return ""
 }
 
-func (x *Job) GetFinishedAt() int32 {
+func (x *Job) GetFinishedAt() int64 {
 	if x != nil {
 		return x.FinishedAt
 	}
@@ -180,8 +183,13 @@ type CreateJobRequest struct {
 	Model           string                           `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
 	TrainingFile    string                           `protobuf:"bytes,2,opt,name=training_file,json=trainingFile,proto3" json:"training_file,omitempty"`
 	Hyperparameters *CreateJobRequest_HyperParameter `protobuf:"bytes,3,opt,name=hyperparameters,proto3" json:"hyperparameters,omitempty"`
-	Suffix          string                           `protobuf:"bytes,4,opt,name=suffix,proto3" json:"suffix,omitempty"`
-	ValidationFile  string                           `protobuf:"bytes,5,opt,name=validation_file,json=validationFile,proto3" json:"validation_file,omitempty"`
+	// A string of up to 18 characters that will be added to your fine-tuned model name.
+	//
+	// For example, a suffix of "custom-model-name" would produce a
+	// model name like
+	// ft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel.
+	Suffix         string `protobuf:"bytes,4,opt,name=suffix,proto3" json:"suffix,omitempty"`
+	ValidationFile string `protobuf:"bytes,5,opt,name=validation_file,json=validationFile,proto3" json:"validation_file,omitempty"`
 }
 
 func (x *CreateJobRequest) Reset() {
@@ -604,7 +612,7 @@ var file_api_v1_job_manager_service_proto_rawDesc = []byte{
 	0x69, 0x2f, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x22, 0xa5, 0x05, 0x0a, 0x03, 0x4a, 0x6f, 0x62, 0x12, 0x0e, 0x0a, 0x02, 0x69,
 	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x63,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52,
 	0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x42, 0x0a, 0x05, 0x65, 0x72,
 	0x72, 0x6f, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x6c, 0x6c, 0x6d, 0x6f,
 	0x70, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x66, 0x69, 0x6e, 0x65, 0x5f, 0x74, 0x75, 0x6e,
@@ -613,7 +621,7 @@ var file_api_v1_job_manager_service_proto_rawDesc = []byte{
 	0x0a, 0x10, 0x66, 0x69, 0x6e, 0x65, 0x5f, 0x74, 0x75, 0x6e, 0x65, 0x64, 0x5f, 0x6d, 0x6f, 0x64,
 	0x65, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x66, 0x69, 0x6e, 0x65, 0x54, 0x75,
 	0x6e, 0x65, 0x64, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x12, 0x1f, 0x0a, 0x0b, 0x66, 0x69, 0x6e, 0x69,
-	0x73, 0x68, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0a, 0x66,
+	0x73, 0x68, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x66,
 	0x69, 0x6e, 0x69, 0x73, 0x68, 0x65, 0x64, 0x41, 0x74, 0x12, 0x5f, 0x0a, 0x0f, 0x68, 0x79, 0x70,
 	0x65, 0x72, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x65, 0x74, 0x65, 0x72, 0x73, 0x18, 0x06, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x35, 0x2e, 0x6c, 0x6c, 0x6d, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x6f, 0x72,

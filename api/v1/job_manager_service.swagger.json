@@ -169,7 +169,8 @@
           "$ref": "#/definitions/v1CreateJobRequestHyperParameter"
         },
         "suffix": {
-          "type": "string"
+          "type": "string",
+          "description": "A string of up to 18 characters that will be added to your fine-tuned model name.\n\nFor example, a suffix of \"custom-model-name\" would produce a\nmodel name like\nft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel."
         },
         "validationFile": {
           "type": "string"
@@ -200,24 +201,26 @@
           "type": "string"
         },
         "createdAt": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64"
         },
         "error": {
           "$ref": "#/definitions/JobError"
         },
         "fineTunedModel": {
-          "type": "string"
+          "type": "string",
+          "description": "The name of the fine-tuned model that is being created. The value will be null if the fine-tuning job is still running."
         },
         "finishedAt": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64"
         },
         "hyperparameters": {
           "$ref": "#/definitions/v1JobHyperParameter"
         },
         "model": {
-          "type": "string"
+          "type": "string",
+          "description": "The base model that is being fine-tuned."
         },
         "object": {
           "type": "string"
@@ -232,7 +235,8 @@
           }
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "description": "The current status of the fine-tuning job, which can be either validating_files, queued, running, succeeded, failed, or cancelled."
         },
         "trainedTokens": {
           "type": "integer",

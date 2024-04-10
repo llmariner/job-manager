@@ -11,10 +11,12 @@ type JobState string
 
 const (
 	// JobStatePending represents the pending state.
+	// TODO(kenji): Consider renaming this to "queued" to be consistent with OpenAI API.
 	JobStatePending JobState = "pending"
 	// JobStateRunning represents the running state.
 	JobStateRunning JobState = "running"
 	// JobStateCompleted represents the completed state.
+	// TODO(kenji): Consider renaming this to "succeeded" or "failed" to be consistent with OpenAI API.
 	JobStateCompleted JobState = "completed"
 )
 
@@ -25,6 +27,9 @@ type Job struct {
 
 	// Message is the marshaled proto message of v1.Job.
 	Message []byte
+
+	// Suffix is a string that will be added to a fine-tuned model name.
+	Suffix string
 
 	State    JobState `gorm:"index:idx_job_state_tenant_id"`
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
