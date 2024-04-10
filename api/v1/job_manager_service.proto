@@ -81,7 +81,7 @@ service FineTuningService {
 
   rpc CancelJob(CancelJobRequest) returns (Job) {
     option (google.api.http) = {
-      get: "/v1/fine_tuning/jobs/{id}/cancel"
+      post: "/v1/fine_tuning/jobs/{id}/cancel"
     };
   }
 }

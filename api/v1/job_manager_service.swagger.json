@@ -84,7 +84,7 @@
       }
     },
     "/v1/fine_tuning/jobs/{id}/cancel": {
-      "get": {
+      "post": {
         "operationId": "FineTuningService_CancelJob",
         "responses": {
           "200": {
