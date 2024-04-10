@@ -10,24 +10,28 @@ option go_package = "github.com/llm-operator/job-manager/api/v1";
 
 message Job {
   string id = 1;
-  int32 created_at = 2;
+  int64 created_at = 2;
   message Error {
     string code = 1;
     string message = 2;
     string param = 3;
   }
   Error error = 3;
+  // The name of the fine-tuned model that is being created. The value will be null if the fine-tuning job is still running.
   string fine_tuned_model = 4;
-  int32 finished_at = 5;
+  int64 finished_at = 5;
   message HyperParameter {
     // Note: OpenAI API supports string or interger.
     string n_epochs = 1;
   }
   HyperParameter hyperparameters = 6;
+  // The base model that is being fine-tuned.
   string model = 7;
+  //
   string object = 8;
   string organization_id = 9;
   repeated string result_files = 10;
+  // The current status of the fine-tuning job, which can be either validating_files, queued, running, succeeded, failed, or cancelled.
   string status = 11;
   int32 trained_tokens = 12;
   string training_file = 13;
@@ -46,6 +50,11 @@ message CreateJobRequest {
     string n_epochs = 3;
   }
   HyperParameter hyperparameters = 3;
+  // A string of up to 18 characters that will be added to your fine-tuned model name.
+  //
+  // For example, a suffix of "custom-model-name" would produce a
+  // model name like
+  // ft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel.
   string suffix = 4;
   string validation_file = 5;
 }

@@ -93,7 +93,7 @@ func (s *LifecycleManager) Reconcile(
 
 	log.Printf("Registering genereated fine-tuned model\n")
 	if _, err := s.modelRegisterClient.RegisterModel(ctx, &iv1.RegisterModelRequest{
-		// TODO(kenji): Fix this.
+		// TODO: Set the base model and the model name from the job spec.
 		ModelName:   "gemma:2b-fine-tuned",
 		BaseModel:   "gemma:2b",
 		AdapterPath: "/models/adapter/ggml-adapter-model.bin",
@@ -101,6 +101,8 @@ func (s *LifecycleManager) Reconcile(
 		log.Printf("Failed to register model: %s\n", err)
 		return ctrl.Result{}, err
 	}
+
+	// TODO: Update the status and the fined-tuned model in the Message.
 
 	if err := s.store.UpdateJobState(job.JobID, job.Version, store.JobStateCompleted); err != nil {
 		log.Printf("Failed to update job state: %s\n", err)
