@@ -91,7 +91,6 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, nil
 	}
 
-	// TODO(kenji): Watch pods and update job state. The code should be changed to check the completion of the job in an async fashion.
 	log.Printf("Registering genereated fine-tuned model\n")
 	if _, err := s.modelRegisterClient.RegisterModel(ctx, &iv1.RegisterModelRequest{
 		// TODO(kenji): Fix this.

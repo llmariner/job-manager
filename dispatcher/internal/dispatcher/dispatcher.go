@@ -26,9 +26,8 @@ func New(
 }
 
 type D struct {
-	store               *store.S
-	podCreator          podCreatorI
-	modelRegisterClient ModelRegisterClient
+	store      *store.S
+	podCreator podCreatorI
 
 	jobPollingInterval time.Duration
 }
