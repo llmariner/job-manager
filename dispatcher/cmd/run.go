@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	iv1 "github.com/llm-operator/inference-manager/api/v1"
@@ -15,10 +14,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 const flagConfig = "config"
@@ -67,13 +67,25 @@ func run(ctx context.Context, c *config.Config) error {
 		st = store.New(dbInst)
 	}
 
-	k8sClient, err := newK8sClient(c.Debug.KubeconfigPath)
+	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
 	if err != nil {
-		return fmt.Errorf("new k8s client: %s", err)
+		return err
+	}
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+		LeaderElection:   c.KubernetesManager.EnableLeaderElection,
+		LeaderElectionID: c.KubernetesManager.LeaderElectionID,
+		Metrics: metricsserver.Options{
+			BindAddress: c.KubernetesManager.MetricsBindAddress,
+		},
+		HealthProbeBindAddress: c.KubernetesManager.HealthBindAddress,
+		PprofBindAddress:       c.KubernetesManager.PprofBindAddress,
+	})
+	if err != nil {
+		return err
 	}
 
 	pc := dispatcher.NewPodCreator(
-		k8sClient,
+		mgr.GetClient(),
 		c.JobNamespace,
 		&c.ModelStore,
 		c.Debug.UseFakeJob,
@@ -91,28 +103,23 @@ func run(ctx context.Context, c *config.Config) error {
 		iclient = iv1.NewInferenceEngineInternalServiceClient(conn)
 	}
 
-	d := dispatcher.New(st, pc, iclient)
-	return d.Run(ctx, c.JobPollingInterval)
+	if err := dispatcher.New(st, pc, c.JobPollingInterval).
+		SetupWithManager(mgr); err != nil {
+		return err
+	}
+	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), iclient).
+		SetupWithManager(mgr); err != nil {
+		return err
+	}
+	return mgr.Start(ctx)
 }
 
-func newK8sClient(kubeconfigPath string) (kubernetes.Interface, error) {
-	var config *rest.Config
-	var err error
+func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
 	if kubeconfigPath != "" {
 		log.Printf("Using kubeconfig at %q", kubeconfigPath)
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	} else {
-		config, err = rest.InClusterConfig()
+		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	return rest.InClusterConfig()
 }
 
 func init() {

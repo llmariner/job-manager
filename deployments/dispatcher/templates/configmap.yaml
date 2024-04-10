@@ -19,6 +19,12 @@ data:
       database: {{ .Values.database.database }}
       username: {{ .Values.database.username }}
       passwordEnvName: {{ .Values.database.passwordEnvName }}
+    kubernetesManager:
+      enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
+      leaderElectionID: {{ include "dynamic-eviction-controller.fullname" . }}
+      metricsBindAddress: {{ .Values.kubernetesManager.metricsBindAddress }}
+      healthBindAddress: {{ .Values.kubernetesManager.healthBindAddress }}
+      pprofBindAddress: {{ .Values.kubernetesManager.pprofBindAddress }}
     debug:
       autoMigrate: {{ .Values.debug.autoMigrate }}
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}

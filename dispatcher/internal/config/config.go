@@ -25,6 +25,16 @@ type ModelStoreConfig struct {
 	PVClaimName string `yaml:"pvClaimName"`
 }
 
+// KubernetesManagerConfig is the Kubernetes manager configuration.
+type KubernetesManagerConfig struct {
+	EnableLeaderElection bool   `yaml:"enableLeaderElection"`
+	LeaderElectionID     string `yaml:"leaderElectionID"`
+
+	MetricsBindAddress string `yaml:"metricsBindAddress"`
+	HealthBindAddress  string `yaml:"healthBindAddress"`
+	PprofBindAddress   string `yaml:"pprofBindAddress"`
+}
+
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
@@ -37,6 +47,8 @@ type Config struct {
 	Database db.Config `yaml:"database"`
 
 	Debug DebugConfig `yaml:"debug"`
+
+	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 }
 
 // Validate validates the configuration.
