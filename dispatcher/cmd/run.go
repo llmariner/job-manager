@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
+	"github.com/go-logr/logr"
 	iv1 "github.com/llm-operator/inference-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
@@ -22,6 +23,8 @@ import (
 )
 
 const flagConfig = "config"
+
+var setupLog = ctrl.Log.WithName("setup")
 
 var runCmd = &cobra.Command{
 	Use:   "run",
@@ -49,6 +52,8 @@ var runCmd = &cobra.Command{
 }
 
 func run(ctx context.Context, c *config.Config) error {
+	ctrl.SetLogger(logr.FromSlogHandler(slog.Default().Handler()))
+
 	var st *store.S
 	if c.Debug.Standalone {
 		dbInst, err := gorm.Open(sqlite.Open(c.Debug.SqlitePath), &gorm.Config{})
@@ -116,7 +121,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
 	if kubeconfigPath != "" {
-		log.Printf("Using kubeconfig at %q", kubeconfigPath)
+		setupLog.Info("Using kubeconfig at", "path", kubeconfigPath)
 		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
 	return rest.InClusterConfig()

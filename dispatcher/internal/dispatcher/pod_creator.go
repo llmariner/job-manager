@@ -3,7 +3,6 @@ package dispatcher
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
@@ -11,6 +10,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,8 +48,9 @@ type PodCreator struct {
 
 func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
+	log := ctrl.LoggerFrom(ctx)
 
-	log.Printf("Creating a pod for job %s\n", job.JobID)
+	log.Info("Creating a pod for job")
 	podName := fmt.Sprintf("job-%s", job.JobID)
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -65,7 +66,7 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	if err := p.k8sClient.Create(ctx, pod); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			// TODO(kenji): Revisit this error handling.
-			log.Printf("Pod %s already exists\n", job.JobID)
+			log.Info("Pod already exists", "pod", fmt.Sprintf("%s/%s", pod.Namespace, pod.Name))
 			return nil
 		}
 		return err

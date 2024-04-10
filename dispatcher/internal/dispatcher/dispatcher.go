@@ -2,7 +2,6 @@ package dispatcher
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
@@ -71,7 +70,10 @@ func (d *D) processPendingJobs(ctx context.Context) error {
 }
 
 func (d *D) processJob(ctx context.Context, job *store.Job) error {
-	log.Printf("Started processing job (ID: %s)\n", job.JobID)
+	log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.JobID)
+	ctx = ctrl.LoggerInto(ctx, log)
+
+	log.Info("Processing job")
 	if err := d.podCreator.createPod(ctx, job); err != nil {
 		return err
 	}
