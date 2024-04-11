@@ -2,6 +2,8 @@ package dispatcher
 
 import (
 	"context"
+	"io"
+	"os"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
@@ -46,16 +48,31 @@ func (c *NoopModelCreatorClient) PublishModel(
 	return &mv1.PublishModelResponse{}, nil
 }
 
+// S3Client is an interface for an S3 client.
+type S3Client interface {
+	Upload(r io.Reader, key string) error
+}
+
+// NoopS3Client is a no-op S3 client.
+type NoopS3Client struct{}
+
+// Upload is a no-op implementation of Upload.
+func (n *NoopS3Client) Upload(r io.Reader, key string) error {
+	return nil
+}
+
 // NewLifecycleManager returns a new LifecycleManager.
 func NewLifecycleManager(
 	store *store.S,
 	client client.Client,
 	modelCreatorClient ModelCreatorClient,
+	s3Client S3Client,
 ) *LifecycleManager {
 	return &LifecycleManager{
 		store:              store,
 		k8sClient:          client,
 		modelCreatorClient: modelCreatorClient,
+		s3Client:           s3Client,
 	}
 }
 
@@ -64,6 +81,7 @@ type LifecycleManager struct {
 	store              *store.S
 	k8sClient          client.Client
 	modelCreatorClient ModelCreatorClient
+	s3Client           S3Client
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -127,9 +145,6 @@ func (s *LifecycleManager) Reconcile(
 	log.Info("Pod successfully completed")
 
 	log.Info("Registering genereated fine-tuned model")
-	// TODO(kenji): Currently the model is generated at /models/adapter/ggml-adapter-model.bin. We
-	// neeed to put this to a location where inference engine can retrieve.
-
 	var jobProto v1.Job
 	if err := proto.Unmarshal(job.Message, &jobProto); err != nil {
 		log.Error(err, "Failed to unmarshal job")
@@ -145,7 +160,18 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, err
 	}
 
-	// TODO(kenji): Upload the model to the specified location.
+	log.Info("Uploading the model.")
+	// TODO(kenji): Provide a unique location per model. Or make the pod just upload the model directly.
+	r, err := os.Open("/models/adapter/ggml-adapter-model.bin")
+	if err != nil {
+		log.Error(err, "Failed to open model")
+		return ctrl.Result{}, err
+	}
+	if err := s.s3Client.Upload(r, resp.Path); err != nil {
+		log.Error(err, "Failed to upload model")
+		return ctrl.Result{}, err
+	}
+	log.Info("Uploaded the model successfully")
 
 	if _, err := s.modelCreatorClient.PublishModel(ctx, &mv1.PublishModelRequest{
 		Id:       resp.Id,

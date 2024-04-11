@@ -13,6 +13,10 @@ data:
       enable: {{ .Values.modelStore.enable }}
       mountPath: {{ .Values.modelStore.mountPath }}
       pvClaimName: {{ .Values.modelStore.pvClaimName }}
+    objectStore:
+      s3:
+        endpointUrl: {{ .Values.objectStore.s3.endpointUrl }}
+        bucket: {{ .Values.objectStore.s3.bucket }}
     database:
       host: {{ .Values.database.host }}
       port: {{ .Values.database.port }}
