@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"google.golang.org/grpc/codes"
@@ -34,6 +35,14 @@ func (s *S) CreateJob(
 	// TODO(kenji): This follows the OpenAI API spec, but might not be necessary.
 	if len(req.Suffix) > 18 {
 		return nil, status.Errorf(codes.InvalidArgument, "suffix is too long")
+	}
+
+	// Check if the specified training file exits.
+	// TODO: Pass the authorization token.
+	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
+		Id: req.TrainingFile,
+	}); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "get file: %s", err)
 	}
 
 	jobID := newJobID()

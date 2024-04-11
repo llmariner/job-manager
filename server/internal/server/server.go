@@ -1,20 +1,27 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 
+	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
+type fileGetClient interface {
+	GetFile(ctx context.Context, in *fv1.GetFileRequest, opts ...grpc.CallOption) (*fv1.File, error)
+}
+
 // New creates a server.
-func New(store *store.S) *S {
+func New(store *store.S, fileGetClient fileGetClient) *S {
 	return &S{
-		store: store,
+		store:         store,
+		fileGetClient: fileGetClient,
 	}
 }
 
@@ -24,7 +31,8 @@ type S struct {
 
 	srv *grpc.Server
 
-	store *store.S
+	store         *store.S
+	fileGetClient fileGetClient
 }
 
 // Run starts the gRPC server.

@@ -13,6 +13,8 @@ type Config struct {
 	GRPCPort int `yaml:"grpcPort"`
 	HTTPPort int `yaml:"httpPort"`
 
+	FileManagerServerAddr string `yaml:"fileManagerServerAddr"`
+
 	Database db.Config `yaml:"database"`
 }
 
@@ -23,6 +25,9 @@ func (c *Config) Validate() error {
 	}
 	if c.HTTPPort <= 0 {
 		return fmt.Errorf("httpPort must be greater than 0")
+	}
+	if c.FileManagerServerAddr == "" {
+		return fmt.Errorf("file manager address must be set")
 	}
 	if err := c.Database.Validate(); err != nil {
 		return fmt.Errorf("database: %s", err)

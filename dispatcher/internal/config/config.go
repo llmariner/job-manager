@@ -66,7 +66,7 @@ func (c *Config) Validate() error {
 		}
 	} else {
 		if c.ModelManagerServerAddr == "" {
-			return fmt.Errorf("inference manager address must be set")
+			return fmt.Errorf("model manager address must be set")
 		}
 		if err := c.Database.Validate(); err != nil {
 			return fmt.Errorf("database: %s", err)
