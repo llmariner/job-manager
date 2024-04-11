@@ -20,16 +20,30 @@ import (
 
 // ModelCreatorClient is the client for the model creation service.
 type ModelCreatorClient interface {
-	CreateModel(ctx context.Context, in *mv1.CreateModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
+	RegisterModel(ctx context.Context, in *mv1.RegisterModelRequest, opts ...grpc.CallOption) (*mv1.RegisterModelResponse, error)
+	PublishModel(ctx context.Context, in *mv1.PublishModelRequest, opts ...grpc.CallOption) (*mv1.PublishModelResponse, error)
 }
 
 // NoopModelCreatorClient is a no-op implementation of ModelCreatorClient.
 type NoopModelCreatorClient struct {
 }
 
-// CreateModel is a no-op implementation of CreateModel.
-func (c *NoopModelCreatorClient) CreateModel(ctx context.Context, in *mv1.CreateModelRequest, opts ...grpc.CallOption) (*mv1.Model, error) {
-	return &mv1.Model{}, nil
+// RegisterModel is a no-op implementation of RegisterModel.
+func (c *NoopModelCreatorClient) RegisterModel(
+	ctx context.Context,
+	in *mv1.RegisterModelRequest,
+	opts ...grpc.CallOption,
+) (*mv1.RegisterModelResponse, error) {
+	return &mv1.RegisterModelResponse{}, nil
+}
+
+// PublishModel is a no-op implementation of PublishModel.
+func (c *NoopModelCreatorClient) PublishModel(
+	ctx context.Context,
+	in *mv1.PublishModelRequest,
+	opts ...grpc.CallOption,
+) (*mv1.PublishModelResponse, error) {
+	return &mv1.PublishModelResponse{}, nil
 }
 
 // NewLifecycleManager returns a new LifecycleManager.
@@ -121,12 +135,23 @@ func (s *LifecycleManager) Reconcile(
 		log.Error(err, "Failed to unmarshal job")
 		return ctrl.Result{}, err
 	}
-	if _, err := s.modelCreatorClient.CreateModel(ctx, &mv1.CreateModelRequest{
+	resp, err := s.modelCreatorClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
 		BaseModel: jobProto.Model,
 		Suffix:    job.Suffix,
 		TenantId:  job.TenantID,
+	})
+	if err != nil {
+		log.Error(err, "Failed to register model")
+		return ctrl.Result{}, err
+	}
+
+	// TODO(kenji): Upload the model to the specified location.
+
+	if _, err := s.modelCreatorClient.PublishModel(ctx, &mv1.PublishModelRequest{
+		Id:       resp.Id,
+		TenantId: job.TenantID,
 	}); err != nil {
-		log.Error(err, "Failed to create model")
+		log.Error(err, "Failed to publish model")
 		return ctrl.Result{}, err
 	}
 
