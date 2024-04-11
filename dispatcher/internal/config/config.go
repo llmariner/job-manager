@@ -9,6 +9,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// S3Config is the S3 configuration.
+type S3Config struct {
+	EndpointURL string `yaml:"endpointUrl"`
+	Bucket      string `yaml:"bucket"`
+}
+
+// ObjectStoreConfig is the object store configuration.
+type ObjectStoreConfig struct {
+	S3 S3Config `yaml:"s3"`
+}
+
+// Validate validates the object store configuration.
+func (c *ObjectStoreConfig) Validate() error {
+	if c.S3.EndpointURL == "" {
+		return fmt.Errorf("s3 endpoint url must be set")
+	}
+	if c.S3.Bucket == "" {
+		return fmt.Errorf("s3 bucket must be set")
+	}
+	return nil
+}
+
 // DebugConfig is the debug configuration.
 type DebugConfig struct {
 	KubeconfigPath string `yaml:"kubeconfigPath"`
@@ -43,9 +65,13 @@ type Config struct {
 
 	ModelManagerServerAddr string `yaml:"modelManagerServerAddr"`
 
+	// TODO(kenji): Remove this. This was created to share models between job-manager-dispatcher
+	// and inference-manager-engine, but models should be stored in an object store instead.
 	ModelStore ModelStoreConfig `yaml:"modelStore"`
 
 	Database db.Config `yaml:"database"`
+
+	ObjectStore ObjectStoreConfig `yaml:"objectStore"`
 
 	Debug DebugConfig `yaml:"debug"`
 
@@ -68,6 +94,11 @@ func (c *Config) Validate() error {
 		if c.ModelManagerServerAddr == "" {
 			return fmt.Errorf("model manager address must be set")
 		}
+
+		if err := c.ObjectStore.Validate(); err != nil {
+			return fmt.Errorf("object store: %s", err)
+		}
+
 		if err := c.Database.Validate(); err != nil {
 			return fmt.Errorf("database: %s", err)
 		}

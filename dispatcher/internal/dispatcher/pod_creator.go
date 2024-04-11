@@ -52,6 +52,9 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 
 	log.Info("Creating a pod for job")
 	podName := fmt.Sprintf("job-%s", job.JobID)
+
+	// TODO(kenji): Manage training files. Download them from the object store if needed.
+
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,

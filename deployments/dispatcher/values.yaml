@@ -8,6 +8,16 @@ modelStore:
   mountPath: /models
   pvClaimName:
 
+objectStore:
+  s3:
+    endpointUrl:
+    bucket:
+
+awsSecret:
+  name:
+  accessKeyIdKey:
+  secretAccessKeyKey:
+
 database:
   host:
   port: 5432

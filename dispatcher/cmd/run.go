@@ -9,6 +9,7 @@ import (
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
+	"github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -104,21 +105,24 @@ func run(ctx context.Context, c *config.Config) error {
 	)
 
 	var mclient dispatcher.ModelCreatorClient
+	var s3Client dispatcher.S3Client
 	if c.Debug.Standalone {
 		mclient = &dispatcher.NoopModelCreatorClient{}
+		s3Client = &dispatcher.NoopS3Client{}
 	} else {
 		conn, err := grpc.Dial(c.ModelManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 		mclient = mv1.NewModelsInternalServiceClient(conn)
+		s3Client = s3.NewClient(c.ObjectStore.S3)
 	}
 
 	if err := dispatcher.New(st, pc, c.JobPollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
-	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), mclient).
+	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), mclient, s3Client).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
