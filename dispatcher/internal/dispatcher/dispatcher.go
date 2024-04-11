@@ -12,6 +12,7 @@ type podCreatorI interface {
 	createPod(ctx context.Context, job *store.Job) error
 }
 
+// New returns a new dispatcher.
 func New(
 	store *store.S,
 	podCreator podCreatorI,
@@ -24,6 +25,7 @@ func New(
 	}
 }
 
+// D is a dispatcher.
 type D struct {
 	store      *store.S
 	podCreator podCreatorI

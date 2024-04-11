@@ -19,6 +19,7 @@ type DebugConfig struct {
 	HuggingFaceAccessToken string `yaml:"huggingFaceAccessToken"`
 }
 
+// ModelStoreConfig is the model store configuration.
 type ModelStoreConfig struct {
 	Enable      bool   `yaml:"enable"`
 	MountPath   string `yaml:"mountPath"`
