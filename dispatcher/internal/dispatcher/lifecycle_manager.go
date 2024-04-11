@@ -23,7 +23,7 @@ type ModelCreatorClient interface {
 	CreateModel(ctx context.Context, in *mv1.CreateModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
-// NoopModelCreatorlient is a no-op implementation of ModelCreatorClient.
+// NoopModelCreatorClient is a no-op implementation of ModelCreatorClient.
 type NoopModelCreatorClient struct {
 }
 

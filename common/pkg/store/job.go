@@ -20,6 +20,7 @@ const (
 	JobStateCompleted JobState = "completed"
 )
 
+// Job represents a job.
 type Job struct {
 	gorm.Model
 
@@ -54,7 +55,7 @@ func (s *S) GetJobByJobID(jobID string) (*Job, error) {
 	return &job, nil
 }
 
-// ListPendingJob finds pending jobs.
+// ListPendingJobs finds pending jobs.
 func (s *S) ListPendingJobs() ([]*Job, error) {
 	var jobs []*Job
 	if err := s.db.Where("state = ?", JobStatePending).Order("job_id").Find(&jobs).Error; err != nil {
@@ -81,7 +82,7 @@ func (s *S) ListJobsByTenantID(tenantID string) ([]*Job, error) {
 	return jobs, nil
 }
 
-// UpdateJob updates a job.
+// UpdateJobState updates a job.
 func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState) error {
 	result := s.db.Model(&Job{}).
 		Where("job_id = ?", jobID).
