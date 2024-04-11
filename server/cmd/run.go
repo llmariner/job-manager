@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
@@ -68,8 +69,15 @@ func run(ctx context.Context, c *config.Config) error {
 		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", c.HTTPPort), mux)
 	}()
 
+	conn, err := grpc.Dial(c.FileManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+
+	fclient := fv1.NewFilesServiceClient(conn)
+
 	go func() {
-		s := server.New(st)
+		s := server.New(st, fclient)
 		errCh <- s.Run(c.GRPCPort)
 	}()
 
