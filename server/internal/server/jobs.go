@@ -37,6 +37,8 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.InvalidArgument, "suffix is too long")
 	}
 
+	// TODO(kenji): Check if a specified model exists.
+
 	// Check if the specified training file exits.
 	// TODO: Pass the authorization token.
 	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
@@ -71,9 +73,7 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
 	}
 
-	return &v1.Job{
-		Id: jobID,
-	}, nil
+	return jobProto, nil
 }
 
 // ListJobs lists all jobs.
