@@ -56,16 +56,16 @@ jobs:
       with:
         context: ./build/dispatcher
         push: true
-        tags: llm-operator/job-manager:dispatcher-${{ needs.update-tag.outputs.new_tag }}
+        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:dispatcher-${{ needs.update-tag.outputs.new_tag }}
     - name: Build, tag, and push server to Amazon ECR
       uses: docker/build-push-action@v5
       with:
         context: ./build/server
         push: true
-        tags: llm-operator/job-manager:server-${{ needs.update-tag.outputs.new_tag }}
+        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:server-${{ needs.update-tag.outputs.new_tag }}
     - name: Build, tag, and push fine-tuning to Amazon ECR
       uses: docker/build-push-action@v5
       with:
         context: ./build/experiments/fine-tuning
         push: true
-        tags: llm-operator/job-manager:fine-tuning-${{ needs.update-tag.outputs.new_tag }}
+        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fine-tuning-${{ needs.update-tag.outputs.new_tag }}
