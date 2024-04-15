@@ -6,28 +6,32 @@ import (
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	managedPodAnnotationKey = "llm-operator/managed-pod"
+	managedJobAnnotationKey = "llm-operator/managed-pod"
 	jobIDAnnotationKey      = "llm-operator/job-id"
+
+	jobPrefix = "job-"
 )
 
-// NewPodCreator returns a new PodCreator.
-func NewPodCreator(
+// NewJobClient returns a new JobCreator.
+func NewJobClient(
 	k8sClient client.Client,
 	namespace string,
 	modelStoreConfig *config.ModelStoreConfig,
 	useFakeJob bool,
 	huggingFaceAccessToken string,
-) *PodCreator {
-	return &PodCreator{
+) *JobClient {
+	return &JobClient{
 		k8sClient:              k8sClient,
 		namespace:              namespace,
 		modelStoreConfig:       modelStoreConfig,
@@ -36,8 +40,8 @@ func NewPodCreator(
 	}
 }
 
-// PodCreator creates a pod for a job.
-type PodCreator struct {
+// JobClient operates a Kubernetes Job resource for a job.
+type JobClient struct {
 	k8sClient client.Client
 	// TODO(kenji): Be able to specify the namespace per tenant.
 	namespace              string
@@ -46,30 +50,30 @@ type PodCreator struct {
 	huggingFaceAccessToken string
 }
 
-func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
+func (p *JobClient) createJob(ctx context.Context, jobData *store.Job) error {
 	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
 	log := ctrl.LoggerFrom(ctx)
 
 	log.Info("Creating a pod for job")
-	podName := fmt.Sprintf("job-%s", job.JobID)
+	jobName := fmt.Sprintf("%s%s", jobPrefix, jobData.JobID)
 
 	// TODO(kenji): Manage training files. Download them from the object store if needed.
 
-	pod := &corev1.Pod{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
+			Name:      jobName,
 			Namespace: p.namespace,
 			Annotations: map[string]string{
-				managedPodAnnotationKey: "true",
-				jobIDAnnotationKey:      job.JobID,
+				managedJobAnnotationKey: "true",
+				jobIDAnnotationKey:      jobData.JobID,
 			},
 		},
-		Spec: p.podSpec(),
+		Spec: p.jobSpec(),
 	}
-	if err := p.k8sClient.Create(ctx, pod); err != nil {
+	if err := p.k8sClient.Create(ctx, job); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			// TODO(kenji): Revisit this error handling.
-			log.Info("Pod already exists", "pod", fmt.Sprintf("%s/%s", pod.Namespace, pod.Name))
+			log.Info("Job already exists", "pod", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
 			return nil
 		}
 		return err
@@ -77,7 +81,7 @@ func (p *PodCreator) createPod(ctx context.Context, job *store.Job) error {
 	return nil
 }
 
-func (p *PodCreator) podSpec() corev1.PodSpec {
+func (p *JobClient) jobSpec() batchv1.JobSpec {
 	var image, cmd string
 	var res corev1.ResourceRequirements
 	if p.useFakeJob {
@@ -134,28 +138,34 @@ cp ./output/ggml-adapter-model.bin /models/adapter/
 		})
 	}
 
-	return corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name:            "main",
-				Image:           image,
-				ImagePullPolicy: "Never",
-				Command:         []string{"/bin/bash", "-c", cmd},
-				Resources:       res,
-				VolumeMounts:    volumeMounts,
-				Env: []corev1.EnvVar{
+	return batchv1.JobSpec{
+		BackoffLimit:            ptr.To(int32(3)),
+		TTLSecondsAfterFinished: ptr.To(int32(60 * 60 * 24)), // 1 day
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
 					{
-						Name:  "HUGGING_FACE_HUB_TOKEN",
-						Value: p.huggingFaceAccessToken,
+						Name:            "main",
+						Image:           image,
+						ImagePullPolicy: "Never",
+						Command:         []string{"/bin/bash", "-c", cmd},
+						Resources:       res,
+						VolumeMounts:    volumeMounts,
+						Env: []corev1.EnvVar{
+							{
+								Name:  "HUGGING_FACE_HUB_TOKEN",
+								Value: p.huggingFaceAccessToken,
+							},
+						},
 					},
 				},
+				Volumes:       volumes,
+				RestartPolicy: corev1.RestartPolicyNever,
 			},
 		},
-		Volumes:       volumes,
-		RestartPolicy: corev1.RestartPolicyOnFailure,
 	}
 }
 
-func isManagedPod(annotations map[string]string) bool {
-	return annotations[managedPodAnnotationKey] == "true"
+func isManagedJob(annotations map[string]string) bool {
+	return annotations[managedJobAnnotationKey] == "true"
 }
