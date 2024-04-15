@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/go-logr/logr"
+	fv1 "github.com/llm-operator/file-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/db"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
@@ -104,24 +105,34 @@ func run(ctx context.Context, c *config.Config) error {
 		c.Debug.HuggingFaceAccessToken,
 	)
 
+	var preProcessor dispatcher.PostProcessorI
 	var postProcessor dispatcher.PostProcessorI
 	if c.Debug.Standalone {
+		preProcessor = &dispatcher.NoopPreProcessor{}
 		postProcessor = &dispatcher.NoopPostProcessor{}
 	} else {
-		conn, err := grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(c.FileManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		fclient := fv1.NewFilesInternalServiceClient(conn)
+
+		conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 		mclient := mv1.NewModelsInternalServiceClient(conn)
-		// TODO(kenji): Set up file manager client.
 		s3Client := s3.NewClient(c.ObjectStore.S3)
+
+		preProcessor = dispatcher.NewPreProcessor(fclient, mclient)
 		postProcessor = dispatcher.NewPostProcessor(mclient, s3Client)
 	}
 
-	if err := dispatcher.New(st, jc, c.JobPollingInterval).
+	if err := dispatcher.New(st, jc, preProcessor, c.JobPollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
+
 	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), postProcessor).
 		SetupWithManager(mgr); err != nil {
 		return err
