@@ -104,26 +104,25 @@ func run(ctx context.Context, c *config.Config) error {
 		c.Debug.HuggingFaceAccessToken,
 	)
 
-	var mclient dispatcher.ModelCreatorClient
-	var s3Client dispatcher.S3Client
+	var postProcessor dispatcher.PostProcessorI
 	if c.Debug.Standalone {
-		mclient = &dispatcher.NoopModelCreatorClient{}
-		s3Client = &dispatcher.NoopS3Client{}
+		postProcessor = &dispatcher.NoopPostProcessor{}
 	} else {
 		conn, err := grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
-		mclient = mv1.NewModelsInternalServiceClient(conn)
+		mclient := mv1.NewModelsInternalServiceClient(conn)
 		// TODO(kenji): Set up file manager client.
-		s3Client = s3.NewClient(c.ObjectStore.S3)
+		s3Client := s3.NewClient(c.ObjectStore.S3)
+		postProcessor = dispatcher.NewPostProcessor(mclient, s3Client)
 	}
 
 	if err := dispatcher.New(st, jc, c.JobPollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
-	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), mclient, s3Client).
+	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), postProcessor).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
