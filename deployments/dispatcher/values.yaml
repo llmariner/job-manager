@@ -1,7 +1,8 @@
 jobPollingInterval: 10s
 jobNamespace: default
 
-modelManagerServerAddr:
+modelManagerInternalServerAddr:
+fileManagerInternalServer:
 
 modelStore:
   enable: false

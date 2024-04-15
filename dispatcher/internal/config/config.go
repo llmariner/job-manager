@@ -63,7 +63,8 @@ type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
 	JobNamespace       string        `yaml:"jobNamespace"`
 
-	ModelManagerServerAddr string `yaml:"modelManagerServerAddr"`
+	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
+	FileManagerInternalServerAddr  string `yaml:"fileManagerInternalServerAddr"`
 
 	// TODO(kenji): Remove this. This was created to share models between job-manager-dispatcher
 	// and inference-manager-engine, but models should be stored in an object store instead.
@@ -91,8 +92,11 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("sqlite path must be set")
 		}
 	} else {
-		if c.ModelManagerServerAddr == "" {
-			return fmt.Errorf("model manager address must be set")
+		if c.ModelManagerInternalServerAddr == "" {
+			return fmt.Errorf("model manager internal server address must be set")
+		}
+		if c.FileManagerInternalServerAddr == "" {
+			return fmt.Errorf("file manager internal server address must be set")
 		}
 
 		if err := c.ObjectStore.Validate(); err != nil {

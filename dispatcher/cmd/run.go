@@ -110,11 +110,12 @@ func run(ctx context.Context, c *config.Config) error {
 		mclient = &dispatcher.NoopModelCreatorClient{}
 		s3Client = &dispatcher.NoopS3Client{}
 	} else {
-		conn, err := grpc.Dial(c.ModelManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
 		mclient = mv1.NewModelsInternalServiceClient(conn)
+		// TODO(kenji): Set up file manager client.
 		s3Client = s3.NewClient(c.ObjectStore.S3)
 	}
 
