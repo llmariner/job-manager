@@ -125,7 +125,7 @@ func (s *LifecycleManager) Reconcile(
 			return ctrl.Result{}, err
 		}
 		if jobData.State == store.JobStateRunning {
-			// set back to the pending status If job is accidentally deleted.
+			// set back to the pending status if job is accidentally deleted.
 			if err = s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStatePending); err != nil {
 				log.Error(err, "Failed to update job state")
 				return ctrl.Result{}, err
