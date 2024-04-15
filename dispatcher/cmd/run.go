@@ -96,7 +96,7 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	pc := dispatcher.NewPodCreator(
+	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
 		c.JobNamespace,
 		&c.ModelStore,
@@ -119,7 +119,7 @@ func run(ctx context.Context, c *config.Config) error {
 		s3Client = s3.NewClient(c.ObjectStore.S3)
 	}
 
-	if err := dispatcher.New(st, pc, c.JobPollingInterval).
+	if err := dispatcher.New(st, jc, c.JobPollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}

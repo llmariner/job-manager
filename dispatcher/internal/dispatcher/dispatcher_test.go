@@ -58,7 +58,7 @@ type noopPodCreator struct {
 	counter int
 }
 
-func (n *noopPodCreator) createPod(ctx context.Context, job *store.Job) error {
+func (n *noopPodCreator) createJob(ctx context.Context, job *store.Job) error {
 	n.counter++
 	return nil
 }

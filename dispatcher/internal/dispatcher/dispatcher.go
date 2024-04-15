@@ -8,19 +8,19 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type podCreatorI interface {
-	createPod(ctx context.Context, job *store.Job) error
+type jobCreatorI interface {
+	createJob(ctx context.Context, job *store.Job) error
 }
 
 // New returns a new dispatcher.
 func New(
 	store *store.S,
-	podCreator podCreatorI,
+	podCreator jobCreatorI,
 	jobPollingInterval time.Duration,
 ) *D {
 	return &D{
 		store:              store,
-		podCreator:         podCreator,
+		jobCreator:         podCreator,
 		jobPollingInterval: jobPollingInterval,
 	}
 }
@@ -28,7 +28,7 @@ func New(
 // D is a dispatcher.
 type D struct {
 	store      *store.S
-	podCreator podCreatorI
+	jobCreator jobCreatorI
 
 	jobPollingInterval time.Duration
 }
@@ -76,7 +76,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 	ctx = ctrl.LoggerInto(ctx, log)
 
 	log.Info("Processing job")
-	if err := d.podCreator.createPod(ctx, job); err != nil {
+	if err := d.jobCreator.createJob(ctx, job); err != nil {
 		return err
 	}
 	return d.store.UpdateJobState(job.JobID, job.Version, store.JobStateRunning)
