@@ -2,17 +2,17 @@ package dispatcher
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	batchv1apply "k8s.io/client-go/applyconfigurations/batch/v1"
+	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,35 +56,27 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job) error {
 	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
 	log := ctrl.LoggerFrom(ctx)
 
-	log.Info("Creating a pod for job")
+	log.Info("Creating a k8s Job resource for a job")
 
 	// TODO(kenji): Manage training files. Download them from the object store if needed.
 
-	job := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      util.GetK8sJobName(jobData.JobID),
-			Namespace: p.namespace,
-			Annotations: map[string]string{
-				managedJobAnnotationKey: "true",
-				jobIDAnnotationKey:      jobData.JobID,
-			},
-		},
-		Spec: p.jobSpec(),
-	}
-	if err := p.k8sClient.Create(ctx, job); err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			// TODO(kenji): Revisit this error handling.
-			log.Info("Job already exists", "pod", fmt.Sprintf("%s/%s", job.Namespace, job.Name))
-			return nil
-		}
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(batchv1apply.
+		Job(util.GetK8sJobName(jobData.JobID), p.namespace).
+		WithAnnotations(map[string]string{
+			managedJobAnnotationKey: "true",
+			jobIDAnnotationKey:      jobData.JobID}).
+		WithSpec(p.jobSpec()))
+	if err != nil {
 		return err
 	}
-	return nil
+	patch := &unstructured.Unstructured{Object: obj}
+	opts := &client.PatchOptions{FieldManager: "job-manager-dispatcher", Force: ptr.To(true)}
+	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
 
-func (p *JobClient) jobSpec() batchv1.JobSpec {
+func (p *JobClient) jobSpec() *batchv1apply.JobSpecApplyConfiguration {
 	var image, cmd string
-	var res corev1.ResourceRequirements
+	var res *corev1apply.ResourceRequirementsApplyConfiguration
 	if p.useFakeJob {
 		image = "llm-operator/experiments-fake-job:latest"
 		cmd = "mkdir /models/adapter; cp ./ggml-adapter-model.bin /models/adapter/ggml-adapter-model.bin"
@@ -112,59 +104,41 @@ accelerate launch \
 python ./convert-lora-to-ggml.py ./output &&
 cp ./output/ggml-adapter-model.bin /models/adapter/
 `
-		res = corev1.ResourceRequirements{
-			Limits: corev1.ResourceList{
+		res = corev1apply.ResourceRequirements().
+			WithLimits(corev1.ResourceList{
 				"nvidia.com/gpu": *resource.NewQuantity(1, resource.DecimalSI),
-			},
-		}
+			})
 	}
 
-	var volumeMounts []corev1.VolumeMount
-	var volumes []corev1.Volume
-	mountPath := "/models"
+	container := corev1apply.Container().
+		WithName("main").
+		WithImage(image).
+		WithImagePullPolicy(corev1.PullNever).
+		WithCommand("/bin/bash", "-c", cmd).
+		WithResources(res).
+		WithEnv(corev1apply.EnvVar().
+			WithName("HUGGING_FACE_HUB_TOKEN").
+			WithValue(p.huggingFaceAccessToken))
+	podSpec := corev1apply.PodSpec().
+		WithContainers(container).
+		WithRestartPolicy(corev1.RestartPolicyNever)
+	jobSpec := batchv1apply.JobSpec().
+		WithTTLSecondsAfterFinished(int32(jobTTL.Seconds())).
+		WithBackoffLimit(3).
+		WithTemplate(corev1apply.PodTemplateSpec().
+			WithSpec(podSpec))
+
 	if ms := p.modelStoreConfig; ms.Enable {
 		const vname = "model-store"
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      vname,
-			MountPath: mountPath,
-		})
-
-		volumes = append(volumes, corev1.Volume{
-			Name: vname,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: ms.PVClaimName,
-				},
-			},
-		})
+		container.WithVolumeMounts(corev1apply.VolumeMount().
+			WithName(vname).
+			WithMountPath("/models"))
+		podSpec.WithVolumes(corev1apply.Volume().
+			WithName(vname).
+			WithPersistentVolumeClaim(corev1apply.PersistentVolumeClaimVolumeSource().
+				WithClaimName(ms.PVClaimName)))
 	}
-
-	return batchv1.JobSpec{
-		BackoffLimit:            ptr.To(int32(3)),
-		TTLSecondsAfterFinished: ptr.To(int32(jobTTL.Seconds())),
-		Template: corev1.PodTemplateSpec{
-			Spec: corev1.PodSpec{
-				Containers: []corev1.Container{
-					{
-						Name:            "main",
-						Image:           image,
-						ImagePullPolicy: "Never",
-						Command:         []string{"/bin/bash", "-c", cmd},
-						Resources:       res,
-						VolumeMounts:    volumeMounts,
-						Env: []corev1.EnvVar{
-							{
-								Name:  "HUGGING_FACE_HUB_TOKEN",
-								Value: p.huggingFaceAccessToken,
-							},
-						},
-					},
-				},
-				Volumes:       volumes,
-				RestartPolicy: corev1.RestartPolicyNever,
-			},
-		},
-	}
+	return jobSpec
 }
 
 func isManagedJob(annotations map[string]string) bool {
