@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"gorm.io/gorm"
 )
 
 const (
@@ -108,9 +110,41 @@ func (s *S) CancelJob(
 	ctx context.Context,
 	req *v1.CancelJobRequest,
 ) (*v1.Job, error) {
-	return nil, status.Errorf(codes.Unimplemented, "not implemented")
+	job, err := s.store.GetJobByJobID(req.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+
+	switch job.State {
+	case store.JobStateCompleted, store.JobStateCancelled:
+		return jobToProto(job)
+	case store.JobStatePending:
+	case store.JobStateRunning:
+		if err := s.k8sJobClient.CancelJob(ctx, job.JobID); err != nil {
+			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
+		}
+	}
+
+	if err := s.store.UpdateJobState(req.Id, job.Version, store.JobStateCancelled); err != nil {
+		return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+	}
+	job.State = store.JobStateCancelled
+	return jobToProto(job)
 }
 
 func newJobID() string {
 	return uuid.New().String()
+}
+
+func jobToProto(job *store.Job) (*v1.Job, error) {
+	var jobProto v1.Job
+	err := proto.Unmarshal(job.Message, &jobProto)
+	if err != nil {
+		return nil, err
+	}
+	jobProto.Status = string(job.State)
+	return &jobProto, nil
 }

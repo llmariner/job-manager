@@ -16,6 +16,9 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const flagConfig = "config"
@@ -76,12 +79,30 @@ func run(ctx context.Context, c *config.Config) error {
 
 	fclient := fv1.NewFilesServiceClient(conn)
 
+	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
+	if err != nil {
+		return err
+	}
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+	k8sJobClient := server.NewK8sJobClient(kubeClient, c.JobNamespace)
+
 	go func() {
-		s := server.New(st, fclient)
+		s := server.New(st, fclient, k8sJobClient)
 		errCh <- s.Run(c.GRPCPort)
 	}()
 
 	return <-errCh
+}
+
+func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
+	if kubeconfigPath != "" {
+		log.Printf("Using kubeconfig at %s", kubeconfigPath)
+		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	}
+	return rest.InClusterConfig()
 }
 
 func init() {

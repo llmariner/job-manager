@@ -16,6 +16,15 @@ type Config struct {
 	FileManagerServerAddr string `yaml:"fileManagerServerAddr"`
 
 	Database db.Config `yaml:"database"`
+
+	JobNamespace string `yaml:"jobNamespace"`
+
+	Debug DebugConfig `yaml:"debug"`
+}
+
+// DebugConfig is the debug configuration.
+type DebugConfig struct {
+	KubeconfigPath string `yaml:"kubeconfigPath"`
 }
 
 // Validate validates the configuration.

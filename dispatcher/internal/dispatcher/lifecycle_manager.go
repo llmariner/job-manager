@@ -2,10 +2,11 @@ package dispatcher
 
 import (
 	"context"
-	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -72,7 +73,7 @@ func (s *LifecycleManager) Reconcile(
 ) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	jobID := strings.TrimPrefix(req.Name, jobPrefix)
+	jobID := util.GetJobID(req.Name)
 	log = log.WithValues("jobID", jobID)
 	ctx = ctrl.LoggerInto(ctx, log)
 
@@ -109,9 +110,28 @@ func (s *LifecycleManager) Reconcile(
 		log.Error(err, "Failed to get Job from jobID")
 		return ctrl.Result{}, err
 	}
-	if jobData.State == store.JobStateCompleted {
+	// TODO(aya): handle status mismatch
+	switch jobData.State {
+	case store.JobStateCompleted:
 		// do nothing, already completed
 		return ctrl.Result{}, nil
+	case store.JobStateCancelled:
+		// TODO(aya): rethink cleanup method (e.g., post-processed data)
+		var (
+			expired        bool
+			expirationTime time.Time
+		)
+		for _, cond := range job.Status.Conditions {
+			if cond.Type == batchv1.JobSuspended {
+				expirationTime = cond.LastTransitionTime.Add(jobTTL)
+				expired = time.Now().After(expirationTime)
+			}
+		}
+		if !expired {
+			requeueAfter := expirationTime.Sub(time.Now())
+			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
+		}
+		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
 	}
 	log.Info("Job successfully completed")
 

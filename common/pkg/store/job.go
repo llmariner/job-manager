@@ -18,6 +18,8 @@ const (
 	// JobStateCompleted represents the completed state.
 	// TODO(kenji): Consider renaming this to "succeeded" or "failed" to be consistent with OpenAI API.
 	JobStateCompleted JobState = "completed"
+	// JobStateCancelled represents the cancelled state.
+	JobStateCancelled JobState = "cancelled"
 )
 
 // Job represents a job.
