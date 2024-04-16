@@ -36,7 +36,7 @@ func TestProcessPendingJobs(t *testing.T) {
 	}
 
 	pc := &noopPodCreator{}
-	d := New(st, pc, time.Second)
+	d := New(st, pc, &NoopPreProcessor{}, time.Second)
 	err := d.processPendingJobs(context.Background())
 	assert.NoError(t, err)
 

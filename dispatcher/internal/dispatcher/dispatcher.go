@@ -12,23 +12,40 @@ type jobCreatorI interface {
 	createJob(ctx context.Context, job *store.Job) error
 }
 
+// PreProcessorI is an interface for pre-processing jobs.
+type PreProcessorI interface {
+	Process(ctx context.Context, job *store.Job) error
+}
+
+// NoopPreProcessor is a no-op implementation of PreProcessorI.
+type NoopPreProcessor struct {
+}
+
+// Process is a no-op implementation of Process.
+func (p *NoopPreProcessor) Process(ctx context.Context, job *store.Job) error {
+	return nil
+}
+
 // New returns a new dispatcher.
 func New(
 	store *store.S,
-	podCreator jobCreatorI,
+	jobCreator jobCreatorI,
+	preProcessor PreProcessorI,
 	jobPollingInterval time.Duration,
 ) *D {
 	return &D{
 		store:              store,
-		jobCreator:         podCreator,
+		jobCreator:         jobCreator,
+		preProcessor:       preProcessor,
 		jobPollingInterval: jobPollingInterval,
 	}
 }
 
 // D is a dispatcher.
 type D struct {
-	store      *store.S
-	jobCreator jobCreatorI
+	store        *store.S
+	jobCreator   jobCreatorI
+	preProcessor PreProcessorI
 
 	jobPollingInterval time.Duration
 }
@@ -74,6 +91,13 @@ func (d *D) processPendingJobs(ctx context.Context) error {
 func (d *D) processJob(ctx context.Context, job *store.Job) error {
 	log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.JobID)
 	ctx = ctrl.LoggerInto(ctx, log)
+
+	log.Info("Pre-processing job")
+	if err := d.preProcessor.Process(ctx, job); err != nil {
+		return err
+	}
+
+	log.Info("Pre-processing successfully completed")
 
 	log.Info("Processing job")
 	if err := d.jobCreator.createJob(ctx, job); err != nil {
