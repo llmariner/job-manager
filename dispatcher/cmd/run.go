@@ -57,22 +57,9 @@ var runCmd = &cobra.Command{
 func run(ctx context.Context, c *config.Config) error {
 	ctrl.SetLogger(logr.FromSlogHandler(slog.Default().Handler()))
 
-	var st *store.S
-	if c.Debug.Standalone {
-		dbInst, err := gorm.Open(sqlite.Open(c.Debug.SqlitePath), &gorm.Config{})
-		if err != nil {
-			return err
-		}
-		st = store.New(dbInst)
-		if err := st.AutoMigrate(); err != nil {
-			return err
-		}
-	} else {
-		dbInst, err := db.OpenDB(c.Database)
-		if err != nil {
-			return err
-		}
-		st = store.New(dbInst)
+	st, err := newStore(c)
+	if err != nil {
+		return err
 	}
 
 	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
@@ -105,27 +92,9 @@ func run(ctx context.Context, c *config.Config) error {
 		c.Debug.HuggingFaceAccessToken,
 	)
 
-	var preProcessor dispatcher.PreProcessorI
-	var postProcessor dispatcher.PostProcessorI
-	if c.Debug.Standalone {
-		preProcessor = &dispatcher.NoopPreProcessor{}
-		postProcessor = &dispatcher.NoopPostProcessor{}
-	} else {
-		conn, err := grpc.Dial(c.FileManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-		fclient := fv1.NewFilesInternalServiceClient(conn)
-
-		conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return err
-		}
-		mclient := mv1.NewModelsInternalServiceClient(conn)
-		s3Client := s3.NewClient(c.ObjectStore.S3)
-
-		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client)
-		postProcessor = dispatcher.NewPostProcessor(mclient)
+	preProcessor, postProcessor, err := newProcessors(c)
+	if err != nil {
+		return err
 	}
 
 	if err := dispatcher.New(st, jc, preProcessor, c.JobPollingInterval).
@@ -138,6 +107,49 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	return mgr.Start(ctx)
+}
+
+func newStore(c *config.Config) (*store.S, error) {
+	if c.Debug.Standalone {
+		dbInst, err := gorm.Open(sqlite.Open(c.Debug.SqlitePath), &gorm.Config{})
+		if err != nil {
+			return nil, err
+		}
+		st := store.New(dbInst)
+		if err := st.AutoMigrate(); err != nil {
+			return nil, err
+		}
+		return st, nil
+	}
+
+	dbInst, err := db.OpenDB(c.Database)
+	if err != nil {
+		return nil, err
+	}
+	return store.New(dbInst), nil
+}
+
+func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostProcessorI, error) {
+	if c.Debug.Standalone {
+		return &dispatcher.NoopPreProcessor{}, &dispatcher.NoopPostProcessor{}, nil
+	}
+
+	conn, err := grpc.Dial(c.FileManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	fclient := fv1.NewFilesInternalServiceClient(conn)
+
+	conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
+	mclient := mv1.NewModelsInternalServiceClient(conn)
+	s3Client := s3.NewClient(c.ObjectStore.S3)
+
+	preProcessor := dispatcher.NewPreProcessor(fclient, mclient, s3Client)
+	postProcessor := dispatcher.NewPostProcessor(mclient)
+	return preProcessor, postProcessor, nil
 }
 
 func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
