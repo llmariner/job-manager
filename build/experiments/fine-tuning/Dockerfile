@@ -7,7 +7,7 @@ RUN \
   apt install -y \
     ca-certificates \
     gcc \
-     python3-dev
+    curl
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt

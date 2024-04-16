@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
@@ -41,7 +42,10 @@ func TestPreProcess(t *testing.T) {
 	got, err := p.Process(context.Background(), job)
 	assert.NoError(t, err)
 	want := &PreProcessResult{
-		BaseModelURL:    "presigned-model-path",
+		BaseModelURLs: map[string]string{
+			"obj1":      "presigned-model-path/obj1",
+			"path/obj2": "presigned-model-path/path/obj2",
+		},
 		TrainingFileURL: "presigned-file-path",
 		OutputModelID:   "generated-model-id",
 		OutputModelURL:  "presigned-generated-model-path",
@@ -87,6 +91,17 @@ func (f *fakeModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseM
 type fakeS3Client struct {
 }
 
-func (f *fakeS3Client) GeneratePresignedURL(key string, expire time.Duration) (string, error) {
+func (c *fakeS3Client) GeneratePresignedURL(key string, expire time.Duration) (string, error) {
 	return fmt.Sprintf("presigned-%s", key), nil
+}
+
+func (c *fakeS3Client) ListObjectsPages(prefix string, f func(page *s3.ListObjectsOutput, lastPage bool) bool) error {
+	page := &s3.ListObjectsOutput{
+		Contents: []*s3.Object{
+			{Key: proto.String("model-path/obj1")},
+			{Key: proto.String("model-path/path/obj2")},
+		},
+	}
+	f(page, true)
+	return nil
 }

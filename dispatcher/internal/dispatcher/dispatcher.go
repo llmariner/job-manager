@@ -9,7 +9,7 @@ import (
 )
 
 type jobCreatorI interface {
-	createJob(ctx context.Context, job *store.Job) error
+	createJob(ctx context.Context, job *store.Job, presult *PreProcessResult) error
 }
 
 // PreProcessorI is an interface for pre-processing jobs.
@@ -105,7 +105,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 	log.Info("Successfuly completed pre-processing")
 
 	log.Info("Creating a k8s job")
-	if err := d.jobCreator.createJob(ctx, job); err != nil {
+	if err := d.jobCreator.createJob(ctx, job, presult); err != nil {
 		return err
 	}
 	log.Info("Successfully created the k8s job")

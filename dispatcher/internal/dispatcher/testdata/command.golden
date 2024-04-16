@@ -3,13 +3,13 @@ set -euo pipefail
 # Download the model and the training file.
 mkdir base-model
 
-{{ range $path, $url := .BaseModelURLs }}
-mkdir -p $(dirname base-model/base{{ $path }})
-curl -o base-model/{{ $path }} "{{ $url }}"
-{{ end }}
+
+mkdir -p $(dirname base-model/basepath)
+curl -o base-model/path "config.json"
+
 
 mkdir dataset/
-curl -o dataset/training.json "{{.TrainingFileURL}}"
+curl -o dataset/training.json ""
 
 mkdir output
 
