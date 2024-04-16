@@ -41,13 +41,13 @@ jobs:
     - name: Set up Docker BUIldx
       uses: docker/setup-buildx-action@v3
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::803339316953:rule/github-actions-ecr-push-llm-operators
+        role-to-assume: arn:aws:iam::803339316953:role/github-actions-ecr-push-llm-operators
         aws-region: us-east-1
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
       with:
         registries: '803339316953'
         mask-password: "true"
