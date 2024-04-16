@@ -3,9 +3,11 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +22,7 @@ const (
 	managedJobAnnotationKey = "llm-operator/managed-pod"
 	jobIDAnnotationKey      = "llm-operator/job-id"
 
-	jobPrefix = "job-"
+	jobTTL = time.Hour * 24
 )
 
 // NewJobClient returns a new JobCreator.
@@ -55,13 +57,12 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job) error {
 	log := ctrl.LoggerFrom(ctx)
 
 	log.Info("Creating a pod for job")
-	jobName := fmt.Sprintf("%s%s", jobPrefix, jobData.JobID)
 
 	// TODO(kenji): Manage training files. Download them from the object store if needed.
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
+			Name:      util.GetK8sJobName(jobData.JobID),
 			Namespace: p.namespace,
 			Annotations: map[string]string{
 				managedJobAnnotationKey: "true",
@@ -140,7 +141,7 @@ cp ./output/ggml-adapter-model.bin /models/adapter/
 
 	return batchv1.JobSpec{
 		BackoffLimit:            ptr.To(int32(3)),
-		TTLSecondsAfterFinished: ptr.To(int32(60 * 60 * 24)), // 1 day
+		TTLSecondsAfterFinished: ptr.To(int32(jobTTL.Seconds())),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{

@@ -15,3 +15,6 @@ data:
       database: {{ .Values.database.database }}
       username: {{ .Values.database.username }}
       passwordEnvName: {{ .Values.database.passwordEnvName }}
+    jobNamespace: {{ .Values.jobNamespace }}
+    debug:
+      kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
