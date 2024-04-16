@@ -97,3 +97,23 @@ func TestUpdateJobState(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrConcurrentUpdate))
 }
+
+func TestUpdateOutputModelID(t *testing.T) {
+	st, teardown := NewTest(t)
+	defer teardown()
+
+	job := &Job{
+		JobID:   "job0",
+		State:   JobStatePending,
+		Version: 1,
+	}
+	err := st.CreateJob(job)
+	assert.NoError(t, err)
+
+	err = st.UpdateOutputModelID(job.JobID, job.Version, "output-model-id")
+	assert.NoError(t, err)
+
+	got, err := st.GetJobByJobID("job0")
+	assert.NoError(t, err)
+	assert.Equal(t, "output-model-id", got.OutputModelID)
+}

@@ -105,7 +105,7 @@ func run(ctx context.Context, c *config.Config) error {
 		c.Debug.HuggingFaceAccessToken,
 	)
 
-	var preProcessor dispatcher.PostProcessorI
+	var preProcessor dispatcher.PreProcessorI
 	var postProcessor dispatcher.PostProcessorI
 	if c.Debug.Standalone {
 		preProcessor = &dispatcher.NoopPreProcessor{}
@@ -124,8 +124,8 @@ func run(ctx context.Context, c *config.Config) error {
 		mclient := mv1.NewModelsInternalServiceClient(conn)
 		s3Client := s3.NewClient(c.ObjectStore.S3)
 
-		preProcessor = dispatcher.NewPreProcessor(fclient, mclient)
-		postProcessor = dispatcher.NewPostProcessor(mclient, s3Client)
+		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client)
+		postProcessor = dispatcher.NewPostProcessor(mclient)
 	}
 
 	if err := dispatcher.New(st, jc, preProcessor, c.JobPollingInterval).

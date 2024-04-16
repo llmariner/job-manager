@@ -1,12 +1,11 @@
 package s3
 
 import (
-	"io"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 )
 
@@ -33,16 +32,18 @@ type Client struct {
 	bucket string
 }
 
-// Upload uploads the data that buf contains to a S3 object.
-func (c *Client) Upload(r io.Reader, key string) error {
-	uploader := s3manager.NewUploaderWithClient(c.svc)
-	_, err := uploader.Upload(&s3manager.UploadInput{
+// GeneratePresignedURL generates a pre-signed URL.
+//
+// TODO(kenji): Limit the presigned URL capability by changing the credentials to be used.
+func (c *Client) GeneratePresignedURL(key string, expire time.Duration) (string, error) {
+	req, _ := c.svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
-		Body:   r,
 	})
+
+	url, err := req.Presign(expire)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return url, nil
 }

@@ -37,6 +37,9 @@ type Job struct {
 	State    JobState `gorm:"index:idx_job_state_tenant_id"`
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
 
+	// OutputModelID is the ID of a generated model.
+	OutputModelID string
+
 	Version int
 }
 
@@ -92,6 +95,25 @@ func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState) 
 		Updates(map[string]interface{}{
 			"state":   newState,
 			"version": currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update job: %w", ErrConcurrentUpdate)
+	}
+	return nil
+}
+
+// UpdateOutputModelID updates the output model ID.
+func (s *S) UpdateOutputModelID(jobID string, currentVersion int, outputModelID string) error {
+	result := s.db.Model(&Job{}).
+		Where("job_id = ?", jobID).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"output_model_id": outputModelID,
+			"version":         currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
 		return err
