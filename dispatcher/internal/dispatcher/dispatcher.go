@@ -102,12 +102,12 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 		return err
 	}
 	job.Version++
-	log.Info("Completed pre-processing")
+	log.Info("Successfuly completed pre-processing")
 
-	log.Info("Creating a job")
+	log.Info("Creating a k8s job")
 	if err := d.jobCreator.createJob(ctx, job); err != nil {
 		return err
 	}
-	log.Info("Created t job")
+	log.Info("Successfully created the k8s job")
 	return d.store.UpdateJobState(job.JobID, job.Version, store.JobStateRunning)
 }
