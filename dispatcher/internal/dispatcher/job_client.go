@@ -141,7 +141,7 @@ cp ./output/ggml-adapter-model.bin /models/adapter/
 
 	return batchv1.JobSpec{
 		BackoffLimit:            ptr.To(int32(3)),
-		TTLSecondsAfterFinished: ptr.To(int32(jobTTL.Seconds())), // 1 day
+		TTLSecondsAfterFinished: ptr.To(int32(jobTTL.Seconds())),
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{

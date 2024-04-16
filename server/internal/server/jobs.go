@@ -126,6 +126,8 @@ func (s *S) CancelJob(
 		if err := s.k8sJobClient.CancelJob(ctx, job.JobID); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
 		}
+	default:
+		return nil, status.Errorf(codes.Internal, "unexpected job state: %s", job.State)
 	}
 
 	if err := s.store.UpdateJobState(req.Id, job.Version, store.JobStateCancelled); err != nil {
