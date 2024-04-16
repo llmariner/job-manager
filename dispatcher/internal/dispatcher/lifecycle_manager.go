@@ -2,16 +2,10 @@ package dispatcher
 
 import (
 	"context"
-	"io"
-	"os"
 	"strings"
 
 	"github.com/go-logr/logr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
-	mv1 "github.com/llm-operator/model-manager/api/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -21,44 +15,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// ModelCreatorClient is the client for the model creation service.
-type ModelCreatorClient interface {
-	RegisterModel(ctx context.Context, in *mv1.RegisterModelRequest, opts ...grpc.CallOption) (*mv1.RegisterModelResponse, error)
-	PublishModel(ctx context.Context, in *mv1.PublishModelRequest, opts ...grpc.CallOption) (*mv1.PublishModelResponse, error)
+// PostProcessorI is an interface for post-processing.
+type PostProcessorI interface {
+	Process(ctx context.Context, job *store.Job) error
 }
 
-// NoopModelCreatorClient is a no-op implementation of ModelCreatorClient.
-type NoopModelCreatorClient struct {
+// NoopPostProcessor is a no-op implementation of PostProcessorI.
+type NoopPostProcessor struct {
 }
 
-// RegisterModel is a no-op implementation of RegisterModel.
-func (c *NoopModelCreatorClient) RegisterModel(
-	ctx context.Context,
-	in *mv1.RegisterModelRequest,
-	opts ...grpc.CallOption,
-) (*mv1.RegisterModelResponse, error) {
-	return &mv1.RegisterModelResponse{}, nil
-}
-
-// PublishModel is a no-op implementation of PublishModel.
-func (c *NoopModelCreatorClient) PublishModel(
-	ctx context.Context,
-	in *mv1.PublishModelRequest,
-	opts ...grpc.CallOption,
-) (*mv1.PublishModelResponse, error) {
-	return &mv1.PublishModelResponse{}, nil
-}
-
-// S3Client is an interface for an S3 client.
-type S3Client interface {
-	Upload(r io.Reader, key string) error
-}
-
-// NoopS3Client is a no-op S3 client.
-type NoopS3Client struct{}
-
-// Upload is a no-op implementation of Upload.
-func (n *NoopS3Client) Upload(r io.Reader, key string) error {
+// Process is a no-op implementation of Process.
+func (p *NoopPostProcessor) Process(ctx context.Context, job *store.Job) error {
 	return nil
 }
 
@@ -66,23 +33,20 @@ func (n *NoopS3Client) Upload(r io.Reader, key string) error {
 func NewLifecycleManager(
 	store *store.S,
 	client client.Client,
-	modelCreatorClient ModelCreatorClient,
-	s3Client S3Client,
+	postProcessor PostProcessorI,
 ) *LifecycleManager {
 	return &LifecycleManager{
-		store:              store,
-		k8sClient:          client,
-		modelCreatorClient: modelCreatorClient,
-		s3Client:           s3Client,
+		store:         store,
+		k8sClient:     client,
+		postProcessor: postProcessor,
 	}
 }
 
 // LifecycleManager manages job lifecycle and sync status.
 type LifecycleManager struct {
-	store              *store.S
-	k8sClient          client.Client
-	modelCreatorClient ModelCreatorClient
-	s3Client           S3Client
+	store         *store.S
+	k8sClient     client.Client
+	postProcessor PostProcessorI
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -151,44 +115,12 @@ func (s *LifecycleManager) Reconcile(
 	}
 	log.Info("Job successfully completed")
 
-	log.Info("Registering genereated fine-tuned model")
-	var jobProto v1.Job
-	if err := proto.Unmarshal(jobData.Message, &jobProto); err != nil {
-		log.Error(err, "Failed to unmarshal job")
+	log.Info("Running post-processing")
+	if err := s.postProcessor.Process(ctx, jobData); err != nil {
+		log.Error(err, "Failed to post process")
 		return ctrl.Result{}, err
 	}
-	resp, err := s.modelCreatorClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
-		BaseModel: jobProto.Model,
-		Suffix:    jobData.Suffix,
-		TenantId:  jobData.TenantID,
-	})
-	if err != nil {
-		log.Error(err, "Failed to register model")
-		return ctrl.Result{}, err
-	}
-
-	log.Info("Uploading the model.")
-	// TODO(kenji): Provide a unique location per model. Or make the job just upload the model directly.
-	r, err := os.Open("/models/adapter/ggml-adapter-model.bin")
-	if err != nil {
-		log.Error(err, "Failed to open model")
-		return ctrl.Result{}, err
-	}
-	if err := s.s3Client.Upload(r, resp.Path); err != nil {
-		log.Error(err, "Failed to upload model")
-		return ctrl.Result{}, err
-	}
-	log.Info("Uploaded the model successfully")
-
-	if _, err := s.modelCreatorClient.PublishModel(ctx, &mv1.PublishModelRequest{
-		Id:       resp.Id,
-		TenantId: jobData.TenantID,
-	}); err != nil {
-		log.Error(err, "Failed to publish model")
-		return ctrl.Result{}, err
-	}
-
-	// TODO: Update the status and the fined-tuned model in the Message.
+	log.Info("Post-processing successfully completed")
 
 	if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateCompleted); err != nil {
 		log.Error(err, "Failed to update job state")
