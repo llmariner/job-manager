@@ -4,6 +4,11 @@ on:
     branches:
     - main
 
+permissions:
+  # This is necessary for AWS credentials. See:
+  # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#adding-permissions-settings
+  id-token: write
+
 jobs:
 
   re-test:
