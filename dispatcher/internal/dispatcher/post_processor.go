@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 type modelPublishClient interface {
@@ -31,11 +29,6 @@ type PostProcessor struct {
 
 // Process processes the job.
 func (p *PostProcessor) Process(ctx context.Context, job *store.Job) error {
-	var jobProto v1.Job
-	if err := proto.Unmarshal(job.Message, &jobProto); err != nil {
-		return err
-	}
-
 	if job.OutputModelID == "" {
 		return fmt.Errorf("output model ID is not populated")
 	}
