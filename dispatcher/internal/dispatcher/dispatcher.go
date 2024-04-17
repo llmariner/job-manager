@@ -57,7 +57,7 @@ func (d *D) SetupWithManager(mgr ctrl.Manager) error {
 
 // Start starts the dispatcher.
 func (d *D) Start(ctx context.Context) error {
-	if err := d.processPendingJobs(ctx); err != nil {
+	if err := d.processQueuedJobs(ctx); err != nil {
 		return err
 	}
 
@@ -67,15 +67,15 @@ func (d *D) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := d.processPendingJobs(ctx); err != nil {
+			if err := d.processQueuedJobs(ctx); err != nil {
 				return err
 			}
 		}
 	}
 }
 
-func (d *D) processPendingJobs(ctx context.Context) error {
-	jobs, err := d.store.ListPendingJobs()
+func (d *D) processQueuedJobs(ctx context.Context) error {
+	jobs, err := d.store.ListQueuedJobs()
 	if err != nil {
 		return err
 	}

@@ -10,14 +10,14 @@ import (
 type JobState string
 
 const (
-	// JobStatePending represents the pending state.
-	// TODO(kenji): Consider renaming this to "queued" to be consistent with OpenAI API.
-	JobStatePending JobState = "pending"
+	// JobStateQueued represents the pending state.
+	JobStateQueued JobState = "queued"
 	// JobStateRunning represents the running state.
 	JobStateRunning JobState = "running"
-	// JobStateCompleted represents the completed state.
-	// TODO(kenji): Consider renaming this to "succeeded" or "failed" to be consistent with OpenAI API.
-	JobStateCompleted JobState = "completed"
+	// JobStatusFailed represents the failed state.
+	JobStatusFailed JobState = "failed"
+	// JobStateSucceeded represents the succeeded state.
+	JobStateSucceeded JobState = "succeeded"
 	// JobStateCancelled represents the cancelled state.
 	JobStateCancelled JobState = "cancelled"
 )
@@ -60,19 +60,19 @@ func (s *S) GetJobByJobID(jobID string) (*Job, error) {
 	return &job, nil
 }
 
-// ListPendingJobs finds pending jobs.
-func (s *S) ListPendingJobs() ([]*Job, error) {
+// ListQueuedJobs finds queued jobs.
+func (s *S) ListQueuedJobs() ([]*Job, error) {
 	var jobs []*Job
-	if err := s.db.Where("state = ?", JobStatePending).Order("job_id").Find(&jobs).Error; err != nil {
+	if err := s.db.Where("state = ?", JobStateQueued).Order("job_id").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 	return jobs, nil
 }
 
-// ListPendingJobsByTenantID finds pending jobs.
-func (s *S) ListPendingJobsByTenantID(tenantID string) ([]*Job, error) {
+// ListQueuedJobsByTenantID finds queued jobs.
+func (s *S) ListQueuedJobsByTenantID(tenantID string) ([]*Job, error) {
 	var jobs []*Job
-	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, JobStatePending).Order("job_id").Find(&jobs).Error; err != nil {
+	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, JobStateQueued).Order("job_id").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 	return jobs, nil
