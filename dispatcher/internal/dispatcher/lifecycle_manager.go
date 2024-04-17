@@ -134,7 +134,7 @@ func (s *LifecycleManager) Reconcile(
 			log.V(2).Info("Job is cancelled but not expired yet", "requeue-after", requeueAfter)
 			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 		}
-		log.Info("Delete the cancelled and expired job")
+		log.Info("Deleting the cancelled and expired job")
 		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
 	}
 
