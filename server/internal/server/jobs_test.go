@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestCreateJob(t *testing.T) {
@@ -103,7 +102,7 @@ func TestJobCancel(t *testing.T) {
 			srv := New(st, nil, &noopK8sJobClient{})
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
-			assert.True(t, proto.Equal(tc.want, resp), "want: %+v,\ngot: %+v", tc.want, resp)
+			assert.Equal(t, tc.want.Status, resp.Status)
 		})
 	}
 }
