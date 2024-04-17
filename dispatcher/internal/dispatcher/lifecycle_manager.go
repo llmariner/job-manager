@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -91,7 +92,7 @@ func (s *LifecycleManager) Reconcile(
 		}
 		if jobData.State == store.JobStateRunning {
 			// set back to the pending status if job is accidentally deleted.
-			if err = s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStatePending); err != nil {
+			if err = s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateQueued); err != nil {
 				log.Error(err, "Failed to update job state")
 				return ctrl.Result{}, err
 			}
@@ -99,7 +100,7 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, nil
 	}
 
-	if job.Status.Succeeded == 0 {
+	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
 		// TODO(aya): handle other job statuses
 		log.V(2).Info("Job is still running")
 		return ctrl.Result{}, nil
@@ -112,8 +113,9 @@ func (s *LifecycleManager) Reconcile(
 	}
 	// TODO(aya): handle status mismatch
 	switch jobData.State {
-	case store.JobStateCompleted:
-		// do nothing, already completed
+	case store.JobStateSucceeded, store.JobStatusFailed:
+		// do nothing, already complete
+		log.V(2).Info("Job is already completed", "state", jobData.State)
 		return ctrl.Result{}, nil
 	case store.JobStateCancelled:
 		// TODO(aya): rethink cleanup method (e.g., post-processed data)
@@ -129,9 +131,27 @@ func (s *LifecycleManager) Reconcile(
 		}
 		if !expired {
 			requeueAfter := time.Until(expirationTime)
+			log.V(2).Info("Job is cancelled but not expired yet", "requeue-after", requeueAfter)
 			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 		}
+		log.Info("Deleting the cancelled and expired job")
 		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
+	}
+
+	if job.Status.Failed > 0 {
+		if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStatusFailed); err != nil {
+			log.Error(err, "Failed to update job state")
+			return ctrl.Result{}, err
+		}
+		var message string
+		for _, cond := range job.Status.Conditions {
+			if cond.Type == batchv1.JobFailed {
+				message = fmt.Sprintf("%s: %s", cond.Reason, cond.Message)
+				break
+			}
+		}
+		log.Info("Job failed", "msg", message)
+		return ctrl.Result{}, nil
 	}
 	log.Info("Job successfully completed")
 
@@ -142,7 +162,7 @@ func (s *LifecycleManager) Reconcile(
 	}
 	log.Info("Post-processing successfully completed")
 
-	if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateCompleted); err != nil {
+	if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateSucceeded); err != nil {
 		log.Error(err, "Failed to update job state")
 		return ctrl.Result{}, err
 	}

@@ -9,24 +9,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProcessPendingJobs(t *testing.T) {
+func TestProcessQueuedJobs(t *testing.T) {
 	st, teardown := store.NewTest(t)
 	defer teardown()
 
 	jobs := []*store.Job{
 		{
 			JobID:    "job0",
-			State:    store.JobStatePending,
+			State:    store.JobStateQueued,
 			TenantID: "tid0",
 		},
 		{
 			JobID:    "job1",
-			State:    store.JobStateCompleted,
+			State:    store.JobStateSucceeded,
 			TenantID: "tid0",
 		},
 		{
 			JobID:    "job2",
-			State:    store.JobStatePending,
+			State:    store.JobStateQueued,
 			TenantID: "tid1",
 		},
 	}
@@ -37,12 +37,12 @@ func TestProcessPendingJobs(t *testing.T) {
 
 	pc := &noopPodCreator{}
 	d := New(st, pc, &NoopPreProcessor{}, time.Second)
-	err := d.processPendingJobs(context.Background())
+	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
 	wants := map[string]store.JobState{
 		jobs[0].JobID: store.JobStateRunning,
-		jobs[1].JobID: store.JobStateCompleted,
+		jobs[1].JobID: store.JobStateSucceeded,
 		jobs[2].JobID: store.JobStateRunning,
 	}
 	for jobID, want := range wants {

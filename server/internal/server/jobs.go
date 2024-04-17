@@ -56,7 +56,7 @@ func (s *S) CreateJob(
 		CreatedAt: time.Now().UTC().Unix(),
 		Model:     req.Model,
 		Object:    "fine_tuning.job",
-		Status:    "queued",
+		Status:    string(store.JobStateQueued),
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
@@ -65,7 +65,7 @@ func (s *S) CreateJob(
 
 	job := &store.Job{
 		JobID:    jobID,
-		State:    store.JobStatePending,
+		State:    store.JobStateQueued,
 		Message:  msg,
 		Suffix:   req.Suffix,
 		TenantID: fakeTenantID,
@@ -91,12 +91,11 @@ func (s *S) ListJobs(
 	// TODO: Implement pagination.
 	var jobProtos []*v1.Job
 	for _, job := range jobs {
-		var jobProto v1.Job
-		err := proto.Unmarshal(job.Message, &jobProto)
+		jobProto, err := jobToProto(job)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "unmarshal job: %s", err)
+			return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 		}
-		jobProtos = append(jobProtos, &jobProto)
+		jobProtos = append(jobProtos, jobProto)
 	}
 	return &v1.ListJobsResponse{
 		Object:  "list",
@@ -119,9 +118,12 @@ func (s *S) CancelJob(
 	}
 
 	switch job.State {
-	case store.JobStateCompleted, store.JobStateCancelled:
+	case
+		store.JobStateSucceeded,
+		store.JobStatusFailed,
+		store.JobStateCancelled:
 		return jobToProto(job)
-	case store.JobStatePending:
+	case store.JobStateQueued:
 	case store.JobStateRunning:
 		if err := s.k8sJobClient.CancelJob(ctx, job.JobID); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
@@ -134,7 +136,12 @@ func (s *S) CancelJob(
 		return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 	}
 	job.State = store.JobStateCancelled
-	return jobToProto(job)
+
+	jobProto, err := jobToProto(job)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
+	}
+	return jobProto, nil
 }
 
 func newJobID() string {

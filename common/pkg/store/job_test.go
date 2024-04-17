@@ -18,7 +18,7 @@ func TestCreateAndGetJob(t *testing.T) {
 
 	job := &Job{
 		JobID:    "job0",
-		State:    JobStatePending,
+		State:    JobStateQueued,
 		TenantID: "tid0",
 	}
 	err = st.CreateJob(job)
@@ -36,7 +36,7 @@ func TestCreateAndListJobs(t *testing.T) {
 	jobs := []*Job{
 		{
 			JobID:    "job0",
-			State:    JobStatePending,
+			State:    JobStateQueued,
 			TenantID: "tid0",
 		},
 		{
@@ -46,7 +46,7 @@ func TestCreateAndListJobs(t *testing.T) {
 		},
 		{
 			JobID:    "job2",
-			State:    JobStatePending,
+			State:    JobStateQueued,
 			TenantID: "tid1",
 		},
 	}
@@ -55,18 +55,18 @@ func TestCreateAndListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	got, err := st.ListPendingJobs()
+	got, err := st.ListQueuedJobs()
 	assert.NoError(t, err)
 	assert.Len(t, got, 2)
 	assert.Equal(t, jobs[0].JobID, got[0].JobID)
 	assert.Equal(t, jobs[2].JobID, got[1].JobID)
 
-	got, err = st.ListPendingJobsByTenantID("tid0")
+	got, err = st.ListQueuedJobsByTenantID("tid0")
 	assert.NoError(t, err)
 	assert.Len(t, got, 1)
 	assert.Equal(t, jobs[0].JobID, got[0].JobID)
 
-	got, err = st.ListPendingJobsByTenantID("tid1")
+	got, err = st.ListQueuedJobsByTenantID("tid1")
 	assert.NoError(t, err)
 	assert.Len(t, got, 1)
 	assert.Equal(t, jobs[2].JobID, got[0].JobID)
@@ -84,7 +84,7 @@ func TestUpdateJobState(t *testing.T) {
 
 	job := &Job{
 		JobID:   "job0",
-		State:   JobStatePending,
+		State:   JobStateQueued,
 		Version: 1,
 	}
 	err := st.CreateJob(job)
@@ -104,7 +104,7 @@ func TestUpdateOutputModelID(t *testing.T) {
 
 	job := &Job{
 		JobID:   "job0",
-		State:   JobStatePending,
+		State:   JobStateQueued,
 		Version: 1,
 	}
 	err := st.CreateJob(job)

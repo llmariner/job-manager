@@ -73,7 +73,7 @@ func TestJobCancel(t *testing.T) {
 	}{
 		{
 			name:  "transit pending to cancelled",
-			state: store.JobStatePending,
+			state: store.JobStateQueued,
 			want:  &v1.Job{Status: string(store.JobStateCancelled)},
 		},
 		{
@@ -83,8 +83,8 @@ func TestJobCancel(t *testing.T) {
 		},
 		{
 			name:  "keep completed state",
-			state: store.JobStateCompleted,
-			want:  &v1.Job{Status: string(store.JobStateCompleted)},
+			state: store.JobStateSucceeded,
+			want:  &v1.Job{Status: string(store.JobStateSucceeded)},
 		},
 		{
 			name:  "keep cancelled state",
