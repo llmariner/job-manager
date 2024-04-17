@@ -71,6 +71,6 @@ jobs:
     - name: Build, tag, and push fine-tuning to Amazon ECR
       uses: docker/build-push-action@v5
       with:
-        file: ./build/experiments/fine-tuning/Dockerfile
+        context: ./build/experiments/fine-tuning
         push: true
         tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fine-tuning-${{ needs.update-tag.outputs.new_tag }}
