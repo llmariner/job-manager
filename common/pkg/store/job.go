@@ -3,6 +3,8 @@ package store
 import (
 	"fmt"
 
+	v1 "github.com/llm-operator/job-manager/api/v1"
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
 
@@ -41,6 +43,32 @@ type Job struct {
 	OutputModelID string
 
 	Version int
+}
+
+// V1Job converts a job to v1.Job.
+func (j *Job) V1Job() (*v1.Job, error) {
+	var jobProto v1.Job
+	err := proto.Unmarshal(j.Message, &jobProto)
+	if err != nil {
+		return nil, err
+	}
+	jobProto.Status = string(j.State)
+	return &jobProto, nil
+}
+
+// MutateMessage mutates the message field of a job.
+func (j *Job) MutateMessage(mutateFn func(j *v1.Job)) error {
+	jobProto, err := j.V1Job()
+	if err != nil {
+		return err
+	}
+	mutateFn(jobProto)
+	msg, err := proto.Marshal(jobProto)
+	if err != nil {
+		return err
+	}
+	j.Message = msg
+	return nil
 }
 
 // CreateJob creates a new job.
@@ -100,6 +128,25 @@ func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState) 
 		return err
 	}
 
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update job: %w", ErrConcurrentUpdate)
+	}
+	return nil
+}
+
+// UpdateJobStateAndMessage updates a job state and message.
+func (s *S) UpdateJobStateAndMessage(jobID string, currentVersion int, newState JobState, message []byte) error {
+	result := s.db.Model(&Job{}).
+		Where("job_id = ?", jobID).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":   newState,
+			"message": message,
+			"version": currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("update job: %w", ErrConcurrentUpdate)
 	}

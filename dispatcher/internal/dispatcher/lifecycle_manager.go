@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	batchv1 "k8s.io/api/batch/v1"
@@ -139,16 +140,28 @@ func (s *LifecycleManager) Reconcile(
 	}
 
 	if job.Status.Failed > 0 {
-		if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStatusFailed); err != nil {
-			log.Error(err, "Failed to update job state")
-			return ctrl.Result{}, err
-		}
 		var message string
 		for _, cond := range job.Status.Conditions {
 			if cond.Type == batchv1.JobFailed {
 				message = fmt.Sprintf("%s: %s", cond.Reason, cond.Message)
 				break
 			}
+		}
+		if err := jobData.MutateMessage(func(j *v1.Job) {
+			j.FinishedAt = time.Now().UTC().Unix()
+			j.Error = &v1.Job_Error{Message: message}
+		}); err != nil {
+			log.Error(err, "Failed to mutate message")
+			return ctrl.Result{}, err
+		}
+		if err := s.store.UpdateJobStateAndMessage(
+			jobID,
+			jobData.Version,
+			store.JobStatusFailed,
+			jobData.Message,
+		); err != nil {
+			log.Error(err, "Failed to update job state")
+			return ctrl.Result{}, err
 		}
 		log.Info("Job failed", "msg", message)
 		return ctrl.Result{}, nil
@@ -162,7 +175,18 @@ func (s *LifecycleManager) Reconcile(
 	}
 	log.Info("Post-processing successfully completed")
 
-	if err := s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateSucceeded); err != nil {
+	if err := jobData.MutateMessage(func(j *v1.Job) {
+		j.FinishedAt = time.Now().UTC().Unix()
+	}); err != nil {
+		log.Error(err, "Failed to mutate message")
+		return ctrl.Result{}, err
+	}
+	if err := s.store.UpdateJobStateAndMessage(
+		jobID,
+		jobData.Version,
+		store.JobStateSucceeded,
+		jobData.Message,
+	); err != nil {
 		log.Error(err, "Failed to update job state")
 		return ctrl.Result{}, err
 	}

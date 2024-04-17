@@ -91,7 +91,7 @@ func (s *S) ListJobs(
 	// TODO: Implement pagination.
 	var jobProtos []*v1.Job
 	for _, job := range jobs {
-		jobProto, err := jobToProto(job)
+		jobProto, err := job.V1Job()
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 		}
@@ -122,7 +122,7 @@ func (s *S) CancelJob(
 		store.JobStateSucceeded,
 		store.JobStatusFailed,
 		store.JobStateCancelled:
-		return jobToProto(job)
+		return job.V1Job()
 	case store.JobStateQueued:
 	case store.JobStateRunning:
 		if err := s.k8sJobClient.CancelJob(ctx, job.JobID); err != nil {
@@ -132,12 +132,22 @@ func (s *S) CancelJob(
 		return nil, status.Errorf(codes.Internal, "unexpected job state: %s", job.State)
 	}
 
-	if err := s.store.UpdateJobState(req.Id, job.Version, store.JobStateCancelled); err != nil {
+	if err := job.MutateMessage(func(j *v1.Job) {
+		j.FinishedAt = time.Now().UTC().Unix()
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+	}
+	if err := s.store.UpdateJobStateAndMessage(
+		req.Id,
+		job.Version,
+		store.JobStateCancelled,
+		job.Message,
+	); err != nil {
 		return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 	}
 	job.State = store.JobStateCancelled
 
-	jobProto, err := jobToProto(job)
+	jobProto, err := job.V1Job()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 	}
@@ -146,14 +156,4 @@ func (s *S) CancelJob(
 
 func newJobID() string {
 	return uuid.New().String()
-}
-
-func jobToProto(job *store.Job) (*v1.Job, error) {
-	var jobProto v1.Job
-	err := proto.Unmarshal(job.Message, &jobProto)
-	if err != nil {
-		return nil, err
-	}
-	jobProto.Status = string(job.State)
-	return &jobProto, nil
 }
