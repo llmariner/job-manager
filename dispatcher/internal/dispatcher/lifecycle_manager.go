@@ -128,7 +128,7 @@ func (s *LifecycleManager) Reconcile(
 			}
 		}
 		if !expired {
-			requeueAfter := expirationTime.Sub(time.Now())
+			requeueAfter := time.Until(expirationTime)
 			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 		}
 		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
