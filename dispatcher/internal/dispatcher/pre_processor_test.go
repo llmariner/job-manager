@@ -74,12 +74,12 @@ func (f *fakeModelClient) RegisterModel(ctx context.Context, in *mv1.RegisterMod
 	}, nil
 }
 
-func (f *fakeModelClient) GetModelPath(ctx context.Context, in *mv1.GetModelPathRequest, opts ...grpc.CallOption) (*mv1.GetModelPathResponse, error) {
+func (f *fakeModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error) {
 	if in.Id != f.id {
 		return nil, fmt.Errorf("unexpected id: %s", in.Id)
 	}
 
-	return &mv1.GetModelPathResponse{
+	return &mv1.GetBaseModelPathResponse{
 		Path: "model-path",
 	}, nil
 }

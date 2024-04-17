@@ -22,7 +22,7 @@ type fileClient interface {
 
 type modelClient interface {
 	RegisterModel(ctx context.Context, in *mv1.RegisterModelRequest, opts ...grpc.CallOption) (*mv1.RegisterModelResponse, error)
-	GetModelPath(ctx context.Context, in *mv1.GetModelPathRequest, opts ...grpc.CallOption) (*mv1.GetModelPathResponse, error)
+	GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error)
 }
 
 type s3Client interface {
@@ -65,7 +65,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 		return nil, err
 	}
 
-	mresp, err := p.modelClient.GetModelPath(ctx, &mv1.GetModelPathRequest{
+	mresp, err := p.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
 		Id: jobProto.Model,
 	})
 	if err != nil {
