@@ -10,7 +10,6 @@ import (
 	_ "embed"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
-	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -37,16 +36,12 @@ var cmdTemplate string
 func NewJobClient(
 	k8sClient client.Client,
 	namespace string,
-	modelStoreConfig *config.ModelStoreConfig,
 	useFakeJob bool,
-	huggingFaceAccessToken string,
 ) *JobClient {
 	return &JobClient{
-		k8sClient:              k8sClient,
-		namespace:              namespace,
-		modelStoreConfig:       modelStoreConfig,
-		useFakeJob:             useFakeJob,
-		huggingFaceAccessToken: huggingFaceAccessToken,
+		k8sClient:  k8sClient,
+		namespace:  namespace,
+		useFakeJob: useFakeJob,
 	}
 }
 
@@ -54,24 +49,21 @@ func NewJobClient(
 type JobClient struct {
 	k8sClient client.Client
 	// TODO(kenji): Be able to specify the namespace per tenant.
-	namespace              string
-	modelStoreConfig       *config.ModelStoreConfig
-	useFakeJob             bool
-	huggingFaceAccessToken string
+	namespace  string
+	useFakeJob bool
 }
 
-func (p *JobClient) createJob(ctx context.Context, jobData *store.Job) error {
+func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
 	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
 	log := ctrl.LoggerFrom(ctx)
 
 	log.Info("Creating a k8s Job resource for a job")
 
-	// TODO(kenji): Manage training files. Download them from the object store if needed.
-
-	spec, err := p.jobSpec()
+	spec, err := p.jobSpec(jobData, presult)
 	if err != nil {
 		return err
 	}
+
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(batchv1apply.
 		Job(util.GetK8sJobName(jobData.JobID), p.namespace).
 		WithAnnotations(map[string]string{
@@ -80,16 +72,18 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job) error {
 		WithSpec(spec))
 	if err != nil {
 		return err
+
 	}
 	patch := &unstructured.Unstructured{Object: obj}
 	opts := &client.PatchOptions{FieldManager: "job-manager-dispatcher", Force: ptr.To(true)}
 	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
 
-func (p *JobClient) jobSpec() (*batchv1apply.JobSpecApplyConfiguration, error) {
-	cmd, err := p.cmd()
+func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
+	cmd, err := p.cmd(jobData, presult)
 	if err != nil {
 		return nil, err
+
 	}
 
 	container := corev1apply.Container().
@@ -106,17 +100,6 @@ func (p *JobClient) jobSpec() (*batchv1apply.JobSpecApplyConfiguration, error) {
 		WithBackoffLimit(3).
 		WithTemplate(corev1apply.PodTemplateSpec().
 			WithSpec(podSpec))
-
-	if ms := p.modelStoreConfig; ms.Enable {
-		const vname = "model-store"
-		container.WithVolumeMounts(corev1apply.VolumeMount().
-			WithName(vname).
-			WithMountPath("/models"))
-		podSpec.WithVolumes(corev1apply.Volume().
-			WithName(vname).
-			WithPersistentVolumeClaim(corev1apply.PersistentVolumeClaimVolumeSource().
-				WithClaimName(ms.PVClaimName)))
-	}
 	return jobSpec, nil
 }
 
@@ -137,16 +120,27 @@ func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
 		})
 }
 
-func (p *JobClient) cmd() (string, error) {
+func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, error) {
 	if p.useFakeJob {
 		return "mkdir /models/adapter; cp ./ggml-adapter-model.bin /models/adapter/ggml-adapter-model.bin", nil
 	}
 
-	t := template.Must(template.New("cmd").Parse(cmdTemplate))
-	// TODO(kenji): Define params and fill them from preprocess reuslt.
-	type Params struct {
+	jobProto, err := jobData.V1Job()
+	if err != nil {
+		return "", err
 	}
-	params := Params{}
+
+	t := template.Must(template.New("cmd").Parse(cmdTemplate))
+	type Params struct {
+		BaseModelName   string
+		BaseModelURLs   map[string]string
+		TrainingFileURL string
+	}
+	params := Params{
+		BaseModelName:   jobProto.Model,
+		BaseModelURLs:   presult.BaseModelURLs,
+		TrainingFileURL: presult.TrainingFileURL,
+	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {
 		return "", err

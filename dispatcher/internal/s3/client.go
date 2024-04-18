@@ -47,3 +47,14 @@ func (c *Client) GeneratePresignedURL(key string, expire time.Duration) (string,
 	}
 	return url, nil
 }
+
+// ListObjectsPages returns S3 objects with pagination.
+func (c *Client) ListObjectsPages(
+	prefix string,
+	f func(page *s3.ListObjectsOutput, lastPage bool) bool,
+) error {
+	return c.svc.ListObjectsPages(&s3.ListObjectsInput{
+		Bucket: aws.String(c.bucket),
+		Prefix: aws.String(prefix),
+	}, f)
+}

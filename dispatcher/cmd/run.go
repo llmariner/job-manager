@@ -87,9 +87,7 @@ func run(ctx context.Context, c *config.Config) error {
 	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
 		c.JobNamespace,
-		&c.ModelStore,
 		c.Debug.UseFakeJob,
-		c.Debug.HuggingFaceAccessToken,
 	)
 
 	preProcessor, postProcessor, err := newProcessors(c)

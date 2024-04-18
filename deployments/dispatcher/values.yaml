@@ -4,11 +4,6 @@ jobNamespace: default
 modelManagerInternalServerAddr:
 fileManagerInternalServer:
 
-modelStore:
-  enable: false
-  mountPath: /models
-  pvClaimName:
-
 objectStore:
   s3:
     endpointUrl:
@@ -40,7 +35,6 @@ debug:
   autoMigrate: false
   kubeconfigPath:
   useFakeJob: false
-  huggingFaceAccessToken:
 
 replicaCount: 1
 

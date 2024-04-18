@@ -37,15 +37,6 @@ type DebugConfig struct {
 	Standalone     bool   `yaml:"standalone"`
 	SqlitePath     string `yaml:"sqlitePath"`
 	UseFakeJob     bool   `yaml:"useFakeJob"`
-
-	HuggingFaceAccessToken string `yaml:"huggingFaceAccessToken"`
-}
-
-// ModelStoreConfig is the model store configuration.
-type ModelStoreConfig struct {
-	Enable      bool   `yaml:"enable"`
-	MountPath   string `yaml:"mountPath"`
-	PVClaimName string `yaml:"pvClaimName"`
 }
 
 // KubernetesManagerConfig is the Kubernetes manager configuration.
@@ -65,10 +56,6 @@ type Config struct {
 
 	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
 	FileManagerInternalServerAddr  string `yaml:"fileManagerInternalServerAddr"`
-
-	// TODO(kenji): Remove this. This was created to share models between job-manager-dispatcher
-	// and inference-manager-engine, but models should be stored in an object store instead.
-	ModelStore ModelStoreConfig `yaml:"modelStore"`
 
 	Database db.Config `yaml:"database"`
 

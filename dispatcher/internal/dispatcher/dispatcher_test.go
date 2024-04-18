@@ -35,8 +35,9 @@ func TestProcessQueuedJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	pc := &noopPodCreator{}
-	d := New(st, pc, &NoopPreProcessor{}, time.Second)
+	jc := &noopJobCreator{}
+	pp := &NoopPreProcessor{}
+	d := New(st, jc, pp, time.Second)
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
@@ -51,14 +52,14 @@ func TestProcessQueuedJobs(t *testing.T) {
 		assert.Equal(t, want, got.State)
 	}
 	const wantCounter = 2
-	assert.Equal(t, wantCounter, pc.counter)
+	assert.Equal(t, wantCounter, jc.counter)
 }
 
-type noopPodCreator struct {
+type noopJobCreator struct {
 	counter int
 }
 
-func (n *noopPodCreator) createJob(ctx context.Context, job *store.Job) error {
+func (n *noopJobCreator) createJob(ctx context.Context, job *store.Job, presult *PreProcessResult) error {
 	n.counter++
 	return nil
 }

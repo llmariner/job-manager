@@ -2,14 +2,16 @@ package dispatcher
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
-	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -27,6 +29,7 @@ type modelClient interface {
 
 type s3Client interface {
 	GeneratePresignedURL(key string, expire time.Duration) (string, error)
+	ListObjectsPages(prefix string, f func(page *s3.ListObjectsOutput, lastPage bool) bool) error
 }
 
 // NewPreProcessor creates a new pre-processor.
@@ -51,7 +54,7 @@ type PreProcessor struct {
 
 // PreProcessResult is the result of the pre-process.
 type PreProcessResult struct {
-	BaseModelURL    string
+	BaseModelURLs   map[string]string
 	TrainingFileURL string
 
 	OutputModelID  string
@@ -60,8 +63,10 @@ type PreProcessResult struct {
 
 // Process runs the pre-process.
 func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcessResult, error) {
-	var jobProto v1.Job
-	if err := proto.Unmarshal(job.Message, &jobProto); err != nil {
+	log := ctrl.LoggerFrom(ctx)
+
+	jobProto, err := job.V1Job()
+	if err != nil {
 		return nil, err
 	}
 
@@ -69,22 +74,42 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 		Id: jobProto.Model,
 	})
 	if err != nil {
+		return nil, fmt.Errorf("get base model path: %s", err)
+	}
+	// Find all files under the path and generate pre-signed URLs for all of them.
+	var paths []string
+	f := func(page *s3.ListObjectsOutput, lastPage bool) bool {
+		for _, obj := range page.Contents {
+			paths = append(paths, *obj.Key)
+		}
+		return lastPage
+	}
+	if err := p.s3Client.ListObjectsPages(mresp.Path, f); err != nil {
 		return nil, err
 	}
-	baseModelURL, err := p.s3Client.GeneratePresignedURL(mresp.Path, preSignedURLExpire)
-	if err != nil {
-		return nil, err
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("no files found under %s", mresp.Path)
+	}
+	log.Info(fmt.Sprintf("Found %d objects under %s", len(paths), mresp.Path))
+
+	baseModelURLs := map[string]string{}
+	for _, path := range paths {
+		url, err := p.s3Client.GeneratePresignedURL(path, preSignedURLExpire)
+		if err != nil {
+			return nil, fmt.Errorf("generate presigned url: %s", err)
+		}
+		baseModelURLs[strings.TrimPrefix(path, mresp.Path+"/")] = url
 	}
 
 	fresp, err := p.fileClient.GetFilePath(ctx, &fv1.GetFilePathRequest{
 		Id: jobProto.TrainingFile,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get file path: %s", err)
 	}
 	trainingFileURL, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("generate presigned url: %s", err)
 	}
 
 	rresp, err := p.modelClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
@@ -93,17 +118,17 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 		TenantId:  job.TenantID,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("register model: %s", err)
 	}
 	outputModelID := rresp.Id
 
 	outputModelURL, err := p.s3Client.GeneratePresignedURL(rresp.Path, preSignedURLExpire)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("generate presigned url: %s", err)
 	}
 
 	return &PreProcessResult{
-		BaseModelURL:    baseModelURL,
+		BaseModelURLs:   baseModelURLs,
 		TrainingFileURL: trainingFileURL,
 
 		OutputModelID:  outputModelID,

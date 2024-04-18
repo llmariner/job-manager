@@ -7,6 +7,7 @@ import (
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type modelPublishClient interface {
@@ -29,10 +30,13 @@ type PostProcessor struct {
 
 // Process processes the job.
 func (p *PostProcessor) Process(ctx context.Context, job *store.Job) error {
+	log := ctrl.LoggerFrom(ctx)
+
 	if job.OutputModelID == "" {
 		return fmt.Errorf("output model ID is not populated")
 	}
 
+	log.Info("Publishing the model")
 	if _, err := p.modelClient.PublishModel(ctx, &mv1.PublishModelRequest{
 		Id:       job.OutputModelID,
 		TenantId: job.TenantID,
