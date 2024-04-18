@@ -90,7 +90,7 @@ jobs:
     - name: Set up Helm
       uses: Azure/setup-helm@v4
     - name: Fetch index.yaml
-      run: curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/charts/index.yaml
+      run: curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/index.yaml
     - name: Set up charts directory
       run: mkdir charts
     - name: build dispatcher helm chart
