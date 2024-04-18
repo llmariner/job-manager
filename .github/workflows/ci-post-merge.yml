@@ -89,15 +89,14 @@ jobs:
         aws-region: us-west-2
     - name: Set up Helm
       uses: Azure/setup-helm@v4
-    - name: Fetch index.yaml
-      run: curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/index.yaml
     - name: Set up charts directory
       run: mkdir charts
     - name: build dispatcher helm chart
       run: helm package --version ${{ needs.update-tag.outputs.new_tag }} --destination ./charts ./deployments/dispatcher
     - name: build server helm chart
       run: helm package --version ${{ needs.update-tag.outputs.new_tag }} --destination ./charts ./deployments/server
-    - name: build index.yaml
-      run: helm repo index charts --merge index.yaml --url http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/
-    - name: upload charts
-      run: aws s3 sync ./charts s3://llm-operator-charts
+    - name: Rebuild index.yaml and push
+      run: |
+        curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/charts/index.yaml
+        helm repo index charts --merge index.yaml --url http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/
+        aws s3 sync ./charts s3://llm-operator-charts
