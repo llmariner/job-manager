@@ -14,6 +14,7 @@ spec:
       labels:
         {{- include "job-manager-server.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "job-manager-server.serviceAccountName" . }}
       containers:
       - name: job-manager-server
         image: "{{ .Values.image.repository }}:{{ .Values.version | default (printf "server-%s" .Chart.Version)}}"
