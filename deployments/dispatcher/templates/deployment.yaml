@@ -27,12 +27,6 @@ spec:
         - name: config
           mountPath: /etc/config
           readOnly: true
-        {{- with .Values.modelStore }}
-        {{- if .enable }}
-        - mountPath: {{ .mountPath }}
-          name: model-store
-        {{- end }}
-        {{- end }}
         env:
         - name: {{ .Values.database.passwordEnvName }}
           valueFrom:
@@ -57,10 +51,3 @@ spec:
       - name: config
         configMap:
           name: {{ include "job-manager-dispatcher.fullname" . }}
-      {{- with .Values.modelStore }}
-      {{- if .enable }}
-      - name: model-store
-        persistentVolumeClaim:
-          claimName: {{ .pvClaimName }}
-      {{- end }}
-      {{- end }}
