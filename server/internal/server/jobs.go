@@ -52,11 +52,12 @@ func (s *S) CreateJob(
 	jobID := newJobID()
 
 	jobProto := &v1.Job{
-		Id:        jobID,
-		CreatedAt: time.Now().UTC().Unix(),
-		Model:     req.Model,
-		Object:    "fine_tuning.job",
-		Status:    string(store.JobStateQueued),
+		Id:           jobID,
+		CreatedAt:    time.Now().UTC().Unix(),
+		Model:        req.Model,
+		TrainingFile: req.TrainingFile,
+		Object:       "fine_tuning.job",
+		Status:       string(store.JobStateQueued),
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
