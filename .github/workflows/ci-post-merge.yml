@@ -68,12 +68,6 @@ jobs:
         file: ./build/server/Dockerfile
         push: true
         tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:server-${{ needs.update-tag.outputs.new_tag }}
-    - name: Build, tag, and push fine-tuning to Amazon ECR
-      uses: docker/build-push-action@v5
-      with:
-        context: ./build/experiments/fine-tuning
-        push: true
-        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fine-tuning-${{ needs.update-tag.outputs.new_tag }}
 
   publish-helm-chart:
     runs-on: ubuntu-latest
