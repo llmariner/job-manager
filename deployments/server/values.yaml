@@ -21,12 +21,10 @@ debug:
 
 replicaCount: 1
 image:
-  repository: llm-operator/job-manager-server
-  # TODO(kenji): Change this to IfNotPresent. Currently we set the pullPolicy
-  # to Never as it is required to use a loaded image in a Kind cluster.
-  pullPolicy: Never
+  repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager
+  pullPolicy: IfNotPresent
 
 ingress:
   ingressClassName:
 
-version: latest
+version:
