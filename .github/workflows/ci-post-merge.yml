@@ -97,6 +97,6 @@ jobs:
       run: helm package --version ${{ needs.update-tag.outputs.new_tag }} --destination ./charts ./deployments/server
     - name: Rebuild index.yaml and push
       run: |
-        curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/charts/index.yaml
+        curl -o index.yaml http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/index.yaml
         helm repo index charts --merge index.yaml --url http://llm-operator-charts.s3-website-us-west-2.amazonaws.com/
         aws s3 sync ./charts s3://llm-operator-charts
