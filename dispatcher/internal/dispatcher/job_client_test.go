@@ -14,32 +14,57 @@ import (
 )
 
 func TestJobCmd(t *testing.T) {
-	kc := fake.NewFakeClient(&batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "job-job-id0",
-			Namespace: "default",
+	tcs := []struct {
+		name       string
+		useFakeJob bool
+		goldenFile string
+	}{
+		{
+			name:       "non-fake",
+			useFakeJob: false,
+			goldenFile: "testdata/command.golden",
 		},
-	})
-
-	jc := NewJobClient(kc, "default", false)
-
-	jobProto := &v1.Job{
-		Model: "model-id",
+		{
+			name:       "fake",
+			useFakeJob: true,
+			goldenFile: "testdata/command.use_fake.golden",
+		},
 	}
-	b, err := proto.Marshal(jobProto)
-	assert.NoError(t, err)
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
 
-	job := &store.Job{
-		JobID:   "job-id",
-		Message: b,
-	}
-	presult := &PreProcessResult{
-		BaseModelURLs: map[string]string{"path": "config.json"},
-	}
-	got, err := jc.cmd(job, presult)
-	assert.NoError(t, err)
+			kc := fake.NewFakeClient(&batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "job-job-id0",
+					Namespace: "default",
+				},
+			})
 
-	want, err := os.ReadFile("testdata/command.golden")
-	assert.NoError(t, err)
-	assert.Equal(t, string(want), got)
+			jc := NewJobClient(kc, "default", tc.useFakeJob)
+
+			jobProto := &v1.Job{
+				Model: "model-id",
+			}
+			b, err := proto.Marshal(jobProto)
+			assert.NoError(t, err)
+
+			job := &store.Job{
+				JobID:   "job-id",
+				Message: b,
+			}
+			presult := &PreProcessResult{
+				BaseModelURLs: map[string]string{
+					"config.json": "https://example.com/config.json",
+				},
+				TrainingFileURL: "https://example.com/training-file",
+				OutputModelURL:  "https://example.com/output-model",
+			}
+			got, err := jc.cmd(job, presult)
+			assert.NoError(t, err)
+
+			want, err := os.ReadFile(tc.goldenFile)
+			assert.NoError(t, err)
+			assert.Equal(t, string(want), got)
+		})
+	}
 }

@@ -121,10 +121,6 @@ func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
 }
 
 func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, error) {
-	if p.useFakeJob {
-		return "mkdir /models/adapter; cp ./ggml-adapter-model.bin /models/adapter/ggml-adapter-model.bin", nil
-	}
-
 	jobProto, err := jobData.V1Job()
 	if err != nil {
 		return "", err
@@ -135,11 +131,16 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		BaseModelName   string
 		BaseModelURLs   map[string]string
 		TrainingFileURL string
+		OutputModelURL  string
+		UseFakeJob      bool
 	}
 	params := Params{
 		BaseModelName:   jobProto.Model,
 		BaseModelURLs:   presult.BaseModelURLs,
 		TrainingFileURL: presult.TrainingFileURL,
+		OutputModelURL:  presult.OutputModelURL,
+
+		UseFakeJob: p.useFakeJob,
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {

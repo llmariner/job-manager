@@ -1,9 +1,11 @@
 package s3
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
@@ -32,15 +34,33 @@ type Client struct {
 	bucket string
 }
 
-// GeneratePresignedURL generates a pre-signed URL.
-//
-// TODO(kenji): Limit the presigned URL capability by changing the credentials to be used.
-func (c *Client) GeneratePresignedURL(key string, expire time.Duration) (string, error) {
-	req, _ := c.svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(c.bucket),
-		Key:    aws.String(key),
-	})
+// RequestType is the type of the request.
+type RequestType string
 
+const (
+	// RequestTypeGetObject is the type for getting an object.
+	RequestTypeGetObject RequestType = "GetObject"
+	// RequestTypePutObject is the type for putting an object.
+	RequestTypePutObject RequestType = "PutObject"
+)
+
+// GeneratePresignedURL generates a pre-signed URL.
+func (c *Client) GeneratePresignedURL(key string, expire time.Duration, requestType RequestType) (string, error) {
+	var req *request.Request
+	switch requestType {
+	case RequestTypeGetObject:
+		req, _ = c.svc.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: aws.String(c.bucket),
+			Key:    aws.String(key),
+		})
+	case RequestTypePutObject:
+		req, _ = c.svc.PutObjectRequest(&s3.PutObjectInput{
+			Bucket: aws.String(c.bucket),
+			Key:    aws.String(key),
+		})
+	default:
+		return "", fmt.Errorf("unknown request type: %s", requestType)
+	}
 	url, err := req.Presign(expire)
 	if err != nil {
 		return "", err
