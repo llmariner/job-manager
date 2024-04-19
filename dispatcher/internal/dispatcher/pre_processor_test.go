@@ -10,6 +10,7 @@ import (
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -91,7 +92,7 @@ func (f *fakeModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseM
 type fakeS3Client struct {
 }
 
-func (c *fakeS3Client) GeneratePresignedURL(key string, expire time.Duration) (string, error) {
+func (c *fakeS3Client) GeneratePresignedURL(key string, expire time.Duration, requestType is3.RequestType) (string, error) {
 	return fmt.Sprintf("presigned-%s", key), nil
 }
 

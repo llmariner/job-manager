@@ -6,7 +6,7 @@ mkdir base-model
 
 {{ range $path, $url := .BaseModelURLs }}
 mkdir -p $(dirname base-model/{{ $path }})
-curl -o base-model/{{ $path }} "{{ $url }}"
+curl --output base-model/{{ $path }} "{{ $url }}"
 {{ end }}
 
 mkdir dataset/
@@ -14,6 +14,9 @@ curl -o dataset/training.json "{{.TrainingFileURL}}"
 
 mkdir output
 
+{{if .UseFakeJob }}
+cp ./ggml-adapter-model.bin ./output/
+{{ else }}
 accelerate launch \
   --config_file=./single_gpu.yaml \
   --num_processes=1 \
@@ -33,5 +36,6 @@ accelerate launch \
   --output_dir=./output
 
 python ./convert-lora-to-ggml.py ./output
+{{ end }}
 
-# cp ./output/ggml-adapter-model.bin /models/adapter/
+curl --request PUT --upload-file output/ggml-adapter-model.bin "{{ .OutputModelURL }}"

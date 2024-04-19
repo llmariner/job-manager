@@ -5,14 +5,15 @@ set -x
 mkdir base-model
 
 
-mkdir -p $(dirname base-model/path)
-curl -o base-model/path "config.json"
+mkdir -p $(dirname base-model/config.json)
+curl --output base-model/config.json "https://example.com/config.json"
 
 
 mkdir dataset/
-curl -o dataset/training.json ""
+curl -o dataset/training.json "https://example.com/training-file"
 
 mkdir output
+
 
 accelerate launch \
   --config_file=./single_gpu.yaml \
@@ -34,4 +35,5 @@ accelerate launch \
 
 python ./convert-lora-to-ggml.py ./output
 
-# cp ./output/ggml-adapter-model.bin /models/adapter/
+
+curl --request PUT --upload-file output/ggml-adapter-model.bin "https://example.com/output-model"

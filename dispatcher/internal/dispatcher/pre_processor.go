@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,7 +29,7 @@ type modelClient interface {
 }
 
 type s3Client interface {
-	GeneratePresignedURL(key string, expire time.Duration) (string, error)
+	GeneratePresignedURL(key string, expire time.Duration, requestType is3.RequestType) (string, error)
 	ListObjectsPages(prefix string, f func(page *s3.ListObjectsOutput, lastPage bool) bool) error
 }
 
@@ -94,7 +95,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 
 	baseModelURLs := map[string]string{}
 	for _, path := range paths {
-		url, err := p.s3Client.GeneratePresignedURL(path, preSignedURLExpire)
+		url, err := p.s3Client.GeneratePresignedURL(path, preSignedURLExpire, is3.RequestTypeGetObject)
 		if err != nil {
 			return nil, fmt.Errorf("generate presigned url: %s", err)
 		}
@@ -107,7 +108,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	if err != nil {
 		return nil, fmt.Errorf("get file path: %s", err)
 	}
-	trainingFileURL, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire)
+	trainingFileURL, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return nil, fmt.Errorf("generate presigned url: %s", err)
 	}
@@ -122,7 +123,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	}
 	outputModelID := rresp.Id
 
-	outputModelURL, err := p.s3Client.GeneratePresignedURL(rresp.Path, preSignedURLExpire)
+	outputModelURL, err := p.s3Client.GeneratePresignedURL(rresp.Path, preSignedURLExpire, is3.RequestTypePutObject)
 	if err != nil {
 		return nil, fmt.Errorf("generate presigned url: %s", err)
 	}
@@ -130,8 +131,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	return &PreProcessResult{
 		BaseModelURLs:   baseModelURLs,
 		TrainingFileURL: trainingFileURL,
-
-		OutputModelID:  outputModelID,
-		OutputModelURL: outputModelURL,
+		OutputModelID:   outputModelID,
+		OutputModelURL:  outputModelURL,
 	}, nil
 }
