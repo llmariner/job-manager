@@ -1,10 +1,11 @@
 set -euo pipefail
+set -x
 
 # Download the model and the training file.
 mkdir base-model
 
 {{ range $path, $url := .BaseModelURLs }}
-mkdir -p $(dirname base-model/base{{ $path }})
+mkdir -p $(dirname base-model/{{ $path }})
 curl -o base-model/{{ $path }} "{{ $url }}"
 {{ end }}
 
@@ -29,7 +30,8 @@ accelerate launch \
   --lora_alpha=32 \
   --lora_target_modules q_proj k_proj v_proj o_proj \
   --load_in_4bit \
-  --output_dir=./output &&
-python ./convert-lora-to-ggml.py ./output &&
+  --output_dir=./output
+
+python ./convert-lora-to-ggml.py ./output
 
 # cp ./output/ggml-adapter-model.bin /models/adapter/
