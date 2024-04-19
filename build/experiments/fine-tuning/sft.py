@@ -99,9 +99,9 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    raw_datasets = load_dataset(args.dataset_name)
-    train_dataset = raw_datasets["train"]
-    eval_dataset = raw_datasets["test"]
+    train_dataset = load_dataset("json", data_files=args.dataset_name, split="train")
+    # raw_datasets = load_dataset(args.dataset_name)
+    # eval_dataset = raw_datasets["test"]
 
     ################
     # Training
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         model_init_kwargs=model_kwargs,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        #eval_dataset=eval_dataset,
         dataset_text_field=args.dataset_text_field,
         max_seq_length=args.max_seq_length,
         tokenizer=tokenizer,
