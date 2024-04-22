@@ -43,7 +43,7 @@ serviceAccount:
   serviceAccountName: job-manager-dispatcher
 
 image:
-  repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager
+  repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-dispatcher
   pullPolicy: IfNotPresent
 
 version:
