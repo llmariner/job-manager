@@ -6,6 +6,11 @@ on:
         description: 'Image tag'
         required: true
         type: string
+      image:
+        description: 'Image name'
+        required: true
+        type: string
+        default: fine-tuning
 
 permissions:
   # This is necessary for AWS credentials. See:
@@ -30,9 +35,9 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
       with:
         registry-type: public
-    - name: Build, tag, and push fine-tuning to Amazon ECR
+    - name: Build, tag, and push ${{ inputs.image }} to Amazon ECR
       uses: docker/build-push-action@v5
       with:
-        context: ./build/experiments/fine-tuning
+        context: ./build/experiments/${{ inputs.image }}
         push: true
-        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fine-tuning-${{ inputs.tag }}
+        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:${{ inputs.image }}-${{ inputs.tag }}
