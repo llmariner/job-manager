@@ -53,6 +53,7 @@ type KubernetesManagerConfig struct {
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
 	JobNamespace       string        `yaml:"jobNamespace"`
+	JobVersion         string        `yaml:"jobVersion"`
 
 	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
 	FileManagerInternalServerAddr  string `yaml:"fileManagerInternalServerAddr"`

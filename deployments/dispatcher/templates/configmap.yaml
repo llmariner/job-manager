@@ -8,6 +8,7 @@ data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
     jobNamespace: {{ .Values.jobNamespace }}
+    jobVersion: {{ .Values.jobVersion }}
     modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
     fileManagerInternalServerAddr: {{ .Values.fileManagerInternalServerAddr }}
     objectStore:

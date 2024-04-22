@@ -40,7 +40,7 @@ func TestJobCmd(t *testing.T) {
 				},
 			})
 
-			jc := NewJobClient(kc, "default", tc.useFakeJob)
+			jc := NewJobClient(kc, "default", "test", tc.useFakeJob)
 
 			jobProto := &v1.Job{
 				Model: "model-id",
