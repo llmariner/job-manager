@@ -40,4 +40,4 @@ jobs:
       with:
         context: ./build/experiments/${{ inputs.image }}
         push: true
-        tags: public.ecr.aws/v8n3t7y5/llm-operator/job-manager:${{ inputs.image }}-${{ inputs.tag }}
+        tags: public.ecr.aws/v8n3t7y5/llm-operator/${{ inputs.image }}:${{ inputs.tag }}

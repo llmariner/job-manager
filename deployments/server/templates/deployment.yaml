@@ -17,7 +17,7 @@ spec:
       serviceAccountName: {{ include "job-manager-server.serviceAccountName" . }}
       containers:
       - name: job-manager-server
-        image: "{{ .Values.image.repository }}:{{ .Values.version | default (printf "server-%s" .Chart.Version)}}"
+        image: "{{ .Values.image.repository }}:{{ default .Chart.Version .Values.version }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
         - run
