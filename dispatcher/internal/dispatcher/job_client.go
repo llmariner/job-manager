@@ -111,9 +111,9 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 
 func (p *JobClient) image() string {
 	if p.useFakeJob {
-		return "public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fake-job-" + p.jobVersion
+		return "public.ecr.aws/v8n3t7y5/llm-operator/fake-job:" + p.jobVersion
 	}
-	return "public.ecr.aws/v8n3t7y5/llm-operator/job-manager:fine-tuning-" + p.jobVersion
+	return "public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning:" + p.jobVersion
 }
 
 func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
