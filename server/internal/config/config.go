@@ -21,6 +21,13 @@ type Config struct {
 	JobNamespace string `yaml:"jobNamespace"`
 
 	Debug DebugConfig `yaml:"debug"`
+
+	AuthConfig AuthConfig `yaml:"auth"`
+}
+
+type AuthConfig struct {
+	OIDCIssuerURL string `yaml:"oidcIssuerURL"`
+	OIDCClientID  string `yaml:"oidcClientID"`
 }
 
 // DebugConfig is the debug configuration.

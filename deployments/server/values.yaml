@@ -20,6 +20,10 @@ jobNamespace: default
 debug:
   kubeconfigPath:
 
+auth:           
+  oidcIssuerURL: http://dex-server:5556/dex
+  oidcClientID: llm-operator
+
 replicaCount: 1
 
 serviceAccount:

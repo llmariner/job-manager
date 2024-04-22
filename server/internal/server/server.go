@@ -54,10 +54,16 @@ type S struct {
 }
 
 // Run starts the gRPC server.
-func (s *S) Run(port int) error {
+func (s *S) Run(ctx context.Context, port int, issuerURL, clientID string) error {
 	log.Printf("Starting server on port %d\n", port)
 
-	grpcServer := grpc.NewServer()
+	ai, err := newAuthInterceptor(ctx, issuerURL, clientID)
+	if err != nil {
+		return err
+	}
+	opt := grpc.ChainUnaryInterceptor(ai.Unary())
+
+	grpcServer := grpc.NewServer(opt)
 	v1.RegisterFineTuningServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 
