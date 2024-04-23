@@ -126,17 +126,19 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 
 	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 	type Params struct {
-		BaseModelName   string
-		BaseModelURLs   map[string]string
-		TrainingFileURL string
-		OutputModelURL  string
-		UseFakeJob      bool
+		BaseModelName     string
+		BaseModelURLs     map[string]string
+		TrainingFileURL   string
+		ValidationFileURL string
+		OutputModelURL    string
+		UseFakeJob        bool
 	}
 	params := Params{
-		BaseModelName:   jobProto.Model,
-		BaseModelURLs:   presult.BaseModelURLs,
-		TrainingFileURL: presult.TrainingFileURL,
-		OutputModelURL:  presult.OutputModelURL,
+		BaseModelName:     jobProto.Model,
+		BaseModelURLs:     presult.BaseModelURLs,
+		TrainingFileURL:   presult.TrainingFileURL,
+		ValidationFileURL: presult.ValidationFileURL,
+		OutputModelURL:    presult.OutputModelURL,
 
 		UseFakeJob: p.useFakeJob,
 	}

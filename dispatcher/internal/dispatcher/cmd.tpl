@@ -10,7 +10,10 @@ curl --output base-model/{{ $path }} "{{ $url }}"
 {{ end }}
 
 mkdir dataset/
-curl -o dataset/training.json "{{.TrainingFileURL}}"
+curl -o dataset/train.json "{{.TrainingFileURL }}"
+{{if .ValidationFileURL }}
+curl -o dataset/test.json "{{.ValidationFileURL }}"
+{{ end }}
 
 mkdir output
 
@@ -22,7 +25,7 @@ accelerate launch \
   --num_processes=1 \
   ./sft.py \
   --model_name=./base-model \
-  --dataset_name=dataset/training.json \
+  --dataset_name=dataset \
   --per_device_train_batch_size=2 \
   --gradient_accumulation_steps=1 \
   --max_steps=100 \

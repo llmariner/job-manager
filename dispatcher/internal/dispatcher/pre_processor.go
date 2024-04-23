@@ -55,8 +55,9 @@ type PreProcessor struct {
 
 // PreProcessResult is the result of the pre-process.
 type PreProcessResult struct {
-	BaseModelURLs   map[string]string
-	TrainingFileURL string
+	BaseModelURLs     map[string]string
+	TrainingFileURL   string
+	ValidationFileURL string
 
 	OutputModelID  string
 	OutputModelURL string
@@ -102,15 +103,16 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 		baseModelURLs[strings.TrimPrefix(path, mresp.Path+"/")] = url
 	}
 
-	fresp, err := p.fileClient.GetFilePath(ctx, &fv1.GetFilePathRequest{
-		Id: jobProto.TrainingFile,
-	})
+	trainingFileURL, err := p.getPresignedURLForFile(ctx, jobProto.TrainingFile)
 	if err != nil {
-		return nil, fmt.Errorf("get file path: %s", err)
+		return nil, err
 	}
-	trainingFileURL, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
-	if err != nil {
-		return nil, fmt.Errorf("generate presigned url: %s", err)
+	var validationFileURL string
+	if f := jobProto.ValidationFile; f != "" {
+		validationFileURL, err = p.getPresignedURLForFile(ctx, f)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rresp, err := p.modelClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
@@ -129,9 +131,24 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	}
 
 	return &PreProcessResult{
-		BaseModelURLs:   baseModelURLs,
-		TrainingFileURL: trainingFileURL,
-		OutputModelID:   outputModelID,
-		OutputModelURL:  outputModelURL,
+		BaseModelURLs:     baseModelURLs,
+		TrainingFileURL:   trainingFileURL,
+		ValidationFileURL: validationFileURL,
+		OutputModelID:     outputModelID,
+		OutputModelURL:    outputModelURL,
 	}, nil
+}
+
+func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string) (string, error) {
+	fresp, err := p.fileClient.GetFilePath(ctx, &fv1.GetFilePathRequest{
+		Id: fileID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("get file path: %s", err)
+	}
+	url, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
+	if err != nil {
+		return "", fmt.Errorf("generate presigned url: %s", err)
+	}
+	return url, nil
 }
