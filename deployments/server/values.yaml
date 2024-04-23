@@ -21,7 +21,7 @@ debug:
   kubeconfigPath:
 
 auth:           
-  oidcIssuerURL: http://dex-server:5556/dex
+  oidcIssuerUrl: http://kong-kong-proxy.kong/dex
   oidcClientID: llm-operator
 
 replicaCount: 1

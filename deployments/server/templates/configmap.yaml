@@ -20,5 +20,5 @@ data:
     debug:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
     auth:
-      oidcIssuerURL: {{ .Values.auth.oidcIssuerURL }}
+      oidcIssuerUrl: {{ .Values.auth.oidcIssuerUrl }}
       oidcClientID: {{ .Values.auth.oidcClientID }}

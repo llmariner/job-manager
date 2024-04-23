@@ -21,10 +21,12 @@ func newAuthInterceptor(ctx context.Context, issuerURL, clientID string) (*AuthI
 	}, nil
 }
 
+// AuthInterceptor is an authentication interceptor.
 type AuthInterceptor struct {
 	verifier *oidc.IDTokenVerifier
 }
 
+// Unary returns a unary server interceptor.
 func (a *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		md, ok := metadata.FromIncomingContext(ctx)
