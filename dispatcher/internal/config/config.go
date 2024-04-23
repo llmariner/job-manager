@@ -7,6 +7,7 @@ import (
 
 	"github.com/llm-operator/job-manager/common/pkg/db"
 	"gopkg.in/yaml.v3"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // S3Config is the S3 configuration.
@@ -51,8 +52,9 @@ type KubernetesManagerConfig struct {
 
 // JobConfig is the job configuration.
 type JobConfig struct {
-	Image   string `yaml:"image"`
-	Version string `yaml:"version"`
+	Image           string            `yaml:"image"`
+	Version         string            `yaml:"version"`
+	ImagePullPolicy corev1.PullPolicy `yaml:"imagePullPolicy"`
 }
 
 // Validate validates the job configuration.
@@ -63,6 +65,14 @@ func (c *JobConfig) Validate() error {
 	if c.Version == "" {
 		return fmt.Errorf("version must be set")
 	}
+	p := c.ImagePullPolicy
+	if p == "" {
+		return fmt.Errorf("image pull policy must be set")
+	}
+	if p != corev1.PullAlways && p != corev1.PullIfNotPresent && p != corev1.PullNever {
+		return fmt.Errorf("invalid image pull policy")
+	}
+
 	return nil
 }
 
