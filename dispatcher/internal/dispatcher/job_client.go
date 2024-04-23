@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"text/template"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -36,16 +38,13 @@ var cmdTemplate string
 func NewJobClient(
 	k8sClient client.Client,
 	namespace string,
-	jobVersion string,
+	jobConfig config.JobConfig,
 	useFakeJob bool,
 ) *JobClient {
-	if jobVersion == "" {
-		jobVersion = "latest"
-	}
 	return &JobClient{
 		k8sClient:  k8sClient,
 		namespace:  namespace,
-		jobVersion: jobVersion,
+		jobConfig:  jobConfig,
 		useFakeJob: useFakeJob,
 	}
 }
@@ -55,8 +54,8 @@ type JobClient struct {
 	k8sClient client.Client
 	// TODO(kenji): Be able to specify the namespace per tenant.
 	namespace  string
+	jobConfig  config.JobConfig
 	useFakeJob bool
-	jobVersion string
 }
 
 func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
@@ -94,7 +93,7 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 
 	container := corev1apply.Container().
 		WithName("main").
-		WithImage(p.image()).
+		WithImage(fmt.Sprintf("%s:%s", p.jobConfig.Image, p.jobConfig.Version)).
 		WithImagePullPolicy(corev1.PullNever).
 		WithCommand("/bin/bash", "-c", cmd).
 		WithResources(p.res())
@@ -107,13 +106,6 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 		WithTemplate(corev1apply.PodTemplateSpec().
 			WithSpec(podSpec))
 	return jobSpec, nil
-}
-
-func (p *JobClient) image() string {
-	if p.useFakeJob {
-		return "public.ecr.aws/v8n3t7y5/llm-operator/fake-job:" + p.jobVersion
-	}
-	return "public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning:" + p.jobVersion
 }
 
 func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {

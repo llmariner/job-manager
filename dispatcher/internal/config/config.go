@@ -49,11 +49,29 @@ type KubernetesManagerConfig struct {
 	PprofBindAddress   string `yaml:"pprofBindAddress"`
 }
 
+// JobConfig is the job configuration.
+type JobConfig struct {
+	Image   string `yaml:"image"`
+	Version string `yaml:"version"`
+}
+
+// Validate validates the job configuration.
+func (c *JobConfig) Validate() error {
+	if c.Image == "" {
+		return fmt.Errorf("image must be set")
+	}
+	if c.Version == "" {
+		return fmt.Errorf("version must be set")
+	}
+	return nil
+}
+
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
 	JobNamespace       string        `yaml:"jobNamespace"`
-	JobVersion         string        `yaml:"jobVersion"`
+
+	Job JobConfig `yaml:"job"`
 
 	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
 	FileManagerInternalServerAddr  string `yaml:"fileManagerInternalServerAddr"`
@@ -75,6 +93,10 @@ func (c *Config) Validate() error {
 	if c.JobNamespace == "" {
 		return fmt.Errorf("job namespace must be set")
 	}
+	if err := c.Job.Validate(); err != nil {
+		return fmt.Errorf("job: %s", err)
+	}
+
 	if c.Debug.Standalone {
 		if c.Debug.SqlitePath == "" {
 			return fmt.Errorf("sqlite path must be set")

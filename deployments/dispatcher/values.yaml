@@ -1,6 +1,8 @@
 jobPollingInterval: 10s
 jobNamespace: default
-jobVersion:
+job:
+  image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
+  version:
 
 modelManagerInternalServerAddr:
 fileManagerInternalServer:
@@ -33,7 +35,6 @@ kubernetesManager:
   pprofBindAddress:
 
 debug:
-  autoMigrate: false
   kubeconfigPath:
   useFakeJob: false
 

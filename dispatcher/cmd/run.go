@@ -87,7 +87,7 @@ func run(ctx context.Context, c *config.Config) error {
 	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
 		c.JobNamespace,
-		c.JobVersion,
+		c.Job,
 		c.Debug.UseFakeJob,
 	)
 
