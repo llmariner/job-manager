@@ -13,6 +13,7 @@ import (
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/server"
+	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -76,8 +77,13 @@ func run(ctx context.Context, c *config.Config) error {
 	if err != nil {
 		return err
 	}
-
 	fclient := fv1.NewFilesServiceClient(conn)
+
+	conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	mclient := mv1.NewModelsInternalServiceClient(conn)
 
 	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
 	if err != nil {
@@ -90,7 +96,7 @@ func run(ctx context.Context, c *config.Config) error {
 	k8sJobClient := server.NewK8sJobClient(kubeClient, c.JobNamespace)
 
 	go func() {
-		s := server.New(st, fclient, k8sJobClient)
+		s := server.New(st, fclient, mclient, k8sJobClient)
 		errCh <- s.Run(c.GRPCPort)
 	}()
 

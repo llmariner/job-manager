@@ -2,6 +2,7 @@ grpcPort: 8081
 httpPort: 8080
 
 filelManagerServerAddr:
+modelManagerInternalServerAddr:
 
 database:
   host:
