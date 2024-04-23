@@ -94,7 +94,7 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 	container := corev1apply.Container().
 		WithName("main").
 		WithImage(fmt.Sprintf("%s:%s", p.jobConfig.Image, p.jobConfig.Version)).
-		WithImagePullPolicy(corev1.PullNever).
+		WithImagePullPolicy(p.jobConfig.ImagePullPolicy).
 		WithCommand("/bin/bash", "-c", cmd).
 		WithResources(p.res())
 	podSpec := corev1apply.PodSpec().
