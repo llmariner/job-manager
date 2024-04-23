@@ -7,6 +7,7 @@ import (
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -14,7 +15,10 @@ import (
 )
 
 func TestCreateJob(t *testing.T) {
-	const fileID = "file0"
+	const (
+		fileID  = "file0"
+		modelID = "model0"
+	)
 
 	tcs := []struct {
 		name    string
@@ -24,7 +28,7 @@ func TestCreateJob(t *testing.T) {
 		{
 			name: "success",
 			req: &v1.CreateJobRequest{
-				Model:        "model0",
+				Model:        modelID,
 				TrainingFile: fileID,
 				Suffix:       "suffix0",
 			},
@@ -33,8 +37,17 @@ func TestCreateJob(t *testing.T) {
 		{
 			name: "invalid training file",
 			req: &v1.CreateJobRequest{
-				Model:        "model0",
+				Model:        modelID,
 				TrainingFile: "invalid file ID",
+				Suffix:       "suffix0",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid model",
+			req: &v1.CreateJobRequest{
+				Model:        "invalid model ID",
+				TrainingFile: fileID,
 				Suffix:       "suffix0",
 			},
 			wantErr: true,
@@ -46,9 +59,15 @@ func TestCreateJob(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, &noopFileGetClient{
-				id: fileID,
-			}, nil)
+			srv := New(
+				st,
+				&noopFileGetClient{
+					id: fileID,
+				},
+				&noopModelClient{
+					id: modelID,
+				},
+				nil)
 			resp, err := srv.CreateJob(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -99,7 +118,7 @@ func TestJobCancel(t *testing.T) {
 			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, &noopK8sJobClient{})
+			srv := New(st, nil, nil, &noopK8sJobClient{})
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -117,6 +136,18 @@ func (c *noopFileGetClient) GetFile(ctx context.Context, in *fv1.GetFileRequest,
 	}
 
 	return &fv1.File{}, nil
+}
+
+type noopModelClient struct {
+	id string
+}
+
+func (c *noopModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error) {
+	if in.Id != c.id {
+		return nil, status.Error(codes.NotFound, "model not found")
+	}
+
+	return &mv1.GetBaseModelPathResponse{}, nil
 }
 
 type noopK8sJobClient struct{}

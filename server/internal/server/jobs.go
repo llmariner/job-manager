@@ -9,6 +9,7 @@ import (
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -39,13 +40,23 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.InvalidArgument, "suffix is too long")
 	}
 
-	// TODO(kenji): Check if a specified model exists.
+	if _, err := s.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
+		Id: req.Model,
+	}); err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, status.Errorf(codes.InvalidArgument, "model not found")
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "get base model path: %s", err)
+	}
 
 	// Check if the specified training file exits.
 	// TODO: Pass the authorization token.
 	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
 		Id: req.TrainingFile,
 	}); err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, status.Errorf(codes.InvalidArgument, "training file not found")
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "get file: %s", err)
 	}
 
