@@ -49,26 +49,25 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.InvalidArgument, "get base model path: %s", err)
 	}
 
-	// Check if the specified training file exits.
-	// TODO: Pass the authorization token.
-	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
-		Id: req.TrainingFile,
-	}); err != nil {
-		if status.Code(err) == codes.NotFound {
-			return nil, status.Errorf(codes.InvalidArgument, "training file not found")
+	if err := s.validateFile(ctx, req.TrainingFile); err != nil {
+		return nil, err
+	}
+	if f := req.ValidationFile; f != "" {
+		if err := s.validateFile(ctx, f); err != nil {
+			return nil, err
 		}
-		return nil, status.Errorf(codes.InvalidArgument, "get file: %s", err)
 	}
 
 	jobID := newJobID()
 
 	jobProto := &v1.Job{
-		Id:           jobID,
-		CreatedAt:    time.Now().UTC().Unix(),
-		Model:        req.Model,
-		TrainingFile: req.TrainingFile,
-		Object:       "fine_tuning.job",
-		Status:       string(store.JobStateQueued),
+		Id:             jobID,
+		CreatedAt:      time.Now().UTC().Unix(),
+		Model:          req.Model,
+		TrainingFile:   req.TrainingFile,
+		ValidationFile: req.ValidationFile,
+		Object:         "fine_tuning.job",
+		Status:         string(store.JobStateQueued),
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
@@ -88,6 +87,20 @@ func (s *S) CreateJob(
 	}
 
 	return jobProto, nil
+}
+
+func (s *S) validateFile(ctx context.Context, fileID string) error {
+	// Check if the specified training file exits.
+	// TODO: Pass the authorization token.
+	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
+		Id: fileID,
+	}); err != nil {
+		if status.Code(err) == codes.NotFound {
+			return status.Errorf(codes.InvalidArgument, "file %q not found", fileID)
+		}
+		return status.Errorf(codes.InvalidArgument, "get file: %s", err)
+	}
+	return nil
 }
 
 // ListJobs lists all jobs.

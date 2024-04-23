@@ -16,7 +16,8 @@ import (
 
 func TestCreateJob(t *testing.T) {
 	const (
-		fileID  = "file0"
+		tFileID = "tFile0"
+		vFileID = "vFile0"
 		modelID = "model0"
 	)
 
@@ -29,8 +30,18 @@ func TestCreateJob(t *testing.T) {
 			name: "success",
 			req: &v1.CreateJobRequest{
 				Model:        modelID,
-				TrainingFile: fileID,
+				TrainingFile: tFileID,
 				Suffix:       "suffix0",
+			},
+			wantErr: false,
+		},
+		{
+			name: "success with validation file",
+			req: &v1.CreateJobRequest{
+				Model:          modelID,
+				TrainingFile:   tFileID,
+				ValidationFile: vFileID,
+				Suffix:         "suffix0",
 			},
 			wantErr: false,
 		},
@@ -47,8 +58,18 @@ func TestCreateJob(t *testing.T) {
 			name: "invalid model",
 			req: &v1.CreateJobRequest{
 				Model:        "invalid model ID",
-				TrainingFile: fileID,
+				TrainingFile: tFileID,
 				Suffix:       "suffix0",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalida validation file",
+			req: &v1.CreateJobRequest{
+				Model:          modelID,
+				TrainingFile:   tFileID,
+				ValidationFile: "invalid file ID",
+				Suffix:         "suffix0",
 			},
 			wantErr: true,
 		},
@@ -62,7 +83,10 @@ func TestCreateJob(t *testing.T) {
 			srv := New(
 				st,
 				&noopFileGetClient{
-					id: fileID,
+					ids: map[string]bool{
+						tFileID: true,
+						vFileID: true,
+					},
 				},
 				&noopModelClient{
 					id: modelID,
@@ -127,11 +151,11 @@ func TestJobCancel(t *testing.T) {
 }
 
 type noopFileGetClient struct {
-	id string
+	ids map[string]bool
 }
 
 func (c *noopFileGetClient) GetFile(ctx context.Context, in *fv1.GetFileRequest, opts ...grpc.CallOption) (*fv1.File, error) {
-	if in.Id != c.id {
+	if _, ok := c.ids[in.Id]; !ok {
 		return nil, status.Error(codes.NotFound, "file not found")
 	}
 
