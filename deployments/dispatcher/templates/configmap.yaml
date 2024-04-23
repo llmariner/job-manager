@@ -8,7 +8,9 @@ data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
     jobNamespace: {{ .Values.jobNamespace }}
-    jobVersion: {{ .Values.jobVersion }}
+    job:
+      image: {{ .Values.job.image }}
+      version: {{ .Values.job.version }}
     modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
     fileManagerInternalServerAddr: {{ .Values.fileManagerInternalServerAddr }}
     objectStore:
@@ -28,6 +30,5 @@ data:
       healthBindAddress: {{ .Values.kubernetesManager.healthBindAddress }}
       pprofBindAddress: {{ .Values.kubernetesManager.pprofBindAddress }}
     debug:
-      autoMigrate: {{ .Values.debug.autoMigrate }}
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
       useFakeJob: {{ .Values.debug.useFakeJob }}

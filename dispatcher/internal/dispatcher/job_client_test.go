@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,7 +33,6 @@ func TestJobCmd(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-
 			kc := fake.NewFakeClient(&batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "job-job-id0",
@@ -40,7 +40,7 @@ func TestJobCmd(t *testing.T) {
 				},
 			})
 
-			jc := NewJobClient(kc, "default", "test", tc.useFakeJob)
+			jc := NewJobClient(kc, "default", config.JobConfig{}, tc.useFakeJob)
 
 			jobProto := &v1.Job{
 				Model: "model-id",
