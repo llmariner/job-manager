@@ -36,11 +36,16 @@ var cmdTemplate string
 func NewJobClient(
 	k8sClient client.Client,
 	namespace string,
+	jobVersion string,
 	useFakeJob bool,
 ) *JobClient {
+	if jobVersion == "" {
+		jobVersion = "latest"
+	}
 	return &JobClient{
 		k8sClient:  k8sClient,
 		namespace:  namespace,
+		jobVersion: jobVersion,
 		useFakeJob: useFakeJob,
 	}
 }
@@ -51,6 +56,7 @@ type JobClient struct {
 	// TODO(kenji): Be able to specify the namespace per tenant.
 	namespace  string
 	useFakeJob bool
+	jobVersion string
 }
 
 func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
@@ -105,9 +111,9 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 
 func (p *JobClient) image() string {
 	if p.useFakeJob {
-		return "llm-operator/experiments-fake-job:latest"
+		return "public.ecr.aws/v8n3t7y5/llm-operator/fake-job:" + p.jobVersion
 	}
-	return "llm-operator/experiments-fine-tuning:latest"
+	return "public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning:" + p.jobVersion
 }
 
 func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
