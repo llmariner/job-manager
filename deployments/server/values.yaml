@@ -1,3 +1,17 @@
+global:
+  database:
+    host:
+    port:
+    username:
+    passwordEnvName:
+
+  databaseSecret:
+    name:
+    key:
+
+  ingress:
+    ingressClassName:
+
 grpcPort: 8081
 httpPort: 8080
 
@@ -5,15 +19,7 @@ filelManagerServerAddr:
 modelManagerInternalServerAddr:
 
 database:
-  host:
-  port: 5432
   database: job_manager
-  username:
-  passwordEnvName: DB_PASSWORD
-
-databaseSecret:
-  name:
-  key:
 
 jobNamespace: default
 
@@ -30,7 +36,5 @@ image:
   repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-server
   pullPolicy: IfNotPresent
 
-ingress:
-  ingressClassName:
 
 version:
