@@ -1,3 +1,24 @@
+global:
+  database:
+    host:
+    port:
+    username:
+    passwordEnvName:
+
+  databaseSecret:
+    name:
+    key:
+
+  objectStore:
+    s3:
+      endpointUrl:
+      bucket:
+
+  awsSecret:
+    name:
+    accessKeyIdKey:
+    secretAccessKeyKey:
+
 jobPollingInterval: 10s
 jobNamespace: default
 job:
@@ -8,26 +29,8 @@ job:
 modelManagerInternalServerAddr:
 fileManagerInternalServer:
 
-objectStore:
-  s3:
-    endpointUrl:
-    bucket:
-
-awsSecret:
-  name:
-  accessKeyIdKey:
-  secretAccessKeyKey:
-
 database:
-  host:
-  port: 5432
   database: job_manager
-  username:
-  passwordEnvName: DB_PASSWORD
-
-databaseSecret:
-  name:
-  key:
 
 kubernetesManager:
   enableLeaderElection: false
