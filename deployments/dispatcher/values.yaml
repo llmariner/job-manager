@@ -12,6 +12,7 @@ global:
   objectStore:
     s3:
       endpointUrl:
+      region:
       bucket:
 
   awsSecret:
