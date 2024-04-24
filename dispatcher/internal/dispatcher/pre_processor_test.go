@@ -19,7 +19,10 @@ import (
 
 func TestPreProcess(t *testing.T) {
 	fc := &fakeFileClient{
-		id: "training-file-id",
+		ids: map[string]string{
+			"training-file-id":   "training-file-path",
+			"validation-file-id": "validation-file-path",
+		},
 	}
 	mc := &fakeModelClient{
 		id: "model-id",
@@ -29,8 +32,9 @@ func TestPreProcess(t *testing.T) {
 	p := NewPreProcessor(fc, mc, sc)
 
 	jobProto := &v1.Job{
-		Model:        "model-id",
-		TrainingFile: "training-file-id",
+		Model:          "model-id",
+		TrainingFile:   "training-file-id",
+		ValidationFile: "validation-file-id",
 	}
 	b, err := proto.Marshal(jobProto)
 	assert.NoError(t, err)
@@ -47,24 +51,26 @@ func TestPreProcess(t *testing.T) {
 			"obj1":      "presigned-model-path/obj1",
 			"path/obj2": "presigned-model-path/path/obj2",
 		},
-		TrainingFileURL: "presigned-file-path",
-		OutputModelID:   "generated-model-id",
-		OutputModelURL:  "presigned-generated-model-path",
+		TrainingFileURL:   "presigned-training-file-path",
+		ValidationFileURL: "presigned-validation-file-path",
+		OutputModelID:     "generated-model-id",
+		OutputModelURL:    "presigned-generated-model-path",
 	}
 	assert.Equal(t, want, got)
 }
 
 type fakeFileClient struct {
-	id string
+	ids map[string]string
 }
 
 func (f *fakeFileClient) GetFilePath(ctx context.Context, in *fv1.GetFilePathRequest, opts ...grpc.CallOption) (*fv1.GetFilePathResponse, error) {
-	if in.Id != f.id {
+	p, ok := f.ids[in.Id]
+	if !ok {
 		return nil, fmt.Errorf("unexpected id: %s", in.Id)
 	}
 
 	return &fv1.GetFilePathResponse{
-		Path: "file-path",
+		Path: p,
 	}, nil
 }
 

@@ -10,7 +10,10 @@ curl --output base-model/config.json "https://example.com/config.json"
 
 
 mkdir dataset/
-curl -o dataset/training.json "https://example.com/training-file"
+curl -o dataset/train.json "https://example.com/training-file"
+
+curl -o dataset/test.json "https://example.com/validation-file"
+
 
 mkdir output
 

@@ -56,8 +56,9 @@ func TestJobCmd(t *testing.T) {
 				BaseModelURLs: map[string]string{
 					"config.json": "https://example.com/config.json",
 				},
-				TrainingFileURL: "https://example.com/training-file",
-				OutputModelURL:  "https://example.com/output-model",
+				TrainingFileURL:   "https://example.com/training-file",
+				ValidationFileURL: "https://example.com/validation-file",
+				OutputModelURL:    "https://example.com/output-model",
 			}
 			got, err := jc.cmd(job, presult)
 			assert.NoError(t, err)
