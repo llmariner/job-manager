@@ -15,7 +15,7 @@ global:
 grpcPort: 8081
 httpPort: 8080
 
-filelManagerServerAddr:
+fileManagerServerAddr:
 modelManagerInternalServerAddr:
 
 database:
