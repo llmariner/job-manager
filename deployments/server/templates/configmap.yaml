@@ -19,3 +19,6 @@ data:
     jobNamespace: {{ .Values.jobNamespace }}
     debug:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
+    auth:
+      oidcIssuerUrl: {{ .Values.auth.oidcIssuerUrl }}
+      oidcClientID: {{ .Values.auth.oidcClientID }}

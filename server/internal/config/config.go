@@ -21,6 +21,14 @@ type Config struct {
 	JobNamespace string `yaml:"jobNamespace"`
 
 	Debug DebugConfig `yaml:"debug"`
+
+	AuthConfig AuthConfig `yaml:"auth"`
+}
+
+// AuthConfig is the authentication configuration.
+type AuthConfig struct {
+	OIDCIssuerURL string `yaml:"oidcIssuerUrl"`
+	OIDCClientID  string `yaml:"oidcClientID"`
 }
 
 // DebugConfig is the debug configuration.
@@ -44,6 +52,12 @@ func (c *Config) Validate() error {
 	}
 	if err := c.Database.Validate(); err != nil {
 		return fmt.Errorf("database: %s", err)
+	}
+	if c.AuthConfig.OIDCIssuerURL == "" {
+		return fmt.Errorf("oidcIssuerURL must be set")
+	}
+	if c.AuthConfig.OIDCClientID == "" {
+		return fmt.Errorf("oidcClientID must be set")
 	}
 	return nil
 }

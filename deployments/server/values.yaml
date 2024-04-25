@@ -26,6 +26,10 @@ jobNamespace: default
 debug:
   kubeconfigPath:
 
+auth:           
+  oidcIssuerUrl: http://kong-kong-proxy.kong/dex
+  oidcClientID: llm-operator
+
 replicaCount: 1
 
 serviceAccount:
