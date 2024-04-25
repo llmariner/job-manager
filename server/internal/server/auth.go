@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	"github.com/coreos/go-oidc"
@@ -50,11 +51,14 @@ func (a *AuthInterceptor) valid(ctx context.Context, authorization []string) boo
 	}
 	token := strings.TrimPrefix(authorization[0], "Bearer ")
 
-	_, err := a.verifier.Verify(ctx, token)
-	return err != nil
+	if _, err := a.verifier.Verify(ctx, token); err != nil {
+		log.Printf("Failed to verify token: %v", err)
+		return false
+	}
+	return true
 }
 
 func (a *AuthInterceptor) authorized() bool {
 	// TODO(aya): implement authorization
-	return false
+	return true
 }
