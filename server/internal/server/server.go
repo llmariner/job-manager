@@ -9,6 +9,7 @@ import (
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/server/internal/config"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -54,16 +55,19 @@ type S struct {
 }
 
 // Run starts the gRPC server.
-func (s *S) Run(ctx context.Context, port int, issuerURL, clientID string) error {
+func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
 	log.Printf("Starting server on port %d\n", port)
 
-	ai, err := newAuthInterceptor(ctx, issuerURL, clientID)
-	if err != nil {
-		return err
+	var opts []grpc.ServerOption
+	if authConfig.Enable {
+		ai, err := newAuthInterceptor(ctx, authConfig.OIDCIssuerURL, authConfig.OIDCClientID)
+		if err != nil {
+			return err
+		}
+		opts = append(opts, grpc.ChainUnaryInterceptor(ai.Unary()))
 	}
-	opt := grpc.ChainUnaryInterceptor(ai.Unary())
 
-	grpcServer := grpc.NewServer(opt)
+	grpcServer := grpc.NewServer(opts...)
 	v1.RegisterFineTuningServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 

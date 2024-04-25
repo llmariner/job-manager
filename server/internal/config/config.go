@@ -27,8 +27,23 @@ type Config struct {
 
 // AuthConfig is the authentication configuration.
 type AuthConfig struct {
+	Enable        bool   `yaml:"enable"`
 	OIDCIssuerURL string `yaml:"oidcIssuerUrl"`
 	OIDCClientID  string `yaml:"oidcClientID"`
+}
+
+// Validate validates the configuration.
+func (c *AuthConfig) Validate() error {
+	if !c.Enable {
+		return nil
+	}
+	if c.OIDCIssuerURL == "" {
+		return fmt.Errorf("oidcIssuerURL must be set")
+	}
+	if c.OIDCClientID == "" {
+		return fmt.Errorf("oidcClientID must be set")
+	}
+	return nil
 }
 
 // DebugConfig is the debug configuration.
@@ -53,11 +68,8 @@ func (c *Config) Validate() error {
 	if err := c.Database.Validate(); err != nil {
 		return fmt.Errorf("database: %s", err)
 	}
-	if c.AuthConfig.OIDCIssuerURL == "" {
-		return fmt.Errorf("oidcIssuerURL must be set")
-	}
-	if c.AuthConfig.OIDCClientID == "" {
-		return fmt.Errorf("oidcClientID must be set")
+	if err := c.AuthConfig.Validate(); err != nil {
+		return fmt.Errorf("auth: %s", err)
 	}
 	return nil
 }

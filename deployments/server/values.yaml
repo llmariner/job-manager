@@ -12,6 +12,11 @@ global:
   ingress:
     ingressClassName:
 
+  auth:
+    enable: true
+    oidcIssuerUrl:
+    oidcClientID:
+
 grpcPort: 8081
 httpPort: 8080
 
@@ -25,10 +30,6 @@ jobNamespace: default
 
 debug:
   kubeconfigPath:
-
-auth:           
-  oidcIssuerUrl: http://kong-kong-proxy.kong/dex
-  oidcClientID: llm-operator
 
 replicaCount: 1
 
