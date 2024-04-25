@@ -97,7 +97,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	go func() {
 		s := server.New(st, fclient, mclient, k8sJobClient)
-		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig.OIDCIssuerURL, c.AuthConfig.OIDCClientID)
+		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
 	}()
 
 	return <-errCh

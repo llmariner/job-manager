@@ -20,5 +20,6 @@ data:
     debug:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
     auth:
-      oidcIssuerUrl: {{ .Values.auth.oidcIssuerUrl }}
-      oidcClientID: {{ .Values.auth.oidcClientID }}
+      enable: {{ .Values.global.auth.enable }}
+      oidcIssuerUrl: {{ .Values.global.auth.oidcIssuerUrl }}
+      oidcClientID: {{ .Values.global.auth.oidcClientID }}
