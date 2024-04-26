@@ -27,7 +27,7 @@ modelManagerInternalServerAddr: llm-operator-model-manager-server-internal-grpc:
 database:
   database: job_manager
 
-jobNamespace: default
+jobNamespace:
 
 debug:
   kubeconfigPath:

@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ include "job-manager-server.fullname" . }}
-  namespace: {{ .Values.jobNamespace }}
+  namespace: {{ .Values.jobNamespace | default .Release.Namespace | quote }}
   labels:
     {{- include "job-manager-server.labels" . | nindent 4 }}
 subjects:
