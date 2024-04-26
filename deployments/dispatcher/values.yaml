@@ -24,7 +24,7 @@ jobPollingInterval: 10s
 jobNamespace: default
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
-  version:
+  version: latest
   imagePullPolicy: IfNotPresent
 
 # The following default values work if model-manager-server runs in the same namespace.
