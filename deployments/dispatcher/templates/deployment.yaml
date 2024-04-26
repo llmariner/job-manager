@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         {{- include "job-manager-dispatcher.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ sha256sum (toJson .Values) }}
     spec:
       serviceAccountName: {{ include "job-manager-dispatcher.serviceAccountName" . }}
       containers:
