@@ -11,6 +11,7 @@ import (
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -60,7 +61,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 
 	var opts []grpc.ServerOption
 	if authConfig.Enable {
-		ai, err := newAuthInterceptor(ctx, authConfig.OIDCIssuerURL, authConfig.OIDCClientID)
+		ai, err := auth.NewInterceptor(ctx, authConfig.RBACInternalServerAddr, "api.fine_tuning.jobs")
 		if err != nil {
 			return err
 		}

@@ -21,5 +21,4 @@ data:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
     auth:
       enable: {{ .Values.global.auth.enable }}
-      oidcIssuerUrl: {{ .Values.global.auth.oidcIssuerUrl }}
-      oidcClientID: {{ .Values.global.auth.oidcClientID }}
+      rbacServerAddr: {{ .Values.global.auth.rbacInternalServerAddr }}
