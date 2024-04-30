@@ -21,4 +21,4 @@ data:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
     auth:
       enable: {{ .Values.global.auth.enable }}
-      rbacServerAddr: {{ .Values.global.auth.rbacInternalServerAddr }}
+      rbacInternalServerAddr: {{ .Values.global.auth.rbacInternalServerAddr }}
