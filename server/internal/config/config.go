@@ -27,9 +27,8 @@ type Config struct {
 
 // AuthConfig is the authentication configuration.
 type AuthConfig struct {
-	Enable        bool   `yaml:"enable"`
-	OIDCIssuerURL string `yaml:"oidcIssuerUrl"`
-	OIDCClientID  string `yaml:"oidcClientID"`
+	Enable                 bool   `yaml:"enable"`
+	RBACInternalServerAddr string `yaml:"rbacInternalServerAddr"`
 }
 
 // Validate validates the configuration.
@@ -37,11 +36,8 @@ func (c *AuthConfig) Validate() error {
 	if !c.Enable {
 		return nil
 	}
-	if c.OIDCIssuerURL == "" {
-		return fmt.Errorf("oidcIssuerURL must be set")
-	}
-	if c.OIDCClientID == "" {
-		return fmt.Errorf("oidcClientID must be set")
+	if c.RBACInternalServerAddr == "" {
+		return fmt.Errorf("rbacServerAddr must be set")
 	}
 	return nil
 }

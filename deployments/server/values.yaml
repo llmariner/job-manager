@@ -14,8 +14,7 @@ global:
 
   auth:
     enable: true
-    oidcIssuerUrl:
-    oidcClientID:
+    rbacInternalServerAddr:
 
 grpcPort: 8081
 httpPort: 8080
