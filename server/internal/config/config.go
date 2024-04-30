@@ -37,7 +37,7 @@ func (c *AuthConfig) Validate() error {
 		return nil
 	}
 	if c.RBACInternalServerAddr == "" {
-		return fmt.Errorf("rbacServerAddr must be set")
+		return fmt.Errorf("rbacInternalServerAddr must be set")
 	}
 	return nil
 }
