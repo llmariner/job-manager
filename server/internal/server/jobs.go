@@ -40,6 +40,18 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.InvalidArgument, "suffix is too long")
 	}
 
+	if hp := req.Hyperparameters; hp != nil {
+		if hp.BatchSize < 0 {
+			return nil, status.Errorf(codes.InvalidArgument, "batch size must be non-negative")
+		}
+		if hp.LearningRateMultiplier < 0.0 {
+			return nil, status.Errorf(codes.InvalidArgument, "learning rate multiplier must be non-negative")
+		}
+		if hp.NEpochs < 0 {
+			return nil, status.Errorf(codes.InvalidArgument, "n epoch must be non-negative")
+		}
+	}
+
 	if _, err := s.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
 		Id: req.Model,
 	}); err != nil {
@@ -60,14 +72,22 @@ func (s *S) CreateJob(
 
 	jobID := newJobID()
 
+	var hp *v1.Job_Hyperparameters
+	if rhp := req.Hyperparameters; rhp != nil {
+		hp = &v1.Job_Hyperparameters{
+			NEpochs: rhp.NEpochs,
+		}
+	}
+
 	jobProto := &v1.Job{
-		Id:             jobID,
-		CreatedAt:      time.Now().UTC().Unix(),
-		Model:          req.Model,
-		TrainingFile:   req.TrainingFile,
-		ValidationFile: req.ValidationFile,
-		Object:         "fine_tuning.job",
-		Status:         string(store.JobStateQueued),
+		Id:              jobID,
+		CreatedAt:       time.Now().UTC().Unix(),
+		Model:           req.Model,
+		TrainingFile:    req.TrainingFile,
+		ValidationFile:  req.ValidationFile,
+		Hyperparameters: hp,
+		Object:          "fine_tuning.job",
+		Status:          string(store.JobStateQueued),
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {

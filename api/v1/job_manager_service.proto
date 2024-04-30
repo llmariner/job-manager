@@ -20,11 +20,12 @@ message Job {
   // The name of the fine-tuned model that is being created. The value will be null if the fine-tuning job is still running.
   string fine_tuned_model = 4;
   int64 finished_at = 5;
-  message HyperParameter {
+  message Hyperparameters {
     // Note: OpenAI API supports string or interger.
-    string n_epochs = 1;
+    int32 n_epochs = 1;
+    // TODO(kenji): Consider add batch_size and learning_rate_multiplier.
   }
-  HyperParameter hyperparameters = 6;
+  Hyperparameters hyperparameters = 6;
   // The base model that is being fine-tuned.
   string model = 7;
   string object = 8;
@@ -40,15 +41,15 @@ message Job {
 message CreateJobRequest {
   string model = 1;
   string training_file = 2;
-  message HyperParameter {
+  message Hyperparameters {
     // Note: OpenAI API supports string or interger.
-    string batch_size = 1;
+    int32 batch_size = 1;
     // Note: OpenAI API supports string or number.
-    string learning_rate_multiplier = 2;
+    double learning_rate_multiplier = 2;
     // Note: OpenAI API supports string or interger.
-    string n_epochs = 3;
+    int32 n_epochs = 3;
   }
-  HyperParameter hyperparameters = 3;
+  Hyperparameters hyperparameters = 3;
   // A string of up to 18 characters that will be added to your fine-tuned model name.
   //
   // For example, a suffix of "custom-model-name" would produce a

@@ -166,7 +166,7 @@
           "type": "string"
         },
         "hyperparameters": {
-          "$ref": "#/definitions/v1CreateJobRequestHyperParameter"
+          "$ref": "#/definitions/v1CreateJobRequestHyperparameters"
         },
         "suffix": {
           "type": "string",
@@ -177,19 +177,22 @@
         }
       }
     },
-    "v1CreateJobRequestHyperParameter": {
+    "v1CreateJobRequestHyperparameters": {
       "type": "object",
       "properties": {
         "batchSize": {
-          "type": "string",
+          "type": "integer",
+          "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
         },
         "learningRateMultiplier": {
-          "type": "string",
+          "type": "number",
+          "format": "double",
           "description": "Note: OpenAI API supports string or number."
         },
         "nEpochs": {
-          "type": "string",
+          "type": "integer",
+          "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
         }
       }
@@ -216,7 +219,7 @@
           "format": "int64"
         },
         "hyperparameters": {
-          "$ref": "#/definitions/v1JobHyperParameter"
+          "$ref": "#/definitions/v1JobHyperparameters"
         },
         "model": {
           "type": "string",
@@ -250,11 +253,12 @@
         }
       }
     },
-    "v1JobHyperParameter": {
+    "v1JobHyperparameters": {
       "type": "object",
       "properties": {
         "nEpochs": {
-          "type": "string",
+          "type": "integer",
+          "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
         }
       }
