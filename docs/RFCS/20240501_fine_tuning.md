@@ -16,7 +16,7 @@ generates a LoRA adapter, which we convert to the GGUF format with
 [`convert-lora-to-ggml.py`](https://github.com/ggerganov/llama.cpp/blob/master/convert-lora-to-ggml.py),
 which is provided by [llama.cpp](https://github.com/ggerganov/llama.cpp).
 
-# Mising Features
+# Missing Features
 
 - Checkpointing
 - Metrics/events
