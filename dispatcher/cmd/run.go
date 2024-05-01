@@ -88,7 +88,6 @@ func run(ctx context.Context, c *config.Config) error {
 		mgr.GetClient(),
 		c.JobNamespace,
 		c.Job,
-		c.Debug.UseFakeJob,
 	)
 
 	preProcessor, postProcessor, err := newProcessors(c)

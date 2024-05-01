@@ -12,6 +12,7 @@ data:
       image: {{ .Values.job.image }}
       version: {{ .Values.job.version }}
       imagePullPolicy: {{ .Values.job.imagePullPolicy }}
+      numGpus: {{ .Values.job.numGpus }}
     modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
     fileManagerInternalServerAddr: {{ .Values.fileManagerInternalServerAddr }}
     objectStore:
@@ -33,4 +34,3 @@ data:
       pprofBindAddress: {{ .Values.kubernetesManager.pprofBindAddress }}
     debug:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
-      useFakeJob: {{ .Values.debug.useFakeJob }}

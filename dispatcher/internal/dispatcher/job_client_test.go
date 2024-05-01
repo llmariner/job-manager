@@ -17,22 +17,21 @@ import (
 func TestJobCmd(t *testing.T) {
 	tcs := []struct {
 		name       string
-		useFakeJob bool
+		jobConfig  config.JobConfig
 		job        *v1.Job
 		goldenFile string
 	}{
 		{
-			name:       "basic",
-			useFakeJob: false,
+			name:      "basic",
+			jobConfig: config.JobConfig{},
 			job: &v1.Job{
 				Model: "model-id",
 			},
-
 			goldenFile: "testdata/command.basic.golden",
 		},
 		{
-			name:       "hyperparamters",
-			useFakeJob: false,
+			name:      "hyperparamters",
+			jobConfig: config.JobConfig{},
 			job: &v1.Job{
 				Model: "model-id",
 				Hyperparameters: &v1.Job_Hyperparameters{
@@ -44,12 +43,14 @@ func TestJobCmd(t *testing.T) {
 			goldenFile: "testdata/command.hyperparameters.golden",
 		},
 		{
-			name:       "fake",
-			useFakeJob: true,
+			name: "multi-gpu",
+			jobConfig: config.JobConfig{
+				NumGPUs: 4,
+			},
 			job: &v1.Job{
 				Model: "model-id",
 			},
-			goldenFile: "testdata/command.use_fake.golden",
+			goldenFile: "testdata/command.multi-gpu.golden",
 		},
 	}
 	for _, tc := range tcs {
@@ -61,7 +62,7 @@ func TestJobCmd(t *testing.T) {
 				},
 			})
 
-			jc := NewJobClient(kc, "default", config.JobConfig{}, tc.useFakeJob)
+			jc := NewJobClient(kc, "default", tc.jobConfig)
 
 			b, err := proto.Marshal(tc.job)
 			assert.NoError(t, err)

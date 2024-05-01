@@ -17,7 +17,6 @@ curl -o dataset/test.json "https://example.com/validation-file"
 
 mkdir output
 
-
 accelerate launch \
   --mixed_precision=no \
   --num_processes=1 \
@@ -29,8 +28,6 @@ accelerate launch \
   --dataset=./dataset \
   --output=./output 
 
-
 python ./convert-lora-to-ggml.py ./output
-
 
 curl --request PUT --upload-file output/ggml-adapter-model.bin "https://example.com/output-model"

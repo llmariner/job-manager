@@ -41,13 +41,11 @@ func NewJobClient(
 	k8sClient client.Client,
 	namespace string,
 	jobConfig config.JobConfig,
-	useFakeJob bool,
 ) *JobClient {
 	return &JobClient{
-		k8sClient:  k8sClient,
-		namespace:  namespace,
-		jobConfig:  jobConfig,
-		useFakeJob: useFakeJob,
+		k8sClient: k8sClient,
+		namespace: namespace,
+		jobConfig: jobConfig,
 	}
 }
 
@@ -55,9 +53,8 @@ func NewJobClient(
 type JobClient struct {
 	k8sClient client.Client
 	// TODO(kenji): Be able to specify the namespace per tenant.
-	namespace  string
-	jobConfig  config.JobConfig
-	useFakeJob bool
+	namespace string
+	jobConfig config.JobConfig
 }
 
 func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
@@ -111,12 +108,12 @@ func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*bat
 }
 
 func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
-	if p.useFakeJob {
+	if p.jobConfig.NumGPUs == 0 {
 		return nil
 	}
 	return corev1apply.ResourceRequirements().
 		WithLimits(corev1.ResourceList{
-			"nvidia.com/gpu": *resource.NewQuantity(1, resource.DecimalSI),
+			"nvidia.com/gpu": *resource.NewQuantity(int64(p.jobConfig.NumGPUs), resource.DecimalSI),
 		})
 }
 
@@ -133,8 +130,13 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		TrainingFileURL   string
 		ValidationFileURL string
 		OutputModelURL    string
-		UseFakeJob        bool
+
+		NumProcessors     int
 		AdditionalSFTArgs string
+	}
+	numProcessors := 1
+	if p.jobConfig.NumGPUs > 0 {
+		numProcessors = p.jobConfig.NumGPUs
 	}
 	params := Params{
 		BaseModelName:     jobProto.Model,
@@ -142,9 +144,9 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		TrainingFileURL:   presult.TrainingFileURL,
 		ValidationFileURL: presult.ValidationFileURL,
 		OutputModelURL:    presult.OutputModelURL,
-		AdditionalSFTArgs: toAddtionalSFTArgs(jobProto),
 
-		UseFakeJob: p.useFakeJob,
+		NumProcessors:     numProcessors,
+		AdditionalSFTArgs: toAddtionalSFTArgs(jobProto),
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {

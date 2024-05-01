@@ -24,11 +24,11 @@ jobNamespace: default
 job:
   image: llm-operator/experiments-fake-job
   version: latest
+  numGpus: 0
 
 debug:
   kubeconfigPath: /Users/kenji/.kube/config
   standalone: true
-  useFakeJob: true
   sqlitePath: /tmp/job_manager.db
 ```
 
