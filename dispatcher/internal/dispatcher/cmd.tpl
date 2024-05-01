@@ -29,7 +29,8 @@ accelerate launch \
   ./sft.py \
   --model=./base-model \
   --dataset=./dataset \
-  --output=./output
+  --output=./output {{ .AdditionalSFTArgs }}
+
 
 python ./convert-lora-to-ggml.py ./output
 {{ end }}

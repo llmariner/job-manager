@@ -21,9 +21,15 @@ message Job {
   string fine_tuned_model = 4;
   int64 finished_at = 5;
   message Hyperparameters {
+    // batch_size and learning_rate_multiplier are not part of
+    // the OpenAI API spec, but we include here as these parameters are in CreateJobRequest.
+
     // Note: OpenAI API supports string or interger.
-    int32 n_epochs = 1;
-    // TODO(kenji): Consider add batch_size and learning_rate_multiplier.
+    int32 batch_size = 1;
+    // Note: OpenAI API supports string or number.
+    double learning_rate_multiplier = 2;
+    // Note: OpenAI API supports string or interger.
+    int32 n_epochs = 3;
   }
   Hyperparameters hyperparameters = 6;
   // The base model that is being fine-tuned.

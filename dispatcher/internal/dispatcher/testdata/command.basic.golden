@@ -27,7 +27,8 @@ accelerate launch \
   ./sft.py \
   --model=./base-model \
   --dataset=./dataset \
-  --output=./output
+  --output=./output 
+
 
 python ./convert-lora-to-ggml.py ./output
 
