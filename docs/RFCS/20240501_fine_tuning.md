@@ -13,10 +13,8 @@ The Python script for SFT is invoked with [Accelerate](https://huggingface.co/do
 The input to the Python script is an LLM model and trainint
 data. Validation data can also be optionally provided.  The script
 generates a LoRA adapter, which we convert to the GGUF format with
-[the `convert-lora-to-ggml.py`
-script](https://github.com/ggerganov/llama.cpp/blob/master/convert-lora-to-ggml.py),
-which is provided by
-[llama.cpp](https://github.com/ggerganov/llama.cpp).
+[`convert-lora-to-ggml.py`](https://github.com/ggerganov/llama.cpp/blob/master/convert-lora-to-ggml.py),
+which is provided by [llama.cpp](https://github.com/ggerganov/llama.cpp).
 
 # Mising Features
 
