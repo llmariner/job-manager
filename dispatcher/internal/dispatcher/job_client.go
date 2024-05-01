@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	// To embed the command template.
 	_ "embed"
 
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
@@ -132,6 +134,7 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		ValidationFileURL string
 		OutputModelURL    string
 		UseFakeJob        bool
+		AdditionalSFTArgs string
 	}
 	params := Params{
 		BaseModelName:     jobProto.Model,
@@ -139,6 +142,7 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		TrainingFileURL:   presult.TrainingFileURL,
 		ValidationFileURL: presult.ValidationFileURL,
 		OutputModelURL:    presult.OutputModelURL,
+		AdditionalSFTArgs: toAddtionalSFTArgs(jobProto),
 
 		UseFakeJob: p.useFakeJob,
 	}
@@ -149,6 +153,24 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 	return buf.String(), nil
 }
 
+func toAddtionalSFTArgs(jobProto *v1.Job) string {
+	hp := jobProto.Hyperparameters
+	if hp == nil {
+		return ""
+	}
+	args := []string{}
+	if v := hp.BatchSize; v > 0 {
+		args = append(args, fmt.Sprintf("--per_device_train_batch_size=%d", v))
+	}
+	if v := hp.LearningRateMultiplier; v > 0 {
+		args = append(args, fmt.Sprintf("--learning_rate=%f", v))
+	}
+	if v := hp.NEpochs; v > 0 {
+		args = append(args, fmt.Sprintf("--num_train_epochs=%d", v))
+	}
+	return strings.Join(args, " ")
+
+}
 func isManagedJob(annotations map[string]string) bool {
 	return annotations[managedJobAnnotationKey] == "true"
 }

@@ -42,6 +42,12 @@ if __name__ == "__main__":
     parser.add_argument("--model", help="Model path.", type=str)
     parser.add_argument("--dataset", help="Dataset path.", type=str)
     parser.add_argument("--output", help="Output path.", type=str)
+
+    # TODO(kenji): Revisit the default values.
+    parser.add_argument("--learning_rate", help="Learning rate.", default=2e-4, type=float, nargs="?")
+    parser.add_argument("--num_train_epochs", help="Number of training epocs.", default=3, type=int, nargs="?")
+    parser.add_argument("--per_device_train_batch_size", help="Batch size per training.", default=2, type=int, nargs="?")
+
     args = parser.parse_args()
     print(args)
 

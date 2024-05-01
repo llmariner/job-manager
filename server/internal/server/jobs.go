@@ -75,7 +75,9 @@ func (s *S) CreateJob(
 	var hp *v1.Job_Hyperparameters
 	if rhp := req.Hyperparameters; rhp != nil {
 		hp = &v1.Job_Hyperparameters{
-			NEpochs: rhp.NEpochs,
+			BatchSize:              rhp.BatchSize,
+			LearningRateMultiplier: rhp.LearningRateMultiplier,
+			NEpochs:                rhp.NEpochs,
 		}
 	}
 

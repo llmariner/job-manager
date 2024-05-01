@@ -18,16 +18,37 @@ func TestJobCmd(t *testing.T) {
 	tcs := []struct {
 		name       string
 		useFakeJob bool
+		job        *v1.Job
 		goldenFile string
 	}{
 		{
-			name:       "non-fake",
+			name:       "basic",
 			useFakeJob: false,
-			goldenFile: "testdata/command.golden",
+			job: &v1.Job{
+				Model: "model-id",
+			},
+
+			goldenFile: "testdata/command.basic.golden",
+		},
+		{
+			name:       "hyperparamters",
+			useFakeJob: false,
+			job: &v1.Job{
+				Model: "model-id",
+				Hyperparameters: &v1.Job_Hyperparameters{
+					BatchSize:              32,
+					LearningRateMultiplier: 0.1,
+					NEpochs:                10,
+				},
+			},
+			goldenFile: "testdata/command.hyperparameters.golden",
 		},
 		{
 			name:       "fake",
 			useFakeJob: true,
+			job: &v1.Job{
+				Model: "model-id",
+			},
 			goldenFile: "testdata/command.use_fake.golden",
 		},
 	}
@@ -42,10 +63,7 @@ func TestJobCmd(t *testing.T) {
 
 			jc := NewJobClient(kc, "default", config.JobConfig{}, tc.useFakeJob)
 
-			jobProto := &v1.Job{
-				Model: "model-id",
-			}
-			b, err := proto.Marshal(jobProto)
+			b, err := proto.Marshal(tc.job)
 			assert.NoError(t, err)
 
 			job := &store.Job{
@@ -66,6 +84,37 @@ func TestJobCmd(t *testing.T) {
 			want, err := os.ReadFile(tc.goldenFile)
 			assert.NoError(t, err)
 			assert.Equal(t, string(want), got)
+		})
+	}
+}
+
+func TestToAddtionalSFTArgs(t *testing.T) {
+	tcs := []struct {
+		name string
+		job  *v1.Job
+		want string
+	}{
+		{
+			name: "basic",
+			job: &v1.Job{
+				Hyperparameters: &v1.Job_Hyperparameters{
+					BatchSize:              32,
+					LearningRateMultiplier: 0.1,
+					NEpochs:                10,
+				},
+			},
+			want: "--per_device_train_batch_size=32 --learning_rate=0.100000 --num_train_epochs=10",
+		},
+		{
+			name: "empty",
+			job:  &v1.Job{},
+			want: "",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			got := toAddtionalSFTArgs(tc.job)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }

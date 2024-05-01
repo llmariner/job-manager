@@ -256,6 +256,16 @@
     "v1JobHyperparameters": {
       "type": "object",
       "properties": {
+        "batchSize": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Note: OpenAI API supports string or interger."
+        },
+        "learningRateMultiplier": {
+          "type": "number",
+          "format": "double",
+          "description": "Note: OpenAI API supports string or number."
+        },
         "nEpochs": {
           "type": "integer",
           "format": "int32",
