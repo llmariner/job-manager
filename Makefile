@@ -28,10 +28,10 @@ build-docker-server:
 build-docker-dispatcher:
 	docker build --build-arg TARGETARCH=amd64 -t llm-operator/job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
 
-.PHONY: build-docker-experiments-fine-tuning
-build-docker-experiments-fine-tuning:
-	docker build --build-arg TARGETARCH=amd64 -t llm-operator/experiments-fine-tuning:latest -f build/experiments/fine-tuning/Dockerfile build/experiments/fine-tuning
+.PHONY: build-docker-fine-tuning
+build-docker-fine-tuning:
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/fine-tuning:latest -f build/fine-tuning/Dockerfile build/fine-tuning
 
-.PHONY: build-docker-experiments-fake-job
-build-docker-experiments-fake-job:
-	docker build --build-arg TARGETARCH=amd64 -t llm-operator/experiments-fake-job:latest -f build/experiments/fake-job/Dockerfile build/experiments/fake-job
+.PHONY: build-docker-fake-job
+build-docker-fake-job:
+	docker build --build-arg TARGETARCH=amd64 -t llm-operator/fake-job:latest -f build/fake-job/Dockerfile build/fake-job

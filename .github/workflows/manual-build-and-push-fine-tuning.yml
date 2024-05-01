@@ -38,7 +38,7 @@ jobs:
     - name: Build, tag, and push ${{ inputs.image }} to Amazon ECR
       uses: docker/build-push-action@v5
       with:
-        context: ./build/experiments/${{ inputs.image }}
+        context: ./build/${{ inputs.image }}
         push: true
         platforms: linux/amd64,linux/arm64
         tags: |
