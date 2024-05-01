@@ -21,22 +21,15 @@ mkdir output
 cp ./ggml-adapter-model.bin ./output/
 {{ else }}
 accelerate launch \
-  --config_file=./single_gpu.yaml \
+  --mixed_precision=no \
   --num_processes=1 \
+  --num_machines=1 \
+  --num_cpu_threads_per_process=1 \
+  --dynamo_backend=no \
   ./sft.py \
-  --model_name=./base-model \
-  --dataset_name=dataset \
-  --per_device_train_batch_size=2 \
-  --gradient_accumulation_steps=1 \
-  --max_steps=100 \
-  --learning_rate=2e-4 \
-  --save_steps=20_000 \
-  --use_peft \
-  --lora_r=16 \
-  --lora_alpha=32 \
-  --lora_target_modules q_proj k_proj v_proj o_proj \
-  --load_in_4bit \
-  --output_dir=./output
+  --model=./base-model \
+  --dataset=./dataset \
+  --output=./output
 
 python ./convert-lora-to-ggml.py ./output
 {{ end }}

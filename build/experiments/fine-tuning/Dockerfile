@@ -13,5 +13,4 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY sft.py .
-COPY single_gpu.yaml .
 COPY convert-lora-to-ggml.py .
