@@ -8,4 +8,6 @@ RUN \
     ca-certificates \
     curl
 
+COPY sft.py .
 COPY ggml-adapter-model.bin .
+COPY convert-lora-to-ggml.py .

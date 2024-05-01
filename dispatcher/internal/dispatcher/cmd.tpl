@@ -17,12 +17,9 @@ curl -o dataset/test.json "{{.ValidationFileURL }}"
 
 mkdir output
 
-{{if .UseFakeJob }}
-cp ./ggml-adapter-model.bin ./output/
-{{ else }}
 accelerate launch \
   --mixed_precision=no \
-  --num_processes=1 \
+  --num_processes={{ .NumProcessors }} \
   --num_machines=1 \
   --num_cpu_threads_per_process=1 \
   --dynamo_backend=no \
@@ -31,8 +28,6 @@ accelerate launch \
   --dataset=./dataset \
   --output=./output {{ .AdditionalSFTArgs }}
 
-
 python ./convert-lora-to-ggml.py ./output
-{{ end }}
 
 curl --request PUT --upload-file output/ggml-adapter-model.bin "{{ .OutputModelURL }}"

@@ -22,8 +22,8 @@ type ObjectStoreConfig struct {
 	S3 S3Config `yaml:"s3"`
 }
 
-// Validate validates the object store configuration.
-func (c *ObjectStoreConfig) Validate() error {
+// validate validates the object store configuration.
+func (c *ObjectStoreConfig) validate() error {
 	if c.S3.EndpointURL == "" {
 		return fmt.Errorf("s3 endpoint url must be set")
 	}
@@ -41,7 +41,6 @@ type DebugConfig struct {
 	KubeconfigPath string `yaml:"kubeconfigPath"`
 	Standalone     bool   `yaml:"standalone"`
 	SqlitePath     string `yaml:"sqlitePath"`
-	UseFakeJob     bool   `yaml:"useFakeJob"`
 }
 
 // KubernetesManagerConfig is the Kubernetes manager configuration.
@@ -59,10 +58,11 @@ type JobConfig struct {
 	Image           string            `yaml:"image"`
 	Version         string            `yaml:"version"`
 	ImagePullPolicy corev1.PullPolicy `yaml:"imagePullPolicy"`
+	NumGPUs         int               `yaml:"numGpus"`
 }
 
-// Validate validates the job configuration.
-func (c *JobConfig) Validate() error {
+// validate validates the job configuration.
+func (c *JobConfig) validate() error {
 	if c.Image == "" {
 		return fmt.Errorf("image must be set")
 	}
@@ -75,6 +75,10 @@ func (c *JobConfig) Validate() error {
 	}
 	if p != corev1.PullAlways && p != corev1.PullIfNotPresent && p != corev1.PullNever {
 		return fmt.Errorf("invalid image pull policy")
+	}
+
+	if c.NumGPUs < 0 {
+		return fmt.Errorf("num GPUs must be greater than or equal to 0")
 	}
 
 	return nil
@@ -107,7 +111,7 @@ func (c *Config) Validate() error {
 	if c.JobNamespace == "" {
 		return fmt.Errorf("job namespace must be set")
 	}
-	if err := c.Job.Validate(); err != nil {
+	if err := c.Job.validate(); err != nil {
 		return fmt.Errorf("job: %s", err)
 	}
 
@@ -123,7 +127,7 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("file manager internal server address must be set")
 		}
 
-		if err := c.ObjectStore.Validate(); err != nil {
+		if err := c.ObjectStore.validate(); err != nil {
 			return fmt.Errorf("object store: %s", err)
 		}
 

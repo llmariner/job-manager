@@ -25,6 +25,7 @@ job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
   version: latest
   imagePullPolicy: IfNotPresent
+  numGpus: 1
 
 # The following default values work if model-manager-server runs in the same namespace.
 fileManagerInternalServerAddr: llm-operator-file-manager-server-internal-grpc:8082
@@ -41,7 +42,6 @@ kubernetesManager:
 
 debug:
   kubeconfigPath:
-  useFakeJob: false
 
 replicaCount: 1
 

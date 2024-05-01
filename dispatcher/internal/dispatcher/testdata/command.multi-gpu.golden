@@ -17,8 +17,17 @@ curl -o dataset/test.json "https://example.com/validation-file"
 
 mkdir output
 
+accelerate launch \
+  --mixed_precision=no \
+  --num_processes=4 \
+  --num_machines=1 \
+  --num_cpu_threads_per_process=1 \
+  --dynamo_backend=no \
+  ./sft.py \
+  --model=./base-model \
+  --dataset=./dataset \
+  --output=./output 
 
-cp ./ggml-adapter-model.bin ./output/
-
+python ./convert-lora-to-ggml.py ./output
 
 curl --request PUT --upload-file output/ggml-adapter-model.bin "https://example.com/output-model"
