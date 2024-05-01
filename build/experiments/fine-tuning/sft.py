@@ -16,112 +16,125 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-# regular:
-python examples/scripts/sft.py \
-    --model_name_or_path="facebook/opt-350m" \
-    --report_to="wandb" \
-    --learning_rate=1.41e-5 \
-    --per_device_train_batch_size=64 \
-    --gradient_accumulation_steps=16 \
-    --output_dir="sft_openassistant-guanaco" \
-    --logging_steps=1 \
-    --num_train_epochs=3 \
-    --max_steps=-1 \
-    --push_to_hub \
-    --gradient_checkpointing \
 
-# peft:
-python examples/scripts/sft.py \
-    --model_name_or_path="facebook/opt-350m" \
-    --report_to="wandb" \
-    --learning_rate=1.41e-5 \
-    --per_device_train_batch_size=64 \
-    --gradient_accumulation_steps=16 \
-    --output_dir="sft_openassistant-guanaco" \
-    --logging_steps=1 \
-    --num_train_epochs=3 \
-    --max_steps=-1 \
-    --push_to_hub \
-    --gradient_checkpointing \
-    --use_peft \
-    --lora_r=64 \
-    --lora_alpha=16
-"""
 import logging
 import os
+import argparse
 
 import torch
 
 from datasets import load_dataset
-from transformers import AutoTokenizer, TrainingArguments
+from transformers import AutoTokenizer, TrainingArguments, BitsAndBytesConfig
+from peft import LoraConfig
 
 from tqdm.rich import tqdm
 
 from trl import (
-    ModelConfig,
     SFTTrainer,
-    get_peft_config,
-    get_quantization_config,
     get_kbit_device_map,
 )
-
-from trl.commands.cli_utils import SftScriptArguments, TrlParser
 
 # For progress bars.
 tqdm.pandas()
 
 if __name__ == "__main__":
-    parser = TrlParser((SftScriptArguments, TrainingArguments, ModelConfig))
-    args, training_args, model_config = parser.parse_args_and_config()
+    parser = argparse.ArgumentParser("sft.py", description="A script to train a model using SFT.")
+    parser.add_argument("--model", help="Model path.", type=str)
+    parser.add_argument("--dataset", help="Dataset path.", type=str)
+    parser.add_argument("--output", help="Output path.", type=str)
+    args = parser.parse_args()
+    print(args)
 
-    ################
-    # Model & Tokenizer
-    ################
-    torch_dtype = (
-        model_config.torch_dtype
-        if model_config.torch_dtype in ["auto", None]
-        else getattr(torch, model_config.torch_dtype)
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_quant_type="nf4"
     )
-    quantization_config = get_quantization_config(model_config)
+
     model_kwargs = dict(
-        revision=model_config.model_revision,
-        trust_remote_code=model_config.trust_remote_code,
-        attn_implementation=model_config.attn_implementation,
-        torch_dtype=torch_dtype,
-        use_cache=False if training_args.gradient_checkpointing else True,
-        device_map=get_kbit_device_map() if quantization_config is not None else None,
+        # The specific model version to use (can be a branch name, tag name or commit id)."
+        # revision="main",
+        # Trust remote code when loading a model.
+        # trust_remote_code=False,
+        # Which attention implementation to use; you can run --attn_implementation=flash_attention_2,
+        # in which case you must install this manually by running `pip install flash-attn --no-build-isolation`
+        attn_implementation=None,
+        # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
+        # the dtype will be automatically derived from the model's weights."
+        torch_dtype='auto',
+        # use_cache=False,
+        device_map=get_kbit_device_map(),
         quantization_config=quantization_config,
     )
-    tokenizer = AutoTokenizer.from_pretrained(model_config.model_name_or_path, use_fast=True)
+
+    # TODO(kenji): Revisit these parameters.
+    training_args = TrainingArguments(
+        output_dir=args.output,
+        overwrite_output_dir=True,
+        num_train_epochs=3,
+        # batch size per device during training
+        per_device_train_batch_size=2,
+        # number of steps before performing a backward/update pass
+        gradient_accumulation_steps=2,
+        # use gradient checkpointing to save memory
+        gradient_checkpointing=True,
+        # save checkpoint every epoch
+        save_strategy="epoch",
+        logging_steps=10,
+        # learning rate, based on QLoRA paper
+        learning_rate=2e-4,
+        # warmup ratio based on QLoRA paper
+        warmup_ratio=0.03,
+        # max gradient norm based on QLoRA paper
+        max_grad_norm=0.3,
+        # use constant learning rate scheduler
+        lr_scheduler_type="constant",
+        # use bfloat16 precision
+        bf16=True,
+        # use tf32 precision
+        tf32=True,
+        report_to="none",
+    )
+
+    raw_datasets = load_dataset(args.dataset)
+    train_dataset = raw_datasets["train"]
+    eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
+
+    tokenizer = AutoTokenizer.from_pretrained("./base-model", use_fast=True)
     tokenizer.pad_token = tokenizer.eos_token
 
-    ################
-    # Dataset
-    ################
-    raw_datasets = load_dataset(args.dataset_name)
-    train_dataset = raw_datasets[args.dataset_train_name]
-    eval_dataset = None
-    if args.dataset_test_name in raw_datasets:
-        eval_dataset = raw_datasets[args.dataset_test_name]
+    # TODO(kenji): Revisit these parameters.
+    peft_config = LoraConfig(
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        bias="none",
+        task_type="CAUSAL_LM",
+        target_modules=None,
+        modules_to_save=None,
+    )
 
-    ################
-    # Training
-    ################
     trainer = SFTTrainer(
-        model=model_config.model_name_or_path,
+        model=args.model,
         model_init_kwargs=model_kwargs,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        dataset_text_field=args.dataset_text_field,
-        max_seq_length=args.max_seq_length,
+        # The name of the text field of the dataset, in case this is passed by a user,
+        # the trainer will automatically create a `ConstantLengthDataset` based on the `dataset_text_field` argument.
+        dataset_text_field=None,
+        # Used only in case `dataset_text_field` is passed. This argument is used by the `ConstantLengthDataset`
+        # to pack the sequences of the dataset.
+        packing=False,
+        # The maximum sequence length to use for the `ConstantLengthDataset`
+        # and for automatically creating the Dataset.
+        # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
+        max_seq_length=None,
         tokenizer=tokenizer,
-        packing=args.packing,
-        peft_config=get_peft_config(model_config),
+        peft_config=peft_config,
         callbacks=None,
     )
 
     trainer.train()
 
-    trainer.save_model(training_args.output_dir)
+    trainer.save_model(args.output)
