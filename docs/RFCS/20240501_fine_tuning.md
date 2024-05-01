@@ -6,9 +6,9 @@ This describes the design of the fine-tuning jobs and open questions.
 
 We use [Supervised Fine-tuning Trainer
 (SFT)](https://huggingface.co/docs/trl/en/sft_trainer) for
-fine-tuning. SFT provides an easy-use API to train LLM models.
+fine-tuning. SFT provides an easy-use API to train LLM models. Please see [this article](https://cameronrwolfe.substack.com/p/understanding-and-using-supervised) to understand SFT more.
 
-The Python script for SFT is invoked with [Accelerate](https://huggingface.co/docs/accelerate/en/index).
+The Python script for SFT is invoked with [Accelerate](https://huggingface.co/docs/accelerate/en/index). 
 
 The input to the Python script is an LLM model and trainint
 data. Validation data can also be optionally provided.  The script
