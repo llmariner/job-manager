@@ -9,7 +9,7 @@ data:
     grpcPort: {{ .Values.grpcPort }}
     httpPort: {{ .Values.httpPort }}
     fileManagerServerAddr: {{ .Values.fileManagerServerAddr }}
-    modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
+    modelManagerServerAddr: {{ .Values.modelManagerServerAddr }}
     database:
       host: {{ .Values.global.database.host }}
       port: {{ .Values.global.database.port }}
