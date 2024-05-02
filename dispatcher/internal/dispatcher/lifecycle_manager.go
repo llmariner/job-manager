@@ -177,6 +177,7 @@ func (s *LifecycleManager) Reconcile(
 
 	if err := jobData.MutateMessage(func(j *v1.Job) {
 		j.FinishedAt = time.Now().UTC().Unix()
+		j.FineTunedModel = jobData.OutputModelID
 	}); err != nil {
 		log.Error(err, "Failed to mutate message")
 		return ctrl.Result{}, err
