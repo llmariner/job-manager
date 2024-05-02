@@ -90,11 +90,11 @@ func run(ctx context.Context, c *config.Config) error {
 	}
 	fclient := fv1.NewFilesServiceClient(conn)
 
-	conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.Dial(c.ModelManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
-	mclient := mv1.NewModelsInternalServiceClient(conn)
+	mclient := mv1.NewModelsServiceClient(conn)
 
 	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
 	if err != nil {

@@ -52,7 +52,13 @@ func (s *S) CreateJob(
 		}
 	}
 
-	if _, err := s.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
+	// Pass the Authorization to the context for downstream gRPC calls.
+	ctx, err := extractAndAppendAuthorization(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "extract and append authorization: %s", err)
+	}
+
+	if _, err := s.modelClient.GetModel(ctx, &mv1.GetModelRequest{
 		Id: req.Model,
 	}); err != nil {
 		if status.Code(err) == codes.NotFound {
@@ -90,6 +96,7 @@ func (s *S) CreateJob(
 		Hyperparameters: hp,
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
+		// TODO(kenji): Fill more field.
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
@@ -102,7 +109,6 @@ func (s *S) CreateJob(
 		Message:  msg,
 		Suffix:   req.Suffix,
 		TenantID: fakeTenantID,
-		// TODO(kenji): Fill more field.
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
@@ -113,7 +119,7 @@ func (s *S) CreateJob(
 
 func (s *S) validateFile(ctx context.Context, fileID string) error {
 	// Check if the specified training file exits.
-	// TODO: Pass the authorization token.
+
 	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
 		Id: fileID,
 	}); err != nil {

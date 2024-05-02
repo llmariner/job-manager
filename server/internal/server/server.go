@@ -21,7 +21,7 @@ type fileGetClient interface {
 }
 
 type modelClient interface {
-	GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error)
+	GetModel(ctx context.Context, in *mv1.GetModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
 type k8sJobClient interface {

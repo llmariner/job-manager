@@ -13,8 +13,8 @@ type Config struct {
 	GRPCPort int `yaml:"grpcPort"`
 	HTTPPort int `yaml:"httpPort"`
 
-	FileManagerServerAddr          string `yaml:"fileManagerServerAddr"`
-	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
+	FileManagerServerAddr  string `yaml:"fileManagerServerAddr"`
+	ModelManagerServerAddr string `yaml:"modelManagerServerAddr"`
 
 	Database db.Config `yaml:"database"`
 
@@ -58,8 +58,8 @@ func (c *Config) Validate() error {
 	if c.FileManagerServerAddr == "" {
 		return fmt.Errorf("file manager address must be set")
 	}
-	if c.ModelManagerInternalServerAddr == "" {
-		return fmt.Errorf("model manager internal server address must be set")
+	if c.ModelManagerServerAddr == "" {
+		return fmt.Errorf("model manager server address must be set")
 	}
 	if err := c.Database.Validate(); err != nil {
 		return fmt.Errorf("database: %s", err)

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -92,7 +93,8 @@ func TestCreateJob(t *testing.T) {
 					id: modelID,
 				},
 				nil)
-			resp, err := srv.CreateJob(context.Background(), tc.req)
+			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
+			resp, err := srv.CreateJob(ctx, tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -166,12 +168,12 @@ type noopModelClient struct {
 	id string
 }
 
-func (c *noopModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error) {
+func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest, opts ...grpc.CallOption) (*mv1.Model, error) {
 	if in.Id != c.id {
 		return nil, status.Error(codes.NotFound, "model not found")
 	}
 
-	return &mv1.GetBaseModelPathResponse{}, nil
+	return &mv1.Model{}, nil
 }
 
 type noopK8sJobClient struct{}
