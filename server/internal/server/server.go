@@ -49,6 +49,8 @@ type S struct {
 
 	srv *grpc.Server
 
+	enableAuth bool
+
 	store         *store.S
 	fileGetClient fileGetClient
 	modelClient   modelClient
@@ -66,6 +68,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 			return err
 		}
 		opts = append(opts, grpc.ChainUnaryInterceptor(ai.Unary()))
+		s.enableAuth = true
 	}
 
 	grpcServer := grpc.NewServer(opts...)

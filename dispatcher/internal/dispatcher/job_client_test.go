@@ -62,7 +62,7 @@ func TestJobCmd(t *testing.T) {
 				},
 			})
 
-			jc := NewJobClient(kc, "default", tc.jobConfig)
+			jc := NewJobClient(kc, tc.jobConfig, config.KueueConfig{})
 
 			b, err := proto.Marshal(tc.job)
 			assert.NoError(t, err)

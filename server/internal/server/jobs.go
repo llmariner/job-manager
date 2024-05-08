@@ -10,6 +10,7 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -25,6 +26,17 @@ func (s *S) CreateJob(
 	ctx context.Context,
 	req *v1.CreateJobRequest,
 ) (*v1.Job, error) {
+	var orgID string
+	if s.enableAuth {
+		info, err := auth.ExtractUserInfoFromContext(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "extract user info: %s", err)
+		}
+		orgID = info.OrganizationID
+	} else {
+		orgID = fakeTenantID
+	}
+
 	// TODO(kenji): Add more validation.
 	if req.Model == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "model is required")
@@ -96,6 +108,7 @@ func (s *S) CreateJob(
 		Hyperparameters: hp,
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
+		OrganizationId:  orgID,
 		// TODO(kenji): Fill more field.
 	}
 	msg, err := proto.Marshal(jobProto)
@@ -108,7 +121,7 @@ func (s *S) CreateJob(
 		State:    store.JobStateQueued,
 		Message:  msg,
 		Suffix:   req.Suffix,
-		TenantID: fakeTenantID,
+		TenantID: orgID,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)

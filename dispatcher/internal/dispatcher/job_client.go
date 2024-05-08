@@ -30,6 +30,8 @@ const (
 	managedJobAnnotationKey = "llm-operator/managed-pod"
 	jobIDAnnotationKey      = "llm-operator/job-id"
 
+	kueueQueueNameLabelKey = "kueue.x-k8s.io/queue-name"
+
 	jobTTL = time.Hour * 24
 )
 
@@ -39,22 +41,21 @@ var cmdTemplate string
 // NewJobClient returns a new JobCreator.
 func NewJobClient(
 	k8sClient client.Client,
-	namespace string,
 	jobConfig config.JobConfig,
+	kueueConfig config.KueueConfig,
 ) *JobClient {
 	return &JobClient{
-		k8sClient: k8sClient,
-		namespace: namespace,
-		jobConfig: jobConfig,
+		k8sClient:   k8sClient,
+		jobConfig:   jobConfig,
+		kueueConfig: kueueConfig,
 	}
 }
 
 // JobClient operates a Kubernetes Job resource for a job.
 type JobClient struct {
-	k8sClient client.Client
-	// TODO(kenji): Be able to specify the namespace per tenant.
-	namespace string
-	jobConfig config.JobConfig
+	k8sClient   client.Client
+	jobConfig   config.JobConfig
+	kueueConfig config.KueueConfig
 }
 
 func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
@@ -68,17 +69,25 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 		return err
 	}
 
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(batchv1apply.
-		Job(util.GetK8sJobName(jobData.JobID), p.namespace).
+	namespace := p.getNamespace(jobData.TenantID)
+	obj := batchv1apply.
+		Job(util.GetK8sJobName(jobData.JobID), namespace).
 		WithAnnotations(map[string]string{
 			managedJobAnnotationKey: "true",
 			jobIDAnnotationKey:      jobData.JobID}).
-		WithSpec(spec))
+		WithSpec(spec)
+
+	if p.kueueConfig.Enable {
+		obj.WithLabels(map[string]string{
+			kueueQueueNameLabelKey: p.getQueueName(namespace),
+		})
+	}
+
+	uobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
 		return err
-
 	}
-	patch := &unstructured.Unstructured{Object: obj}
+	patch := &unstructured.Unstructured{Object: uobj}
 	opts := &client.PatchOptions{FieldManager: "job-manager-dispatcher", Force: ptr.To(true)}
 	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
@@ -153,6 +162,17 @@ func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, 
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func (p *JobClient) getNamespace(orgID string) string {
+	// TODO(aya): rethink the mapping method organization to namespace.
+	// static mapping by configmap or set namespace to job data?
+	return orgID
+}
+
+func (p *JobClient) getQueueName(namespace string) string {
+	// TODO(aya): rethink how to get queue name
+	return p.kueueConfig.DefaultQueueName
 }
 
 func toAddtionalSFTArgs(jobProto *v1.Job) string {

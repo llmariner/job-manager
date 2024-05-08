@@ -90,8 +90,8 @@ github.com/llm-operator/file-manager v0.2.0 h1:wbbVrNNtmIhYp50/nc3tH3cONmBNTjq1G
 github.com/llm-operator/file-manager v0.2.0/go.mod h1:x5rmGi/2Wa5EyJWxjEW3yu/heoa9L3I2QGC04JktsIA=
 github.com/llm-operator/model-manager v0.4.0 h1:C8KF6474bMrN+2AhFCGN/98RaavTuSpisbf5rngW3vY=
 github.com/llm-operator/model-manager v0.4.0/go.mod h1:unm5lw3NXTSM/DY352d1evHlz1dNLMrI/gb69A0bzdQ=
-github.com/llm-operator/rbac-manager v0.8.0 h1:hhUHX3ldnFhtYaghT9B4EC1aEM+7COAORLsr+Ve8ULc=
-github.com/llm-operator/rbac-manager v0.8.0/go.mod h1:d0hpYbNBTJEj0R32NqHYcqjFCVbYMzHMFhRqIJRyjA4=
+github.com/llm-operator/rbac-manager v0.23.0 h1:XggccqNhAakzDzvfAvqYhUOgpPMZDVrkJldFE6jTIH0=
+github.com/llm-operator/rbac-manager v0.23.0/go.mod h1:1T2otIB+2+TqRcjRirKu4PSXRfHXarvgFnxqDQrd4u8=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mattn/go-sqlite3 v1.14.17 h1:mCRHCLDUBXgpKAqIKsaAaAsrAlbkeomtRFKXh2L6YIM=

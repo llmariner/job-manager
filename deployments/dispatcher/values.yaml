@@ -20,7 +20,6 @@ global:
     secretAccessKeyKey:
 
 jobPollingInterval: 10s
-jobNamespace:
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
   version: latest
@@ -39,6 +38,10 @@ kubernetesManager:
   metricsBindAddress: :8080
   healthBindAddress: :8081
   pprofBindAddress:
+
+kueueIntegration:
+  enable: false
+  defaultQueueName: default
 
 debug:
   kubeconfigPath:

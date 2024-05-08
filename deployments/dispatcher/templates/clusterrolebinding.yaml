@@ -1,8 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: {{ include "job-manager-dispatcher.fullname" . }}
-  namespace: {{ .Values.jobNamespace | default .Release.Namespace | quote }}
   labels:
     {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
 subjects:
@@ -10,6 +9,6 @@ subjects:
   name: {{ include "job-manager-dispatcher.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: {{ include "job-manager-dispatcher.fullname" . }}
   apiGroup: rbac.authorization.k8s.io
