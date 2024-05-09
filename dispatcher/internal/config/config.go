@@ -91,8 +91,8 @@ type KueueConfig struct {
 	DefaultQueueName string `yaml:"defaultQueueName"`
 }
 
-// Validate validates the Kueue configuration.
-func (c *KueueConfig) Validate() error {
+// validate validates the Kueue configuration.
+func (c *KueueConfig) validate() error {
 	if !c.Enable {
 		return nil
 	}
@@ -152,7 +152,7 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if err := c.KueueIntegration.Validate(); err != nil {
+	if err := c.KueueIntegration.validate(); err != nil {
 		return fmt.Errorf("kueue integration: %s", err)
 	}
 	return nil

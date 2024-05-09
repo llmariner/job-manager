@@ -64,12 +64,17 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 
 	log.Info("Creating a k8s Job resource for a job")
 
-	spec, err := p.jobSpec(jobData, presult)
+	jobProto, err := jobData.V1Job()
 	if err != nil {
 		return err
 	}
 
-	namespace := p.getNamespace(jobData.TenantID)
+	spec, err := p.jobSpec(jobProto, presult)
+	if err != nil {
+		return err
+	}
+
+	namespace := p.getNamespace(jobProto.OrganizationId)
 	obj := batchv1apply.
 		Job(util.GetK8sJobName(jobData.JobID), namespace).
 		WithAnnotations(map[string]string{
@@ -92,8 +97,8 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
 
-func (p *JobClient) jobSpec(jobData *store.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
-	cmd, err := p.cmd(jobData, presult)
+func (p *JobClient) jobSpec(jobProto *v1.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
+	cmd, err := p.cmd(jobProto, presult)
 	if err != nil {
 		return nil, err
 
@@ -126,12 +131,7 @@ func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
 		})
 }
 
-func (p *JobClient) cmd(jobData *store.Job, presult *PreProcessResult) (string, error) {
-	jobProto, err := jobData.V1Job()
-	if err != nil {
-		return "", err
-	}
-
+func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, error) {
 	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 	type Params struct {
 		BaseModelName     string

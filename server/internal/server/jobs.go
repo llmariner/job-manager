@@ -34,7 +34,7 @@ func (s *S) CreateJob(
 		}
 		orgID = info.OrganizationID
 	} else {
-		orgID = fakeTenantID
+		orgID = "default"
 	}
 
 	// TODO(kenji): Add more validation.
@@ -121,7 +121,7 @@ func (s *S) CreateJob(
 		State:    store.JobStateQueued,
 		Message:  msg,
 		Suffix:   req.Suffix,
-		TenantID: orgID,
+		TenantID: fakeTenantID,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)

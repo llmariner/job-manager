@@ -5,10 +5,8 @@ import (
 	"testing"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/proto"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -64,13 +62,6 @@ func TestJobCmd(t *testing.T) {
 
 			jc := NewJobClient(kc, tc.jobConfig, config.KueueConfig{})
 
-			b, err := proto.Marshal(tc.job)
-			assert.NoError(t, err)
-
-			job := &store.Job{
-				JobID:   "job-id",
-				Message: b,
-			}
 			presult := &PreProcessResult{
 				BaseModelURLs: map[string]string{
 					"config.json": "https://example.com/config.json",
@@ -79,7 +70,7 @@ func TestJobCmd(t *testing.T) {
 				ValidationFileURL: "https://example.com/validation-file",
 				OutputModelURL:    "https://example.com/output-model",
 			}
-			got, err := jc.cmd(job, presult)
+			got, err := jc.cmd(tc.job, presult)
 			assert.NoError(t, err)
 
 			want, err := os.ReadFile(tc.goldenFile)
