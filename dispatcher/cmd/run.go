@@ -21,7 +21,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
@@ -74,11 +73,6 @@ func run(ctx context.Context, c *config.Config) error {
 		},
 		HealthProbeBindAddress: c.KubernetesManager.HealthBindAddress,
 		PprofBindAddress:       c.KubernetesManager.PprofBindAddress,
-		Cache: cache.Options{
-			DefaultNamespaces: map[string]cache.Config{
-				c.JobNamespace: cache.Config{},
-			},
-		},
 	})
 	if err != nil {
 		return err
@@ -86,8 +80,8 @@ func run(ctx context.Context, c *config.Config) error {
 
 	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
-		c.JobNamespace,
 		c.Job,
+		c.KueueIntegration,
 	)
 
 	preProcessor, postProcessor, err := newProcessors(c)

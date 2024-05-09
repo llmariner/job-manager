@@ -84,10 +84,27 @@ func (c *JobConfig) validate() error {
 	return nil
 }
 
+// KueueConfig is the Kueue configuration.
+type KueueConfig struct {
+	Enable bool `yaml:"enable"`
+
+	DefaultQueueName string `yaml:"defaultQueueName"`
+}
+
+// validate validates the Kueue configuration.
+func (c *KueueConfig) validate() error {
+	if !c.Enable {
+		return nil
+	}
+	if c.DefaultQueueName == "" {
+		return fmt.Errorf("default queue name must be set")
+	}
+	return nil
+}
+
 // Config is the configuration.
 type Config struct {
 	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
-	JobNamespace       string        `yaml:"jobNamespace"`
 
 	Job JobConfig `yaml:"job"`
 
@@ -101,15 +118,14 @@ type Config struct {
 	Debug DebugConfig `yaml:"debug"`
 
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
+
+	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
 }
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
 	if c.JobPollingInterval <= 0 {
 		return fmt.Errorf("job polling interval must be greater than 0")
-	}
-	if c.JobNamespace == "" {
-		return fmt.Errorf("job namespace must be set")
 	}
 	if err := c.Job.validate(); err != nil {
 		return fmt.Errorf("job: %s", err)
@@ -134,6 +150,10 @@ func (c *Config) Validate() error {
 		if err := c.Database.Validate(); err != nil {
 			return fmt.Errorf("database: %s", err)
 		}
+	}
+
+	if err := c.KueueIntegration.validate(); err != nil {
+		return fmt.Errorf("kueue integration: %s", err)
 	}
 	return nil
 }

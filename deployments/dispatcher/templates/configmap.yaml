@@ -7,7 +7,6 @@ metadata:
 data:
   config.yaml: |
     jobPollingInterval: {{ .Values.jobPollingInterval }}
-    jobNamespace: {{ .Values.jobNamespace | default .Release.Namespace | quote }}
     job:
       image: {{ .Values.job.image }}
       version: {{ .Values.job.version }}
@@ -32,5 +31,8 @@ data:
       metricsBindAddress: {{ .Values.kubernetesManager.metricsBindAddress }}
       healthBindAddress: {{ .Values.kubernetesManager.healthBindAddress }}
       pprofBindAddress: {{ .Values.kubernetesManager.pprofBindAddress }}
+    kueueIntegration:
+      enable: {{ .Values.kueueIntegration.enable }}
+      defaultQueueName: {{ .Values.kueueIntegration.defaultQueueName }}
     debug:
       kubeconfigPath: {{ .Values.debug.kubeconfigPath }}
