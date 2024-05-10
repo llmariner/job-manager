@@ -28,9 +28,9 @@ func (s *S) CreateJob(
 ) (*v1.Job, error) {
 	var orgID string
 	if s.enableAuth {
-		info, err := auth.ExtractUserInfoFromContext(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "extract user info: %s", err)
+		info, ok := auth.ExtractUserInfoFromContext(ctx)
+		if !ok {
+			return nil, status.Error(codes.Unauthenticated, "user info not found")
 		}
 		orgID = info.OrganizationID
 	} else {
