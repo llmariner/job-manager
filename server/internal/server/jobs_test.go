@@ -108,6 +108,21 @@ func TestCreateJob(t *testing.T) {
 	}
 }
 
+func TestGetJob(t *testing.T) {
+	const jobID = "job-1"
+
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	err := st.CreateJob(&store.Job{JobID: jobID, TenantID: fakeTenantID, State: store.JobStateQueued})
+	assert.NoError(t, err)
+
+	srv := New(st, nil, nil, &noopK8sJobClient{})
+	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
+	assert.NoError(t, err)
+	assert.Equal(t, store.JobStateQueued, store.JobState(resp.Status))
+}
+
 func TestJobCancel(t *testing.T) {
 	const jobID = "job-1"
 	var tcs = []struct {
@@ -141,7 +156,7 @@ func TestJobCancel(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state})
+			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: fakeTenantID})
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, &noopK8sJobClient{})

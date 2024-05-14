@@ -83,6 +83,36 @@
         ]
       }
     },
+    "/v1/fine_tuning/jobs/{id}": {
+      "get": {
+        "operationId": "FineTuningService_GetJobs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Job"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FineTuningService"
+        ]
+      }
+    },
     "/v1/fine_tuning/jobs/{id}/cancel": {
       "post": {
         "operationId": "FineTuningService_CancelJob",

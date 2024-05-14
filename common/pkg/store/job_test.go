@@ -27,6 +27,15 @@ func TestCreateAndGetJob(t *testing.T) {
 	got, err := st.GetJobByJobID("job0")
 	assert.NoError(t, err)
 	assert.Equal(t, job.JobID, got.JobID)
+
+	got, err = st.GetJobByJobIDAndTenantID("job0", "tid0")
+	assert.NoError(t, err)
+	assert.Equal(t, job.JobID, got.JobID)
+
+	// Different tenant.
+	got, err = st.GetJobByJobIDAndTenantID("job0", "tid1")
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }
 
 func TestCreateAndListJobs(t *testing.T) {
