@@ -131,8 +131,6 @@ func (s *S) CreateJob(
 }
 
 func (s *S) validateFile(ctx context.Context, fileID string) error {
-	// Check if the specified training file exits.
-
 	if _, err := s.fileGetClient.GetFile(ctx, &fv1.GetFileRequest{
 		Id: fileID,
 	}); err != nil {
@@ -170,12 +168,40 @@ func (s *S) ListJobs(
 	}, nil
 }
 
+// GetJob gets a job.
+func (s *S) GetJob(
+	ctx context.Context,
+	req *v1.GetJobRequest,
+) (*v1.Job, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+
+	jobProto, err := job.V1Job()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
+	}
+	return jobProto, nil
+}
+
 // CancelJob cancels a job.
 func (s *S) CancelJob(
 	ctx context.Context,
 	req *v1.CancelJobRequest,
 ) (*v1.Job, error) {
-	job, err := s.store.GetJobByJobID(req.Id)
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)

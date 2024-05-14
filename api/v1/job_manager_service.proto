@@ -76,6 +76,10 @@ message ListJobsResponse {
   bool has_more = 3;
 }
 
+message GetJobRequest {
+  string id = 1;
+}
+
 message CancelJobRequest {
   string id = 1;
 }
@@ -91,6 +95,12 @@ service FineTuningService {
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {
     option (google.api.http) = {
       get: "/v1/fine_tuning/jobs"
+    };
+  }
+
+  rpc GetJobs(GetJobRequest) returns (Job) {
+    option (google.api.http) = {
+      get: "/v1/fine_tuning/jobs/{id}"
     };
   }
 

@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type FineTuningServiceClient interface {
 	CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*Job, error)
 	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
+	GetJobs(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*Job, error)
 	CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*Job, error)
 }
 
@@ -49,6 +50,15 @@ func (c *fineTuningServiceClient) ListJobs(ctx context.Context, in *ListJobsRequ
 	return out, nil
 }
 
+func (c *fineTuningServiceClient) GetJobs(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*Job, error) {
+	out := new(Job)
+	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJobs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fineTuningServiceClient) CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*Job, error) {
 	out := new(Job)
 	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob", in, out, opts...)
@@ -64,6 +74,7 @@ func (c *fineTuningServiceClient) CancelJob(ctx context.Context, in *CancelJobRe
 type FineTuningServiceServer interface {
 	CreateJob(context.Context, *CreateJobRequest) (*Job, error)
 	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
+	GetJobs(context.Context, *GetJobRequest) (*Job, error)
 	CancelJob(context.Context, *CancelJobRequest) (*Job, error)
 	mustEmbedUnimplementedFineTuningServiceServer()
 }
@@ -77,6 +88,9 @@ func (UnimplementedFineTuningServiceServer) CreateJob(context.Context, *CreateJo
 }
 func (UnimplementedFineTuningServiceServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListJobs not implemented")
+}
+func (UnimplementedFineTuningServiceServer) GetJobs(context.Context, *GetJobRequest) (*Job, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetJobs not implemented")
 }
 func (UnimplementedFineTuningServiceServer) CancelJob(context.Context, *CancelJobRequest) (*Job, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelJob not implemented")
@@ -130,6 +144,24 @@ func _FineTuningService_ListJobs_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FineTuningService_GetJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FineTuningServiceServer).GetJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJobs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FineTuningServiceServer).GetJobs(ctx, req.(*GetJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FineTuningService_CancelJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CancelJobRequest)
 	if err := dec(in); err != nil {
@@ -162,6 +194,10 @@ var FineTuningService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListJobs",
 			Handler:    _FineTuningService_ListJobs_Handler,
+		},
+		{
+			MethodName: "GetJobs",
+			Handler:    _FineTuningService_GetJobs_Handler,
 		},
 		{
 			MethodName: "CancelJob",

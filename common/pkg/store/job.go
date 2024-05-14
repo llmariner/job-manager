@@ -88,6 +88,15 @@ func (s *S) GetJobByJobID(jobID string) (*Job, error) {
 	return &job, nil
 }
 
+// GetJobByJobIDAndTenantID gets a job by its job ID and tenant ID.
+func (s *S) GetJobByJobIDAndTenantID(jobID, tenantID string) (*Job, error) {
+	var job Job
+	if err := s.db.Where("job_id = ? AND tenant_id = ?", jobID, tenantID).Take(&job).Error; err != nil {
+		return nil, err
+	}
+	return &job, nil
+}
+
 // ListQueuedJobs finds queued jobs.
 func (s *S) ListQueuedJobs() ([]*Job, error) {
 	var jobs []*Job
