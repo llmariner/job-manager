@@ -98,7 +98,7 @@ service FineTuningService {
     };
   }
 
-  rpc GetJobs(GetJobRequest) returns (Job) {
+  rpc GetJob(GetJobRequest) returns (Job) {
     option (google.api.http) = {
       get: "/v1/fine_tuning/jobs/{id}"
     };

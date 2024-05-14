@@ -85,7 +85,7 @@
     },
     "/v1/fine_tuning/jobs/{id}": {
       "get": {
-        "operationId": "FineTuningService_GetJobs",
+        "operationId": "FineTuningService_GetJob",
         "responses": {
           "200": {
             "description": "A successful response.",
