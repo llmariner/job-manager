@@ -4,8 +4,6 @@ metadata:
   name: {{ include "job-manager-server.fullname" . }}-grpc
   labels:
     {{- include "job-manager-server.labels" . | nindent 4 }}
-  annotations:
-    konghq.com/protocol: grpc
 spec:
   type: ClusterIP
   ports:
