@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/llm-operator/job-manager/common/pkg/db"
+	"github.com/llm-operator/common/pkg/db"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 )
