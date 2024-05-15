@@ -50,7 +50,6 @@ replicaCount: 1
 
 serviceAccount:
   create: true
-  serviceAccountName: job-manager-dispatcher
 
 image:
   repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-dispatcher
