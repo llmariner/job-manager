@@ -193,6 +193,6 @@ func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest,
 
 type noopK8sJobClient struct{}
 
-func (c *noopK8sJobClient) CancelJob(ctx context.Context, jobID string) error {
+func (c *noopK8sJobClient) CancelJob(ctx context.Context, job *v1.Job) error {
 	return nil
 }

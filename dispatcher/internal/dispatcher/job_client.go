@@ -74,7 +74,7 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 		return err
 	}
 
-	namespace := p.getNamespace(jobProto.OrganizationId)
+	namespace := util.GetJobNamespace(jobProto)
 	obj := batchv1apply.
 		Job(util.GetK8sJobName(jobData.JobID), namespace).
 		WithAnnotations(map[string]string{
@@ -162,12 +162,6 @@ func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, er
 		return "", err
 	}
 	return buf.String(), nil
-}
-
-func (p *JobClient) getNamespace(orgID string) string {
-	// TODO(aya): rethink the mapping method organization to namespace.
-	// static mapping by configmap or set namespace to job data?
-	return orgID
 }
 
 func (p *JobClient) getQueueName(namespace string) string {

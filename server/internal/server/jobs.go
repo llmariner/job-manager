@@ -209,15 +209,19 @@ func (s *S) CancelJob(
 		return nil, status.Errorf(codes.Internal, "get job: %s", err)
 	}
 
+	jobProto, err := job.V1Job()
+	if err != nil {
+		return nil, err
+	}
 	switch job.State {
 	case
 		store.JobStateSucceeded,
 		store.JobStatusFailed,
 		store.JobStateCancelled:
-		return job.V1Job()
+		return jobProto, nil
 	case store.JobStateQueued:
 	case store.JobStateRunning:
-		if err := s.k8sJobClient.CancelJob(ctx, job.JobID); err != nil {
+		if err := s.k8sJobClient.CancelJob(ctx, jobProto); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
 		}
 	default:
@@ -239,7 +243,7 @@ func (s *S) CancelJob(
 	}
 	job.State = store.JobStateCancelled
 
-	jobProto, err := job.V1Job()
+	jobProto, err = job.V1Job()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 	}
