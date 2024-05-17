@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,7 @@ func TestCreateAndGetJob(t *testing.T) {
 	assert.Equal(t, job.JobID, got.JobID)
 
 	// Different tenant.
-	got, err = st.GetJobByJobIDAndTenantID("job0", "tid1")
+	_, err = st.GetJobByJobIDAndTenantID("job0", "tid1")
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }
@@ -85,6 +86,48 @@ func TestCreateAndListJobs(t *testing.T) {
 	assert.Len(t, got, 2)
 	assert.Equal(t, jobs[0].JobID, got[0].JobID)
 	assert.Equal(t, jobs[1].JobID, got[1].JobID)
+}
+
+func TestListJobsByTenantIDWithPagination(t *testing.T) {
+	st, teardown := NewTest(t)
+	defer teardown()
+
+	for i := 0; i < 10; i++ {
+		job := &Job{
+			JobID:    fmt.Sprintf("job%d", i),
+			State:    JobStateQueued,
+			TenantID: "tid0",
+		}
+		err := st.CreateJob(job)
+		assert.NoError(t, err)
+	}
+
+	got, hasMore, err := st.ListJobsByTenantIDWithPagination("tid0", 0, 5)
+	assert.NoError(t, err)
+	assert.True(t, hasMore)
+	assert.Len(t, got, 5)
+	want := []string{"job9", "job8", "job7", "job6", "job5"}
+	for i, job := range got {
+		assert.Equal(t, want[i], job.JobID)
+	}
+
+	got, hasMore, err = st.ListJobsByTenantIDWithPagination("tid0", got[4].ID, 2)
+	assert.NoError(t, err)
+	assert.True(t, hasMore)
+	assert.Len(t, got, 2)
+	want = []string{"job4", "job3"}
+	for i, job := range got {
+		assert.Equal(t, want[i], job.JobID)
+	}
+
+	got, hasMore, err = st.ListJobsByTenantIDWithPagination("tid0", got[1].ID, 3)
+	assert.NoError(t, err)
+	assert.False(t, hasMore)
+	assert.Len(t, got, 3)
+	want = []string{"job2", "job1", "job0"}
+	for i, job := range got {
+		assert.Equal(t, want[i], job.JobID)
+	}
 }
 
 func TestUpdateJobState(t *testing.T) {

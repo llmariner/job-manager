@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	fv1 "github.com/llm-operator/file-manager/api/v1"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestCreateJob(t *testing.T) {
@@ -105,6 +107,54 @@ func TestCreateJob(t *testing.T) {
 			_, err = st.GetJobByJobID(resp.Id)
 			assert.NoError(t, err)
 		})
+	}
+}
+
+func TestListJobs(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	for i := 0; i < 10; i++ {
+		jobProto := &v1.Job{
+			Id: fmt.Sprintf("job%d", i),
+		}
+		msg, err := proto.Marshal(jobProto)
+		assert.NoError(t, err)
+		job := &store.Job{
+			JobID:    jobProto.Id,
+			Message:  msg,
+			TenantID: fakeTenantID,
+		}
+		err = st.CreateJob(job)
+		assert.NoError(t, err)
+	}
+
+	srv := New(st, nil, nil, &noopK8sJobClient{})
+	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
+	assert.NoError(t, err)
+	assert.True(t, resp.HasMore)
+	assert.Len(t, resp.Data, 5)
+	want := []string{"job9", "job8", "job7", "job6", "job5"}
+	for i, job := range resp.Data {
+		assert.Equal(t, want[i], job.Id)
+	}
+
+	resp, err = srv.ListJobs(context.Background(), &v1.ListJobsRequest{After: resp.Data[4].Id, Limit: 2})
+	assert.NoError(t, err)
+	assert.True(t, resp.HasMore)
+	assert.Len(t, resp.Data, 2)
+	want = []string{"job4", "job3"}
+	for i, job := range resp.Data {
+		assert.Equal(t, want[i], job.Id)
+	}
+
+	resp, err = srv.ListJobs(context.Background(), &v1.ListJobsRequest{After: resp.Data[1].Id, Limit: 3})
+	assert.NoError(t, err)
+	assert.False(t, resp.HasMore)
+	assert.Len(t, resp.Data, 3)
+	want = []string{"job2", "job1", "job0"}
+	for i, job := range resp.Data {
+		assert.Equal(t, want[i], job.Id)
 	}
 }
 
