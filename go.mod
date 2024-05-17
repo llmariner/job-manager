@@ -7,6 +7,7 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
+	github.com/llm-operator/common v0.1.0
 	github.com/llm-operator/file-manager v0.2.0
 	github.com/llm-operator/model-manager v0.4.0
 	github.com/llm-operator/rbac-manager v0.26.0
@@ -16,7 +17,6 @@ require (
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
-	gorm.io/driver/postgres v1.5.7
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.9
 	k8s.io/api v0.29.3
@@ -53,7 +53,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/llm-operator/common v0.1.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
@@ -81,6 +80,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gorm.io/driver/postgres v1.5.7 // indirect
 	k8s.io/apiextensions-apiserver v0.29.2 // indirect
 	k8s.io/component-base v0.29.2 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
