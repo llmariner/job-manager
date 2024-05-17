@@ -19,8 +19,8 @@ grpcPort: 8081
 httpPort: 8080
 
 # The following default values work if model-manager-server runs in the same namespace.
-fileManagerServerAddr: llm-operator-file-manager-server-grpc:8081
-modelManagerServerAddr: llm-operator-model-manager-server-grpc:8081
+fileManagerServerAddr: file-manager-server-grpc:8081
+modelManagerServerAddr: model-manager-server-grpc:8081
 
 database:
   database: job_manager
