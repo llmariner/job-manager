@@ -18,8 +18,6 @@ type Config struct {
 
 	Database db.Config `yaml:"database"`
 
-	JobNamespace string `yaml:"jobNamespace"`
-
 	Debug DebugConfig `yaml:"debug"`
 
 	AuthConfig AuthConfig `yaml:"auth"`
