@@ -124,6 +124,25 @@ func (s *S) ListJobsByTenantID(tenantID string) ([]*Job, error) {
 	return jobs, nil
 }
 
+// ListJobsByTenantIDWithPagination finds jobs with pagination. Jobs are returned with a descending order of ID.
+func (s *S) ListJobsByTenantIDWithPagination(tenantID string, afterID uint, limit int) ([]*Job, bool, error) {
+	var jobs []*Job
+	q := s.db.Where("tenant_id = ?", tenantID)
+	if afterID > 0 {
+		q = q.Where("id < ?", afterID)
+	}
+	if err := q.Order("id DESC").Limit(limit + 1).Find(&jobs).Error; err != nil {
+		return nil, false, err
+	}
+
+	var hasMore bool
+	if len(jobs) > limit {
+		jobs = jobs[:limit]
+		hasMore = true
+	}
+	return jobs, hasMore, nil
+}
+
 // UpdateJobState updates a job.
 func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState) error {
 	result := s.db.Model(&Job{}).

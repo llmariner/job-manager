@@ -264,8 +264,10 @@ type ListJobsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// after is the identifier for the last job from the previous pagination request.
 	After string `protobuf:"bytes,1,opt,name=after,proto3" json:"after,omitempty"`
-	Limit int32  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// limit is the number of fine-tuning jobs to retrieve. Defaults to 20.
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (x *ListJobsRequest) Reset() {

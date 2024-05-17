@@ -147,7 +147,34 @@ func (s *S) ListJobs(
 	ctx context.Context,
 	req *v1.ListJobsRequest,
 ) (*v1.ListJobsResponse, error) {
-	jobs, err := s.store.ListJobsByTenantID(fakeTenantID)
+	const (
+		defaultLimit = 20
+		maxLimit     = 100
+	)
+	if req.Limit < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "limit must be non-negative")
+	}
+	limit := req.Limit
+	if limit == 0 {
+		limit = defaultLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	var afterID uint
+	if req.After != "" {
+		job, err := s.store.GetJobByJobIDAndTenantID(req.After, fakeTenantID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, status.Errorf(codes.InvalidArgument, "invalid after: %s", err)
+			}
+			return nil, status.Errorf(codes.Internal, "get job: %s", err)
+		}
+		afterID = job.ID
+	}
+
+	jobs, hasMore, err := s.store.ListJobsByTenantIDWithPagination(fakeTenantID, afterID, int(limit))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "find jobs: %s", err)
 	}
@@ -164,7 +191,7 @@ func (s *S) ListJobs(
 	return &v1.ListJobsResponse{
 		Object:  "list",
 		Data:    jobProtos,
-		HasMore: false,
+		HasMore: hasMore,
 	}, nil
 }
 

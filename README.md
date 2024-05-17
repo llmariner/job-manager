@@ -20,7 +20,6 @@ make build-dispatcher
 
 ```yaml
 jobPollingInterval: 10s
-jobNamespace: default
 job:
   image: llm-operator/experiments-fake-job
   version: latest
