@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package llmoperator.workspace.server.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/llm-operator/job-manager/api/v1";
+
+message Notebook {
+  string id = 1;
+  string name = 2;
+
+  int64 created_at = 3;
+  int64 started_at = 4;
+  int64 stopped_at = 5;
+
+  string image = 6;
+  Resources resources = 7;
+  map<string, string> envs = 8;
+
+  message Error {
+    string code = 1;
+    string message = 2;
+  }
+  Error error = 9;
+  string status = 10;
+}
+
+message Resources {
+  message Quantity {
+    int32 requests = 1;
+    int32 limits = 2;
+  }
+
+  Quantity cpu_milicore = 1;
+  Quantity memory_megabytes = 2;
+  Quantity storage_megabytes = 3;
+
+  int32 gpu_count = 4;
+}
+
+message CreateNotebookRequest {
+  string name = 1;
+
+  message Image {
+    oneof image {
+      // Type of preset images.
+      string type = 1;
+      // URI to the custom container image.
+      string uri = 2;
+    }
+  }
+  Image image = 2;
+  Resources resources = 3;
+  map<string, string> envs = 4;
+}
+
+message ListNotebooksRequest {
+}
+
+message ListNotebooksResponse {
+  repeated Notebook notebooks = 1;
+}
+
+message GetNotebookRequest {
+  string id = 1;
+}
+
+message DeleteNotebookRequest {
+  string id = 1;
+}
+
+message DeleteNotebookResponse {
+}
+
+message StopNotebookRequest {
+  string id = 1;
+}
+
+message StopNotebookResponse {
+}
+
+message ResumeNotebookRequest {
+  string id = 1;
+}
+
+message ResumeNotebookResponse {
+}
+
+service WorkspaceService {
+  rpc CreateNotebook(CreateNotebookRequest) returns (Notebook) {
+    option (google.api.http) = {
+      post: "/v1/workspaces/notebooks"
+      body: "*"
+    };
+  }
+  rpc ListNotebook(ListNotebooksRequest) returns (ListNotebooksResponse) {
+    option (google.api.http) = {
+      get: "/v1/workspaces/notebooks"
+    };
+  }
+  rpc GetNotebook(GetNotebookRequest) returns (Notebook) {
+    option (google.api.http) = {
+      get: "/v1/workspaces/notebooks/{id}"
+    };
+  }
+  rpc DeleteNotebook(DeleteNotebookRequest) returns (DeleteNotebookResponse) {
+    option (google.api.http) = {
+      delete: "/v1/workspaces/notebooks/{id}"
+    };
+  }
+
+  rpc StopNotebook(StopNotebookRequest) returns (StopNotebookResponse) {
+    option (google.api.http) = {
+      post: "/v1/workspaces/notebooks/{id}/actions:stop"
+      body: "*"
+    };
+  }
+  rpc ResumeNotebook(ResumeNotebookRequest) returns (ResumeNotebookResponse) {
+    option (google.api.http) = {
+      post: "/v1/workspaces/notebooks/{id}/actions:resume"
+      body: "*"
+    };
+  }
+}
