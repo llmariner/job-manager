@@ -27,14 +27,19 @@ func (s *S) CreateJob(
 	req *v1.CreateJobRequest,
 ) (*v1.Job, error) {
 	var orgID string
+	var userInfo *auth.UserInfo
 	if s.enableAuth {
-		info, ok := auth.ExtractUserInfoFromContext(ctx)
+		var ok bool
+		userInfo, ok = auth.ExtractUserInfoFromContext(ctx)
 		if !ok {
 			return nil, status.Error(codes.Unauthenticated, "user info not found")
 		}
-		orgID = info.OrganizationID
 	} else {
-		orgID = "default"
+		userInfo = &auth.UserInfo{
+			OrganizationID:      "default",
+			ProjectID:           "default",
+			KubernetesNamespace: "default",
+		}
 	}
 
 	// TODO(kenji): Add more validation.
@@ -113,11 +118,14 @@ func (s *S) CreateJob(
 	}
 
 	job := &store.Job{
-		JobID:    jobID,
-		State:    store.JobStateQueued,
-		Message:  msg,
-		Suffix:   req.Suffix,
-		TenantID: fakeTenantID,
+		JobID:               jobID,
+		State:               store.JobStateQueued,
+		Message:             msg,
+		Suffix:              req.Suffix,
+		TenantID:            fakeTenantID,
+		OrganizationID:      userInfo.OrganizationID,
+		ProjectID:           userInfo.ProjectID,
+		KubernetesNamespace: userInfo.KubernetesNamespace,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
@@ -157,6 +165,8 @@ func (s *S) ListJobs(
 	if limit > maxLimit {
 		limit = maxLimit
 	}
+
+	// TODO(kenji): Only show jobs for a organization/project in the context.
 
 	var afterID uint
 	if req.After != "" {
@@ -200,6 +210,8 @@ func (s *S) GetJob(
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
+	// TODO(kenji): Check if a job is visible for a organization/project in the context.
+
 	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -224,6 +236,8 @@ func (s *S) CancelJob(
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
+	// TODO(kenji): Check if a job is visible for a organization/project in the context.
+
 	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -244,7 +258,7 @@ func (s *S) CancelJob(
 		return jobProto, nil
 	case store.JobStateQueued:
 	case store.JobStateRunning:
-		if err := s.k8sJobClient.CancelJob(ctx, jobProto); err != nil {
+		if err := s.k8sJobClient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
 		}
 	default:

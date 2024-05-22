@@ -74,9 +74,8 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 		return err
 	}
 
-	namespace := util.GetJobNamespace(jobProto)
 	obj := batchv1apply.
-		Job(util.GetK8sJobName(jobData.JobID), namespace).
+		Job(util.GetK8sJobName(jobData.JobID), jobData.KubernetesNamespace).
 		WithAnnotations(map[string]string{
 			managedJobAnnotationKey: "true",
 			jobIDAnnotationKey:      jobData.JobID}).
@@ -84,7 +83,7 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 
 	if p.kueueConfig.Enable {
 		obj.WithLabels(map[string]string{
-			kueueQueueNameLabelKey: p.getQueueName(namespace),
+			kueueQueueNameLabelKey: p.getQueueName(jobData.KubernetesNamespace),
 		})
 	}
 
