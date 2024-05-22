@@ -38,8 +38,7 @@ func (p *PostProcessor) Process(ctx context.Context, job *store.Job) error {
 
 	log.Info("Publishing the model")
 	if _, err := p.modelClient.PublishModel(ctx, &mv1.PublishModelRequest{
-		Id:       job.OutputModelID,
-		TenantId: job.TenantID,
+		Id: job.OutputModelID,
 	}); err != nil {
 		return err
 	}

@@ -116,9 +116,11 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	}
 
 	rresp, err := p.modelClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
-		BaseModel: jobProto.Model,
-		Suffix:    job.Suffix,
-		TenantId:  job.TenantID,
+		BaseModel:      jobProto.Model,
+		Suffix:         job.Suffix,
+		TenantId:       job.TenantID,
+		OrganizationId: job.OrganizationID,
+		ProjectId:      job.ProjectID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("register model: %s", err)
