@@ -25,7 +25,7 @@ type modelClient interface {
 }
 
 type k8sJobClient interface {
-	CancelJob(ctx context.Context, job *v1.Job) error
+	CancelJob(ctx context.Context, job *v1.Job, namespace string) error
 }
 
 // New creates a server.

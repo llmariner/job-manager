@@ -25,13 +25,12 @@ func NewK8sJobClient(client kubernetes.Interface) *DefaultK8sJobClient {
 }
 
 // CancelJob cancels a job.
-func (c *DefaultK8sJobClient) CancelJob(ctx context.Context, job *v1.Job) error {
+func (c *DefaultK8sJobClient) CancelJob(ctx context.Context, job *v1.Job, namespace string) error {
 	opts := metav1.ApplyOptions{FieldManager: fieldManager, Force: true}
 	name := util.GetK8sJobName(job.Id)
-	ns := util.GetJobNamespace(job)
-	conf := batchv1apply.Job(name, ns).
+	conf := batchv1apply.Job(name, namespace).
 		WithSpec(batchv1apply.JobSpec().
 			WithSuspend(true))
-	_, err := c.client.BatchV1().Jobs(ns).Apply(ctx, conf, opts)
+	_, err := c.client.BatchV1().Jobs(namespace).Apply(ctx, conf, opts)
 	return err
 }
