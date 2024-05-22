@@ -40,7 +40,7 @@ type Job struct {
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
 
 	OrganizationID      string
-	ProjectID           string `gorm:"index:idx_job_project_id"`
+	ProjectID           string `gorm:"index"`
 	KubernetesNamespace string
 
 	// OutputModelID is the ID of a generated model.
