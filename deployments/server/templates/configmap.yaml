@@ -6,8 +6,8 @@ metadata:
     {{- include "job-manager-server.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    grpcPort: {{ .Values.grpcPort }}
     httpPort: {{ .Values.httpPort }}
+    grpcPort: {{ .Values.grpcPort }}
     fileManagerServerAddr: {{ .Values.fileManagerServerAddr }}
     modelManagerServerAddr: {{ .Values.modelManagerServerAddr }}
     database:

@@ -15,8 +15,8 @@ global:
     enable: true
     rbacInternalServerAddr:
 
-grpcPort: 8081
 httpPort: 8080
+grpcPort: 8081
 
 # The following default values work if model-manager-server runs in the same namespace.
 fileManagerServerAddr: file-manager-server-grpc:8081
