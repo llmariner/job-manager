@@ -19,6 +19,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	defaultProjectID = "default"
+)
+
 type fileGetClient interface {
 	GetFile(ctx context.Context, in *fv1.GetFileRequest, opts ...grpc.CallOption) (*fv1.File, error)
 }
@@ -110,7 +114,7 @@ func (s *S) extractUserInfoFromContext(ctx context.Context) (*auth.UserInfo, err
 	if !s.enableAuth {
 		return &auth.UserInfo{
 			OrganizationID:      "default",
-			ProjectID:           "default",
+			ProjectID:           defaultProjectID,
 			KubernetesNamespace: "default",
 		}, nil
 	}
