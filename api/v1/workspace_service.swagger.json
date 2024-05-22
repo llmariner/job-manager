@@ -18,7 +18,7 @@
   "paths": {
     "/v1/workspaces/notebooks": {
       "get": {
-        "operationId": "WorkspaceService_ListNotebook",
+        "operationId": "WorkspaceService_ListNotebooks",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -126,14 +126,14 @@
         ]
       }
     },
-    "/v1/workspaces/notebooks/{id}/actions:resume": {
+    "/v1/workspaces/notebooks/{id}/actions:start": {
       "post": {
-        "operationId": "WorkspaceService_ResumeNotebook",
+        "operationId": "WorkspaceService_StartNotebook",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ResumeNotebookResponse"
+              "$ref": "#/definitions/v1StartNotebookResponse"
             }
           },
           "default": {
@@ -155,7 +155,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/WorkspaceServiceResumeNotebookBody"
+              "$ref": "#/definitions/WorkspaceServiceStartNotebookBody"
             }
           }
         ],
@@ -230,7 +230,7 @@
         }
       }
     },
-    "WorkspaceServiceResumeNotebookBody": {
+    "WorkspaceServiceStartNotebookBody": {
       "type": "object"
     },
     "WorkspaceServiceStopNotebookBody": {
@@ -369,7 +369,7 @@
         }
       }
     },
-    "v1ResumeNotebookResponse": {
+    "v1StartNotebookResponse": {
       "type": "object"
     },
     "v1StopNotebookResponse": {

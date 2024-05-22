@@ -65,20 +65,20 @@ func local_request_WorkspaceService_CreateNotebook_0(ctx context.Context, marsha
 
 }
 
-func request_WorkspaceService_ListNotebook_0(ctx context.Context, marshaler runtime.Marshaler, client WorkspaceServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_WorkspaceService_ListNotebooks_0(ctx context.Context, marshaler runtime.Marshaler, client WorkspaceServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListNotebooksRequest
 	var metadata runtime.ServerMetadata
 
-	msg, err := client.ListNotebook(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListNotebooks(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_WorkspaceService_ListNotebook_0(ctx context.Context, marshaler runtime.Marshaler, server WorkspaceServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_WorkspaceService_ListNotebooks_0(ctx context.Context, marshaler runtime.Marshaler, server WorkspaceServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListNotebooksRequest
 	var metadata runtime.ServerMetadata
 
-	msg, err := server.ListNotebook(ctx, &protoReq)
+	msg, err := server.ListNotebooks(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -255,8 +255,8 @@ func local_request_WorkspaceService_StopNotebook_0(ctx context.Context, marshale
 
 }
 
-func request_WorkspaceService_ResumeNotebook_0(ctx context.Context, marshaler runtime.Marshaler, client WorkspaceServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResumeNotebookRequest
+func request_WorkspaceService_StartNotebook_0(ctx context.Context, marshaler runtime.Marshaler, client WorkspaceServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq StartNotebookRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -284,13 +284,13 @@ func request_WorkspaceService_ResumeNotebook_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.ResumeNotebook(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.StartNotebook(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_WorkspaceService_ResumeNotebook_0(ctx context.Context, marshaler runtime.Marshaler, server WorkspaceServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResumeNotebookRequest
+func local_request_WorkspaceService_StartNotebook_0(ctx context.Context, marshaler runtime.Marshaler, server WorkspaceServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq StartNotebookRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -318,7 +318,7 @@ func local_request_WorkspaceService_ResumeNotebook_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.ResumeNotebook(ctx, &protoReq)
+	msg, err := server.StartNotebook(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -354,7 +354,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("GET", pattern_WorkspaceService_ListNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkspaceService_ListNotebooks_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -362,12 +362,12 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkspaceService_ListNotebook_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkspaceService_ListNotebooks_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -375,7 +375,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 			return
 		}
 
-		forward_WorkspaceService_ListNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkspaceService_ListNotebooks_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -454,7 +454,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("POST", pattern_WorkspaceService_ResumeNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_WorkspaceService_StartNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -462,12 +462,12 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ResumeNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:resume"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WorkspaceService_ResumeNotebook_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WorkspaceService_StartNotebook_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -475,7 +475,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 			return
 		}
 
-		forward_WorkspaceService_ResumeNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkspaceService_StartNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -542,25 +542,25 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("GET", pattern_WorkspaceService_ListNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WorkspaceService_ListNotebooks_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkspaceService_ListNotebook_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkspaceService_ListNotebooks_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkspaceService_ListNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkspaceService_ListNotebooks_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -630,25 +630,25 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("POST", pattern_WorkspaceService_ResumeNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_WorkspaceService_StartNotebook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ResumeNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:resume"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WorkspaceService_ResumeNotebook_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WorkspaceService_StartNotebook_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WorkspaceService_ResumeNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WorkspaceService_StartNotebook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -658,7 +658,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 var (
 	pattern_WorkspaceService_CreateNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "workspaces", "notebooks"}, ""))
 
-	pattern_WorkspaceService_ListNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "workspaces", "notebooks"}, ""))
+	pattern_WorkspaceService_ListNotebooks_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "workspaces", "notebooks"}, ""))
 
 	pattern_WorkspaceService_GetNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "workspaces", "notebooks", "id"}, ""))
 
@@ -666,13 +666,13 @@ var (
 
 	pattern_WorkspaceService_StopNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v1", "workspaces", "notebooks", "id", "actions"}, "stop"))
 
-	pattern_WorkspaceService_ResumeNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v1", "workspaces", "notebooks", "id", "actions"}, "resume"))
+	pattern_WorkspaceService_StartNotebook_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v1", "workspaces", "notebooks", "id", "actions"}, "start"))
 )
 
 var (
 	forward_WorkspaceService_CreateNotebook_0 = runtime.ForwardResponseMessage
 
-	forward_WorkspaceService_ListNotebook_0 = runtime.ForwardResponseMessage
+	forward_WorkspaceService_ListNotebooks_0 = runtime.ForwardResponseMessage
 
 	forward_WorkspaceService_GetNotebook_0 = runtime.ForwardResponseMessage
 
@@ -680,5 +680,5 @@ var (
 
 	forward_WorkspaceService_StopNotebook_0 = runtime.ForwardResponseMessage
 
-	forward_WorkspaceService_ResumeNotebook_0 = runtime.ForwardResponseMessage
+	forward_WorkspaceService_StartNotebook_0 = runtime.ForwardResponseMessage
 )

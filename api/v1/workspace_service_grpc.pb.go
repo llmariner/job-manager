@@ -20,11 +20,11 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	WorkspaceService_CreateNotebook_FullMethodName = "/llmoperator.workspace.server.v1.WorkspaceService/CreateNotebook"
-	WorkspaceService_ListNotebook_FullMethodName   = "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebook"
+	WorkspaceService_ListNotebooks_FullMethodName  = "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks"
 	WorkspaceService_GetNotebook_FullMethodName    = "/llmoperator.workspace.server.v1.WorkspaceService/GetNotebook"
 	WorkspaceService_DeleteNotebook_FullMethodName = "/llmoperator.workspace.server.v1.WorkspaceService/DeleteNotebook"
 	WorkspaceService_StopNotebook_FullMethodName   = "/llmoperator.workspace.server.v1.WorkspaceService/StopNotebook"
-	WorkspaceService_ResumeNotebook_FullMethodName = "/llmoperator.workspace.server.v1.WorkspaceService/ResumeNotebook"
+	WorkspaceService_StartNotebook_FullMethodName  = "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook"
 )
 
 // WorkspaceServiceClient is the client API for WorkspaceService service.
@@ -32,11 +32,11 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkspaceServiceClient interface {
 	CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*Notebook, error)
-	ListNotebook(ctx context.Context, in *ListNotebooksRequest, opts ...grpc.CallOption) (*ListNotebooksResponse, error)
+	ListNotebooks(ctx context.Context, in *ListNotebooksRequest, opts ...grpc.CallOption) (*ListNotebooksResponse, error)
 	GetNotebook(ctx context.Context, in *GetNotebookRequest, opts ...grpc.CallOption) (*Notebook, error)
 	DeleteNotebook(ctx context.Context, in *DeleteNotebookRequest, opts ...grpc.CallOption) (*DeleteNotebookResponse, error)
 	StopNotebook(ctx context.Context, in *StopNotebookRequest, opts ...grpc.CallOption) (*StopNotebookResponse, error)
-	ResumeNotebook(ctx context.Context, in *ResumeNotebookRequest, opts ...grpc.CallOption) (*ResumeNotebookResponse, error)
+	StartNotebook(ctx context.Context, in *StartNotebookRequest, opts ...grpc.CallOption) (*StartNotebookResponse, error)
 }
 
 type workspaceServiceClient struct {
@@ -56,9 +56,9 @@ func (c *workspaceServiceClient) CreateNotebook(ctx context.Context, in *CreateN
 	return out, nil
 }
 
-func (c *workspaceServiceClient) ListNotebook(ctx context.Context, in *ListNotebooksRequest, opts ...grpc.CallOption) (*ListNotebooksResponse, error) {
+func (c *workspaceServiceClient) ListNotebooks(ctx context.Context, in *ListNotebooksRequest, opts ...grpc.CallOption) (*ListNotebooksResponse, error) {
 	out := new(ListNotebooksResponse)
-	err := c.cc.Invoke(ctx, WorkspaceService_ListNotebook_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, WorkspaceService_ListNotebooks_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +92,9 @@ func (c *workspaceServiceClient) StopNotebook(ctx context.Context, in *StopNoteb
 	return out, nil
 }
 
-func (c *workspaceServiceClient) ResumeNotebook(ctx context.Context, in *ResumeNotebookRequest, opts ...grpc.CallOption) (*ResumeNotebookResponse, error) {
-	out := new(ResumeNotebookResponse)
-	err := c.cc.Invoke(ctx, WorkspaceService_ResumeNotebook_FullMethodName, in, out, opts...)
+func (c *workspaceServiceClient) StartNotebook(ctx context.Context, in *StartNotebookRequest, opts ...grpc.CallOption) (*StartNotebookResponse, error) {
+	out := new(StartNotebookResponse)
+	err := c.cc.Invoke(ctx, WorkspaceService_StartNotebook_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +106,11 @@ func (c *workspaceServiceClient) ResumeNotebook(ctx context.Context, in *ResumeN
 // for forward compatibility
 type WorkspaceServiceServer interface {
 	CreateNotebook(context.Context, *CreateNotebookRequest) (*Notebook, error)
-	ListNotebook(context.Context, *ListNotebooksRequest) (*ListNotebooksResponse, error)
+	ListNotebooks(context.Context, *ListNotebooksRequest) (*ListNotebooksResponse, error)
 	GetNotebook(context.Context, *GetNotebookRequest) (*Notebook, error)
 	DeleteNotebook(context.Context, *DeleteNotebookRequest) (*DeleteNotebookResponse, error)
 	StopNotebook(context.Context, *StopNotebookRequest) (*StopNotebookResponse, error)
-	ResumeNotebook(context.Context, *ResumeNotebookRequest) (*ResumeNotebookResponse, error)
+	StartNotebook(context.Context, *StartNotebookRequest) (*StartNotebookResponse, error)
 	mustEmbedUnimplementedWorkspaceServiceServer()
 }
 
@@ -121,8 +121,8 @@ type UnimplementedWorkspaceServiceServer struct {
 func (UnimplementedWorkspaceServiceServer) CreateNotebook(context.Context, *CreateNotebookRequest) (*Notebook, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateNotebook not implemented")
 }
-func (UnimplementedWorkspaceServiceServer) ListNotebook(context.Context, *ListNotebooksRequest) (*ListNotebooksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListNotebook not implemented")
+func (UnimplementedWorkspaceServiceServer) ListNotebooks(context.Context, *ListNotebooksRequest) (*ListNotebooksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListNotebooks not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) GetNotebook(context.Context, *GetNotebookRequest) (*Notebook, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNotebook not implemented")
@@ -133,8 +133,8 @@ func (UnimplementedWorkspaceServiceServer) DeleteNotebook(context.Context, *Dele
 func (UnimplementedWorkspaceServiceServer) StopNotebook(context.Context, *StopNotebookRequest) (*StopNotebookResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopNotebook not implemented")
 }
-func (UnimplementedWorkspaceServiceServer) ResumeNotebook(context.Context, *ResumeNotebookRequest) (*ResumeNotebookResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResumeNotebook not implemented")
+func (UnimplementedWorkspaceServiceServer) StartNotebook(context.Context, *StartNotebookRequest) (*StartNotebookResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartNotebook not implemented")
 }
 func (UnimplementedWorkspaceServiceServer) mustEmbedUnimplementedWorkspaceServiceServer() {}
 
@@ -167,20 +167,20 @@ func _WorkspaceService_CreateNotebook_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkspaceService_ListNotebook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WorkspaceService_ListNotebooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListNotebooksRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkspaceServiceServer).ListNotebook(ctx, in)
+		return srv.(WorkspaceServiceServer).ListNotebooks(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkspaceService_ListNotebook_FullMethodName,
+		FullMethod: WorkspaceService_ListNotebooks_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspaceServiceServer).ListNotebook(ctx, req.(*ListNotebooksRequest))
+		return srv.(WorkspaceServiceServer).ListNotebooks(ctx, req.(*ListNotebooksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -239,20 +239,20 @@ func _WorkspaceService_StopNotebook_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _WorkspaceService_ResumeNotebook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResumeNotebookRequest)
+func _WorkspaceService_StartNotebook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartNotebookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WorkspaceServiceServer).ResumeNotebook(ctx, in)
+		return srv.(WorkspaceServiceServer).StartNotebook(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WorkspaceService_ResumeNotebook_FullMethodName,
+		FullMethod: WorkspaceService_StartNotebook_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspaceServiceServer).ResumeNotebook(ctx, req.(*ResumeNotebookRequest))
+		return srv.(WorkspaceServiceServer).StartNotebook(ctx, req.(*StartNotebookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -269,8 +269,8 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspaceService_CreateNotebook_Handler,
 		},
 		{
-			MethodName: "ListNotebook",
-			Handler:    _WorkspaceService_ListNotebook_Handler,
+			MethodName: "ListNotebooks",
+			Handler:    _WorkspaceService_ListNotebooks_Handler,
 		},
 		{
 			MethodName: "GetNotebook",
@@ -285,8 +285,8 @@ var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _WorkspaceService_StopNotebook_Handler,
 		},
 		{
-			MethodName: "ResumeNotebook",
-			Handler:    _WorkspaceService_ResumeNotebook_Handler,
+			MethodName: "StartNotebook",
+			Handler:    _WorkspaceService_StartNotebook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
