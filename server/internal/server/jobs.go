@@ -26,20 +26,9 @@ func (s *S) CreateJob(
 	ctx context.Context,
 	req *v1.CreateJobRequest,
 ) (*v1.Job, error) {
-	var orgID string
-	var userInfo *auth.UserInfo
-	if s.enableAuth {
-		var ok bool
-		userInfo, ok = auth.ExtractUserInfoFromContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "user info not found")
-		}
-	} else {
-		userInfo = &auth.UserInfo{
-			OrganizationID:      "default",
-			ProjectID:           "default",
-			KubernetesNamespace: "default",
-		}
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO(kenji): Add more validation.
@@ -109,7 +98,7 @@ func (s *S) CreateJob(
 		Hyperparameters: hp,
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
-		OrganizationId:  orgID,
+		OrganizationId:  userInfo.OrganizationID,
 		// TODO(kenji): Fill more field.
 	}
 	msg, err := proto.Marshal(jobProto)

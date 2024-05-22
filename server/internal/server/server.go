@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
@@ -13,7 +14,9 @@ import (
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 type fileGetClient interface {
@@ -46,6 +49,7 @@ func New(
 // S is a server.
 type S struct {
 	v1.UnimplementedFineTuningServiceServer
+	v1.UnimplementedWorkspaceServiceServer
 
 	srv *grpc.Server
 
@@ -65,7 +69,13 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 	if authConfig.Enable {
 		ai, err := auth.NewInterceptor(ctx, auth.Config{
 			RBACServerAddr: authConfig.RBACInternalServerAddr,
-			AccessResource: "api.fine_tuning.jobs",
+			GetAccessResourceForGRPCRequest: func(fullMethod string) string {
+				switch {
+				case strings.HasPrefix(fullMethod, "/llmoperator.workspace."):
+					return "api.workspaces.notebooks"
+				}
+				return "api.fine_tuning.jobs"
+			},
 		})
 		if err != nil {
 			return err
@@ -76,6 +86,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 
 	grpcServer := grpc.NewServer(opts...)
 	v1.RegisterFineTuningServiceServer(grpcServer, s)
+	v1.RegisterWorkspaceServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 
 	s.srv = grpcServer
@@ -93,4 +104,20 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 // Stop stops the gRPC server.
 func (s *S) Stop() {
 	s.srv.Stop()
+}
+
+func (s *S) extractUserInfoFromContext(ctx context.Context) (*auth.UserInfo, error) {
+	if !s.enableAuth {
+		return &auth.UserInfo{
+			OrganizationID:      "default",
+			ProjectID:           "default",
+			KubernetesNamespace: "default",
+		}, nil
+	}
+	var ok bool
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user info not found")
+	}
+	return userInfo, nil
 }
