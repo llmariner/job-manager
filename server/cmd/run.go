@@ -14,6 +14,7 @@ import (
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/server"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -72,6 +73,7 @@ func run(ctx context.Context, c *config.Config) error {
 				DiscardUnknown: true,
 			},
 		}),
+		runtime.WithIncomingHeaderMatcher(auth.HeaderMatcher),
 	)
 	addr := fmt.Sprintf("localhost:%d", c.GRPCPort)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
