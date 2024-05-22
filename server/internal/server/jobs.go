@@ -65,11 +65,7 @@ func (s *S) CreateJob(
 	}
 
 	// Pass the Authorization to the context for downstream gRPC calls.
-	ctx, err := extractAndAppendAuthorization(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "extract and append authorization: %s", err)
-	}
-
+	ctx = auth.CarryMetadata(ctx)
 	if _, err := s.modelClient.GetModel(ctx, &mv1.GetModelRequest{
 		Id: req.Model,
 	}); err != nil {
