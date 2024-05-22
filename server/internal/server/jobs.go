@@ -140,6 +140,11 @@ func (s *S) ListJobs(
 	ctx context.Context,
 	req *v1.ListJobsRequest,
 ) (*v1.ListJobsResponse, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	const (
 		defaultLimit = 20
 		maxLimit     = 100
@@ -155,11 +160,9 @@ func (s *S) ListJobs(
 		limit = maxLimit
 	}
 
-	// TODO(kenji): Only show jobs for a organization/project in the context.
-
 	var afterID uint
 	if req.After != "" {
-		job, err := s.store.GetJobByJobIDAndTenantID(req.After, fakeTenantID)
+		job, err := s.store.GetJobByJobIDAndProjectID(req.After, userInfo.ProjectID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, status.Errorf(codes.InvalidArgument, "invalid after: %s", err)
@@ -169,7 +172,7 @@ func (s *S) ListJobs(
 		afterID = job.ID
 	}
 
-	jobs, hasMore, err := s.store.ListJobsByTenantIDWithPagination(fakeTenantID, afterID, int(limit))
+	jobs, hasMore, err := s.store.ListJobsByProjectIDWithPagination(userInfo.ProjectID, afterID, int(limit))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "find jobs: %s", err)
 	}
@@ -195,13 +198,18 @@ func (s *S) GetJob(
 	ctx context.Context,
 	req *v1.GetJobRequest,
 ) (*v1.Job, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
 	// TODO(kenji): Check if a job is visible for a organization/project in the context.
 
-	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
+	job, err := s.store.GetJobByJobIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
@@ -221,13 +229,18 @@ func (s *S) CancelJob(
 	ctx context.Context,
 	req *v1.CancelJobRequest,
 ) (*v1.Job, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
 	// TODO(kenji): Check if a job is visible for a organization/project in the context.
 
-	job, err := s.store.GetJobByJobIDAndTenantID(req.Id, fakeTenantID)
+	job, err := s.store.GetJobByJobIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)

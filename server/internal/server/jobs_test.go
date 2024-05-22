@@ -121,9 +121,10 @@ func TestListJobs(t *testing.T) {
 		msg, err := proto.Marshal(jobProto)
 		assert.NoError(t, err)
 		job := &store.Job{
-			JobID:    jobProto.Id,
-			Message:  msg,
-			TenantID: fakeTenantID,
+			JobID:     jobProto.Id,
+			Message:   msg,
+			TenantID:  fakeTenantID,
+			ProjectID: defaultProjectID,
 		}
 		err = st.CreateJob(job)
 		assert.NoError(t, err)
@@ -164,7 +165,12 @@ func TestGetJob(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()
 
-	err := st.CreateJob(&store.Job{JobID: jobID, TenantID: fakeTenantID, State: store.JobStateQueued})
+	err := st.CreateJob(&store.Job{
+		JobID:     jobID,
+		TenantID:  fakeTenantID,
+		ProjectID: defaultProjectID,
+		State:     store.JobStateQueued,
+	})
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, &noopK8sJobClient{})
@@ -206,7 +212,7 @@ func TestJobCancel(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: fakeTenantID})
+			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, &noopK8sJobClient{})

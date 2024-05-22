@@ -40,7 +40,7 @@ type Job struct {
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
 
 	OrganizationID      string
-	ProjectID           string
+	ProjectID           string `gorm:"index:idx_job_project_id"`
 	KubernetesNamespace string
 
 	// OutputModelID is the ID of a generated model.
@@ -92,10 +92,10 @@ func (s *S) GetJobByJobID(jobID string) (*Job, error) {
 	return &job, nil
 }
 
-// GetJobByJobIDAndTenantID gets a job by its job ID and tenant ID.
-func (s *S) GetJobByJobIDAndTenantID(jobID, tenantID string) (*Job, error) {
+// GetJobByJobIDAndProjectID gets a job by its job ID and tenant ID.
+func (s *S) GetJobByJobIDAndProjectID(jobID, projectID string) (*Job, error) {
 	var job Job
-	if err := s.db.Where("job_id = ? AND tenant_id = ?", jobID, tenantID).Take(&job).Error; err != nil {
+	if err := s.db.Where("job_id = ? AND project_id = ?", jobID, projectID).Take(&job).Error; err != nil {
 		return nil, err
 	}
 	return &job, nil
@@ -128,10 +128,10 @@ func (s *S) ListJobsByTenantID(tenantID string) ([]*Job, error) {
 	return jobs, nil
 }
 
-// ListJobsByTenantIDWithPagination finds jobs with pagination. Jobs are returned with a descending order of ID.
-func (s *S) ListJobsByTenantIDWithPagination(tenantID string, afterID uint, limit int) ([]*Job, bool, error) {
+// ListJobsByProjectIDWithPagination finds jobs with pagination. Jobs are returned with a descending order of ID.
+func (s *S) ListJobsByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]*Job, bool, error) {
 	var jobs []*Job
-	q := s.db.Where("tenant_id = ?", tenantID)
+	q := s.db.Where("project_id = ?", projectID)
 	if afterID > 0 {
 		q = q.Where("id < ?", afterID)
 	}

@@ -18,9 +18,9 @@ func TestCreateAndGetJob(t *testing.T) {
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
 	job := &Job{
-		JobID:    "job0",
-		State:    JobStateQueued,
-		TenantID: "tid0",
+		JobID:     "job0",
+		State:     JobStateQueued,
+		ProjectID: "pid0",
 	}
 	err = st.CreateJob(job)
 	assert.NoError(t, err)
@@ -29,12 +29,12 @@ func TestCreateAndGetJob(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, job.JobID, got.JobID)
 
-	got, err = st.GetJobByJobIDAndTenantID("job0", "tid0")
+	got, err = st.GetJobByJobIDAndProjectID("job0", "pid0")
 	assert.NoError(t, err)
 	assert.Equal(t, job.JobID, got.JobID)
 
 	// Different tenant.
-	_, err = st.GetJobByJobIDAndTenantID("job0", "tid1")
+	_, err = st.GetJobByJobIDAndProjectID("job0", "pid1")
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }
@@ -88,21 +88,21 @@ func TestCreateAndListJobs(t *testing.T) {
 	assert.Equal(t, jobs[1].JobID, got[1].JobID)
 }
 
-func TestListJobsByTenantIDWithPagination(t *testing.T) {
+func TestListJobsByProjectIDWithPagination(t *testing.T) {
 	st, teardown := NewTest(t)
 	defer teardown()
 
 	for i := 0; i < 10; i++ {
 		job := &Job{
-			JobID:    fmt.Sprintf("job%d", i),
-			State:    JobStateQueued,
-			TenantID: "tid0",
+			JobID:     fmt.Sprintf("job%d", i),
+			State:     JobStateQueued,
+			ProjectID: "pid0",
 		}
 		err := st.CreateJob(job)
 		assert.NoError(t, err)
 	}
 
-	got, hasMore, err := st.ListJobsByTenantIDWithPagination("tid0", 0, 5)
+	got, hasMore, err := st.ListJobsByProjectIDWithPagination("pid0", 0, 5)
 	assert.NoError(t, err)
 	assert.True(t, hasMore)
 	assert.Len(t, got, 5)
@@ -111,7 +111,7 @@ func TestListJobsByTenantIDWithPagination(t *testing.T) {
 		assert.Equal(t, want[i], job.JobID)
 	}
 
-	got, hasMore, err = st.ListJobsByTenantIDWithPagination("tid0", got[4].ID, 2)
+	got, hasMore, err = st.ListJobsByProjectIDWithPagination("pid0", got[4].ID, 2)
 	assert.NoError(t, err)
 	assert.True(t, hasMore)
 	assert.Len(t, got, 2)
@@ -120,7 +120,7 @@ func TestListJobsByTenantIDWithPagination(t *testing.T) {
 		assert.Equal(t, want[i], job.JobID)
 	}
 
-	got, hasMore, err = st.ListJobsByTenantIDWithPagination("tid0", got[1].ID, 3)
+	got, hasMore, err = st.ListJobsByProjectIDWithPagination("pid0", got[1].ID, 3)
 	assert.NoError(t, err)
 	assert.False(t, hasMore)
 	assert.Len(t, got, 3)
