@@ -2,11 +2,6 @@
 
 Job Manage manages fine-tuning jobs.
 
-# TODO
-- Design integratation with the model registry
-- Design dataset management
-- Design GPU management & scheduling
-
 # Running Dispatcher Locally
 
 You can run `dispatcher` locally.
