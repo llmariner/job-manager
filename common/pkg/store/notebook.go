@@ -58,28 +58,28 @@ func (s *S) CreateNotebook(nb *Notebook) error {
 
 // GetNotebookByIDAndProjectID gets a notebook by its notebook ID and tenant ID.
 func (s *S) GetNotebookByIDAndProjectID(id, projectID string) (*Notebook, error) {
-	var notebook Notebook
-	if err := s.db.Where("notebook_id = ? AND project_id = ?", id, projectID).Take(&notebook).Error; err != nil {
+	var nb Notebook
+	if err := s.db.Where("notebook_id = ? AND project_id = ?", id, projectID).Take(&nb).Error; err != nil {
 		return nil, err
 	}
-	return &notebook, nil
+	return &nb, nil
 }
 
 // ListNotebooksByProjectIDWithPagination finds notebooks with pagination. Notebooks are returned with a descending order of ID.
 func (s *S) ListNotebooksByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]*Notebook, bool, error) {
-	var notebooks []*Notebook
+	var nbs []*Notebook
 	q := s.db.Where("project_id = ?", projectID)
 	if afterID > 0 {
 		q = q.Where("id < ?", afterID)
 	}
-	if err := q.Order("id DESC").Limit(limit + 1).Find(&notebooks).Error; err != nil {
+	if err := q.Order("id DESC").Limit(limit + 1).Find(&nbs).Error; err != nil {
 		return nil, false, err
 	}
 
 	var hasMore bool
-	if len(notebooks) > limit {
-		notebooks = notebooks[:limit]
+	if len(nbs) > limit {
+		nbs = nbs[:limit]
 		hasMore = true
 	}
-	return notebooks, hasMore, nil
+	return nbs, hasMore, nil
 }
