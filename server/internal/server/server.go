@@ -21,6 +21,9 @@ import (
 
 const (
 	defaultProjectID = "default"
+
+	defaultPageSize = 20
+	maxPageSize     = 100
 )
 
 type fileGetClient interface {
