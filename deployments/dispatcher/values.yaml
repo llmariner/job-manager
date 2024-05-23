@@ -19,7 +19,9 @@ global:
     accessKeyIdKey:
     secretAccessKeyKey:
 
-jobPollingInterval: 10s
+  llmOperatorBaseURL:
+
+pollingInterval: 10s
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
   version: latest

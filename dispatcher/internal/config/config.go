@@ -104,7 +104,7 @@ func (c *KueueConfig) validate() error {
 
 // Config is the configuration.
 type Config struct {
-	JobPollingInterval time.Duration `yaml:"jobPollingInterval"`
+	PollingInterval time.Duration `yaml:"pollingInterval"`
 
 	Job JobConfig `yaml:"job"`
 
@@ -120,11 +120,13 @@ type Config struct {
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
+
+	LLMOperatorBaseURL string `yaml:"llmOperatorBaseURL"`
 }
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
-	if c.JobPollingInterval <= 0 {
+	if c.PollingInterval <= 0 {
 		return fmt.Errorf("job polling interval must be greater than 0")
 	}
 	if err := c.Job.validate(); err != nil {
@@ -154,6 +156,10 @@ func (c *Config) Validate() error {
 
 	if err := c.KueueIntegration.validate(); err != nil {
 		return fmt.Errorf("kueue integration: %s", err)
+	}
+
+	if c.LLMOperatorBaseURL == "" {
+		return fmt.Errorf("llm operator base url must be set")
 	}
 	return nil
 }

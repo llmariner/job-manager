@@ -37,7 +37,8 @@ func TestProcessQueuedJobs(t *testing.T) {
 
 	jc := &noopJobCreator{}
 	pp := &NoopPreProcessor{}
-	d := New(st, jc, pp, time.Second)
+	nc := &noopNotebookCreator{}
+	d := New(st, jc, pp, nc, time.Second)
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
@@ -55,11 +56,71 @@ func TestProcessQueuedJobs(t *testing.T) {
 	assert.Equal(t, wantCounter, jc.counter)
 }
 
+func TestProcessQueuedNotebooks(t *testing.T) {
+	st, teardown := store.NewTest(t)
+	defer teardown()
+
+	nbs := []*store.Notebook{
+		{
+			NotebookID: "nb0",
+			State:      store.NotebookStateQueued,
+			TenantID:   "tid0",
+			ProjectID:  "p0",
+		},
+		{
+			NotebookID: "nb1",
+			State:      store.NotebookStateStopped,
+			TenantID:   "tid0",
+			ProjectID:  "p0",
+		},
+		{
+			NotebookID: "nb2",
+			State:      store.NotebookStateQueued,
+			TenantID:   "tid1",
+			ProjectID:  "p0",
+		},
+	}
+	for _, nb := range nbs {
+		err := st.CreateNotebook(nb)
+		assert.NoError(t, err)
+	}
+
+	jc := &noopJobCreator{}
+	pp := &NoopPreProcessor{}
+	nc := &noopNotebookCreator{}
+	d := New(st, jc, pp, nc, time.Second)
+	err := d.processQueuedNotebooks(context.Background())
+	assert.NoError(t, err)
+
+	wants := map[string]store.NotebookState{
+		nbs[0].NotebookID: store.NotebookStateRunning,
+		nbs[1].NotebookID: store.NotebookStateStopped,
+		nbs[2].NotebookID: store.NotebookStateRunning,
+	}
+	for nbID, want := range wants {
+		got, err := st.GetNotebookByIDAndProjectID(nbID, "p0")
+		assert.NoError(t, err)
+		assert.Equal(t, want, got.State)
+	}
+
+	const wantCounter = 2
+	assert.Equal(t, wantCounter, nc.counter)
+}
+
 type noopJobCreator struct {
 	counter int
 }
 
 func (n *noopJobCreator) createJob(ctx context.Context, job *store.Job, presult *PreProcessResult) error {
+	n.counter++
+	return nil
+}
+
+type noopNotebookCreator struct {
+	counter int
+}
+
+func (n *noopNotebookCreator) createNotebook(ctx context.Context, nb *store.Notebook) error {
 	n.counter++
 	return nil
 }

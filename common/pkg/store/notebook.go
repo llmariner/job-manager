@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
@@ -51,6 +53,21 @@ func (n *Notebook) V1Notebook() (*v1.Notebook, error) {
 	return &nbProto, nil
 }
 
+// MutateMessage mutates the message field of a notebook.
+func (n *Notebook) MutateMessage(mutateFn func(nb *v1.Notebook)) error {
+	nbProto, err := n.V1Notebook()
+	if err != nil {
+		return err
+	}
+	mutateFn(nbProto)
+	msg, err := proto.Marshal(nbProto)
+	if err != nil {
+		return err
+	}
+	n.Message = msg
+	return nil
+}
+
 // CreateNotebook creates a new notebook.
 func (s *S) CreateNotebook(nb *Notebook) error {
 	return s.db.Create(nb).Error
@@ -82,4 +99,32 @@ func (s *S) ListNotebooksByProjectIDWithPagination(projectID string, afterID uin
 		hasMore = true
 	}
 	return nbs, hasMore, nil
+}
+
+// ListQueuedNotebooks finds queued notebooks.
+func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
+	var nbs []*Notebook
+	if err := s.db.Where("state = ?", NotebookStateQueued).Order("notebook_id").Find(&nbs).Error; err != nil {
+		return nil, err
+	}
+	return nbs, nil
+}
+
+// UpdateNotebookStateAndMessage updates a notebook state and message.
+func (s *S) UpdateNotebookStateAndMessage(id string, currentVersion int, newState NotebookState, message []byte) error {
+	result := s.db.Model(&Notebook{}).
+		Where("notebook_id = ?", id).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":   newState,
+			"message": message,
+			"version": currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
+	}
+	return nil
 }
