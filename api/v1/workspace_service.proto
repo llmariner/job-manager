@@ -56,10 +56,15 @@ message CreateNotebookRequest {
 }
 
 message ListNotebooksRequest {
+  // after is the identifier for the last notebook from the previous pagination request.
+  string after = 1;
+  // limit is the number of notes to retrieve. Defaults to 20.
+  int32 limit = 2;
 }
 
 message ListNotebooksResponse {
   repeated Notebook notebooks = 1;
+  bool has_more = 3;
 }
 
 message GetNotebookRequest {

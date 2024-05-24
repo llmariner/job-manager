@@ -33,6 +33,23 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "after",
+            "description": "after is the identifier for the last notebook from the previous pagination request.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "description": "limit is the number of notes to retrieve. Defaults to 20.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
         "tags": [
           "WorkspaceService"
         ]
@@ -296,6 +313,9 @@
             "type": "object",
             "$ref": "#/definitions/v1Notebook"
           }
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     },

@@ -145,19 +145,15 @@ func (s *S) ListJobs(
 		return nil, err
 	}
 
-	const (
-		defaultLimit = 20
-		maxLimit     = 100
-	)
 	if req.Limit < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "limit must be non-negative")
 	}
 	limit := req.Limit
 	if limit == 0 {
-		limit = defaultLimit
+		limit = defaultPageSize
 	}
-	if limit > maxLimit {
-		limit = maxLimit
+	if limit > maxPageSize {
+		limit = maxPageSize
 	}
 
 	var afterID uint
