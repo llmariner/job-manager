@@ -44,12 +44,14 @@ func New(
 	fileGetClient fileGetClient,
 	modelClient modelClient,
 	k8sJobClient k8sJobClient,
+	nbImageTypes map[string]string,
 ) *S {
 	return &S{
 		store:         store,
 		fileGetClient: fileGetClient,
 		modelClient:   modelClient,
 		k8sJobClient:  k8sJobClient,
+		nbImageTypes:  nbImageTypes,
 	}
 }
 
@@ -66,6 +68,8 @@ type S struct {
 	fileGetClient fileGetClient
 	modelClient   modelClient
 	k8sJobClient  k8sJobClient
+
+	nbImageTypes map[string]string
 }
 
 // Run starts the gRPC server.
