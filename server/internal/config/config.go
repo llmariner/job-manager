@@ -30,6 +30,7 @@ type NotebookConfig struct {
 	ImageTypes map[string]string `yaml:"imageTypes"`
 }
 
+// Validate validates the configuration.
 func (c *NotebookConfig) Validate() error {
 	if len(c.ImageTypes) == 0 {
 		return fmt.Errorf("imageTypes must be set")

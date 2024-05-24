@@ -53,7 +53,7 @@ func TestCreateNotebook(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, nil)
+			srv := New(st, nil, nil, nil, map[string]string{"t0": "img0"})
 			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
 			resp, err := srv.CreateNotebook(ctx, tc.req)
 			if tc.wantErr {
@@ -88,7 +88,7 @@ func TestListNotebooks(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil)
 	resp, err := srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -131,7 +131,7 @@ func TestGetNotebook(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil)
 	resp, err := srv.GetNotebook(context.Background(), &v1.GetNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.Equal(t, store.NotebookStateQueued, store.NotebookState(resp.Status))
