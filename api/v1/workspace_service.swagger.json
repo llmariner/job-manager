@@ -172,7 +172,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/WorkspaceServiceStartNotebookBody"
+              "type": "object"
             }
           }
         ],
@@ -210,7 +210,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/WorkspaceServiceStopNotebookBody"
+              "type": "object"
             }
           }
         ],
@@ -247,12 +247,6 @@
         }
       }
     },
-    "WorkspaceServiceStartNotebookBody": {
-      "type": "object"
-    },
-    "WorkspaceServiceStopNotebookBody": {
-      "type": "object"
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -275,7 +269,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -310,7 +303,6 @@
         "notebooks": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Notebook"
           }
         },

@@ -99,7 +99,9 @@ func (s *S) CreateJob(
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
 		OrganizationId:  userInfo.OrganizationID,
-		// TODO(kenji): Fill more field.
+
+		ProjectId:           userInfo.ProjectID,
+		KubernetesNamespace: userInfo.KubernetesNamespace,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
