@@ -42,6 +42,11 @@ message Job {
   int32 trained_tokens = 12;
   string training_file = 13;
   string validation_file = 14;
+
+  // The following fields are not part of the OpenAI API spec.
+
+  string project_id = 15;
+  string kubernetes_namespace = 16;
 }
 
 message CreateJobRequest {
