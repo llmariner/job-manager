@@ -80,6 +80,9 @@ func run(ctx context.Context, c *config.Config) error {
 	if err := v1.RegisterFineTuningServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
 		return err
 	}
+	if err := v1.RegisterWorkspaceServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
+		return nil
+	}
 
 	errCh := make(chan error)
 	go func() {
