@@ -94,6 +94,7 @@ func TestCreateJob(t *testing.T) {
 				&noopModelClient{
 					id: modelID,
 				},
+				nil,
 				nil)
 			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
 			resp, err := srv.CreateJob(ctx, tc.req)
@@ -130,7 +131,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sJobClient{})
+	srv := New(st, nil, nil, &noopK8sJobClient{}, nil)
 	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -173,7 +174,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sJobClient{})
+	srv := New(st, nil, nil, &noopK8sJobClient{}, nil)
 	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateQueued, store.JobState(resp.Status))
@@ -215,7 +216,7 @@ func TestJobCancel(t *testing.T) {
 			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sJobClient{})
+			srv := New(st, nil, nil, &noopK8sJobClient{}, nil)
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)

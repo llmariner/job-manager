@@ -21,3 +21,6 @@ data:
     auth:
       enable: {{ .Values.global.auth.enable }}
       rbacInternalServerAddr: {{ .Values.global.auth.rbacInternalServerAddr }}
+    notebook:
+      imageTypes:
+        {{- toYaml .Values.notebook.imageTypes | nindent 8 }}

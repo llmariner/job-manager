@@ -21,6 +21,21 @@ type Config struct {
 	Debug DebugConfig `yaml:"debug"`
 
 	AuthConfig AuthConfig `yaml:"auth"`
+
+	NotebookConfig NotebookConfig `yaml:"notebook"`
+}
+
+// NotebookConfig is the notebook configuration.
+type NotebookConfig struct {
+	ImageTypes map[string]string `yaml:"imageTypes"`
+}
+
+// Validate validates the configuration.
+func (c *NotebookConfig) Validate() error {
+	if len(c.ImageTypes) == 0 {
+		return fmt.Errorf("imageTypes must be set")
+	}
+	return nil
 }
 
 // AuthConfig is the authentication configuration.
@@ -64,6 +79,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.AuthConfig.Validate(); err != nil {
 		return fmt.Errorf("auth: %s", err)
+	}
+	if err := c.NotebookConfig.Validate(); err != nil {
+		return fmt.Errorf("notebook: %s", err)
 	}
 	return nil
 }

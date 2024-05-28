@@ -113,7 +113,7 @@ func run(ctx context.Context, c *config.Config) error {
 	k8sJobClient := server.NewK8sJobClient(kubeClient)
 
 	go func() {
-		s := server.New(st, fclient, mclient, k8sJobClient)
+		s := server.New(st, fclient, mclient, k8sJobClient, c.NotebookConfig.ImageTypes)
 		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
 	}()
 

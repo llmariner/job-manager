@@ -44,12 +44,19 @@ func New(
 	fileGetClient fileGetClient,
 	modelClient modelClient,
 	k8sJobClient k8sJobClient,
+	nbImageTypes map[string]string,
 ) *S {
+	nbtypes := make([]string, 0, len(nbImageTypes))
+	for t := range nbImageTypes {
+		nbtypes = append(nbtypes, t)
+	}
 	return &S{
-		store:         store,
-		fileGetClient: fileGetClient,
-		modelClient:   modelClient,
-		k8sJobClient:  k8sJobClient,
+		store:          store,
+		fileGetClient:  fileGetClient,
+		modelClient:    modelClient,
+		k8sJobClient:   k8sJobClient,
+		nbImageTypes:   nbImageTypes,
+		nbImageTypeStr: strings.Join(nbtypes, ", "),
 	}
 }
 
@@ -66,6 +73,9 @@ type S struct {
 	fileGetClient fileGetClient
 	modelClient   modelClient
 	k8sJobClient  k8sJobClient
+
+	nbImageTypes   map[string]string
+	nbImageTypeStr string
 }
 
 // Run starts the gRPC server.
