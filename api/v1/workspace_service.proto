@@ -118,13 +118,11 @@ service WorkspaceService {
   rpc StopNotebook(StopNotebookRequest) returns (StopNotebookResponse) {
     option (google.api.http) = {
       post: "/v1/workspaces/notebooks/{id}/actions:stop"
-      body: "*"
     };
   }
   rpc StartNotebook(StartNotebookRequest) returns (StartNotebookResponse) {
     option (google.api.http) = {
       post: "/v1/workspaces/notebooks/{id}/actions:start"
-      body: "*"
     };
   }
 }
