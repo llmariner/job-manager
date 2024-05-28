@@ -34,7 +34,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	} else if t := req.Image.GetType(); t != "" {
 		uri, ok := s.nbImageTypes[t]
 		if !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid image type: %s", t)
+			return nil, status.Errorf(codes.InvalidArgument, "invalid image type: %s (available types: %s)", t, s.nbImageTypeStr)
 		}
 		image = uri
 	} else {
