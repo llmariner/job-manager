@@ -89,7 +89,9 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	if err := dispatcher.New(st, jc, preProcessor, c.JobPollingInterval).
+	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.LLMOperatorBaseURL)
+
+	if err := dispatcher.New(st, jc, preProcessor, nb, c.PollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}

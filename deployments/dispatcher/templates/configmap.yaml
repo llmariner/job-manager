@@ -6,7 +6,8 @@ metadata:
     {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    jobPollingInterval: {{ .Values.jobPollingInterval }}
+    pollingInterval: {{ .Values.pollingInterval }}
+    llmOperatorBaseURL: {{ .Values.global.llmOperatorBaseURL }}
     job:
       image: {{ .Values.job.image }}
       version: {{ .Values.job.version }}
