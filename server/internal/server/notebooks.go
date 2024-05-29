@@ -149,6 +149,84 @@ func (s *S) GetNotebook(ctx context.Context, req *v1.GetNotebookRequest) (*v1.No
 	return nbProto, nil
 }
 
+// StopNotebook stops a notebook.
+func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.Notebook, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	nb, err := s.store.GetNotebookByIDAndProjectID(req.Id, userInfo.ProjectID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get notebook: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
+	}
+	switch nb.State {
+	case store.NotebookStateQueued,
+		store.NotebookStateRunning:
+		if err := s.store.UpdateNotebookState(nb.NotebookID, nb.Version, store.NotebookStateStopping); err != nil {
+			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
+		}
+		nb.State = store.NotebookStateStopping
+	case store.NotebookStateFailed,
+		store.NotebookStateStopping,
+		store.NotebookStateStopped:
+	default:
+		return nil, status.Errorf(codes.Internal, "unexpected notebook state: %s", nb.State)
+	}
+
+	nbProto, err := nb.V1Notebook()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
+	}
+	return nbProto, nil
+}
+
+// StartNotebook starts a notebook.
+func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v1.Notebook, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	nb, err := s.store.GetNotebookByIDAndProjectID(req.Id, userInfo.ProjectID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get notebook: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
+	}
+	switch nb.State {
+	case store.NotebookStateStopping,
+		store.NotebookStateStopped:
+		if err := s.store.UpdateNotebookState(nb.NotebookID, nb.Version, store.NotebookStateQueued); err != nil {
+			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
+		}
+		nb.State = store.NotebookStateQueued
+	case store.NotebookStateQueued,
+		store.NotebookStateRunning,
+		store.NotebookStateFailed:
+	default:
+		return nil, status.Errorf(codes.Internal, "unexpected notebook state: %s", nb.State)
+	}
+
+	nbProto, err := nb.V1Notebook()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
+	}
+	return nbProto, nil
+}
+
 func newNotebookID() string {
 	return uuid.New().String()
 }

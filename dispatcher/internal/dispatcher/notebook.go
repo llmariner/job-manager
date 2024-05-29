@@ -5,10 +5,13 @@ import (
 
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
+	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	appsv1apply "k8s.io/client-go/applyconfigurations/apps/v1"
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	metav1apply "k8s.io/client-go/applyconfigurations/meta/v1"
@@ -108,6 +111,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 			managedAnnotationKey:    "true",
 			notebookIDAnnotationKey: nb.NotebookID}).
 		WithSpec(appsv1apply.DeploymentSpec().
+			WithReplicas(1).
 			WithSelector(metav1apply.LabelSelector().
 				WithMatchLabels(labels)).
 			WithTemplate(corev1apply.PodTemplateSpec().
@@ -134,4 +138,22 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	patch := &unstructured.Unstructured{Object: uobj}
 	opts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
 	return n.k8sClient.Patch(ctx, patch, client.Apply, opts)
+}
+
+func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Stopping a deployment for a notebook")
+
+	var deploy appsv1.Deployment
+	name := util.GetK8sNotebookName(nb.NotebookID)
+
+	if err := n.k8sClient.Get(ctx, types.NamespacedName{
+		Name:      name,
+		Namespace: nb.KubernetesNamespace,
+	}, &deploy); err != nil {
+		return err
+	}
+
+	scale := &autoscalingv1.Scale{Spec: autoscalingv1.ScaleSpec{Replicas: 0}}
+	return n.k8sClient.SubResource("scale").Update(ctx, &deploy, client.WithSubResourceBody(scale))
 }

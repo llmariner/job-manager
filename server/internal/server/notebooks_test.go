@@ -136,3 +136,91 @@ func TestGetNotebook(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, store.NotebookStateQueued, store.NotebookState(resp.Status))
 }
+
+func TestStopNotebook(t *testing.T) {
+	const nbID = "nb0"
+	var tcs = []struct {
+		name  string
+		state store.NotebookState
+		want  *v1.Notebook
+	}{
+		{
+			name:  "transit queued to stopping",
+			state: store.NotebookStateQueued,
+			want:  &v1.Notebook{Status: string(store.NotebookStateStopping)},
+		},
+		{
+			name:  "transit running to stopping",
+			state: store.NotebookStateRunning,
+			want:  &v1.Notebook{Status: string(store.NotebookStateStopping)},
+		},
+		{
+			name:  "keep failed state",
+			state: store.NotebookStateFailed,
+			want:  &v1.Notebook{Status: string(store.NotebookStateFailed)},
+		},
+		{
+			name:  "keep stopped state",
+			state: store.NotebookStateStopped,
+			want:  &v1.Notebook{Status: string(store.NotebookStateStopped)},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			st, tearDown := store.NewTest(t)
+			defer tearDown()
+
+			err := st.CreateNotebook(&store.Notebook{NotebookID: nbID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
+			assert.NoError(t, err)
+
+			srv := New(st, nil, nil, nil, nil)
+			resp, err := srv.StopNotebook(context.Background(), &v1.StopNotebookRequest{Id: nbID})
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want.Status, resp.Status)
+		})
+	}
+}
+
+func TestStartNotebook(t *testing.T) {
+	const nbID = "nb0"
+	var tcs = []struct {
+		name  string
+		state store.NotebookState
+		want  *v1.Notebook
+	}{
+		{
+			name:  "transit stopping to queued",
+			state: store.NotebookStateQueued,
+			want:  &v1.Notebook{Status: string(store.NotebookStateQueued)},
+		},
+		{
+			name:  "transit stopped to queued",
+			state: store.NotebookStateStopped,
+			want:  &v1.Notebook{Status: string(store.NotebookStateQueued)},
+		},
+		{
+			name:  "keep failed state",
+			state: store.NotebookStateFailed,
+			want:  &v1.Notebook{Status: string(store.NotebookStateFailed)},
+		},
+		{
+			name:  "keep running state",
+			state: store.NotebookStateRunning,
+			want:  &v1.Notebook{Status: string(store.NotebookStateRunning)},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			st, tearDown := store.NewTest(t)
+			defer tearDown()
+
+			err := st.CreateNotebook(&store.Notebook{NotebookID: nbID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
+			assert.NoError(t, err)
+
+			srv := New(st, nil, nil, nil, nil)
+			resp, err := srv.StartNotebook(context.Background(), &v1.StartNotebookRequest{Id: nbID})
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want.Status, resp.Status)
+		})
+	}
+}

@@ -79,6 +79,12 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 			TenantID:   "tid1",
 			ProjectID:  "p0",
 		},
+		{
+			NotebookID: "nb3",
+			State:      store.NotebookStateStopping,
+			TenantID:   "tid1",
+			ProjectID:  "p0",
+		},
 	}
 	for _, nb := range nbs {
 		err := st.CreateNotebook(nb)
@@ -89,13 +95,14 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 	pp := &NoopPreProcessor{}
 	nc := &noopNotebookCreator{}
 	d := New(st, jc, pp, nc, time.Second)
-	err := d.processQueuedNotebooks(context.Background())
+	err := d.processNotebooks(context.Background())
 	assert.NoError(t, err)
 
 	wants := map[string]store.NotebookState{
 		nbs[0].NotebookID: store.NotebookStateRunning,
 		nbs[1].NotebookID: store.NotebookStateStopped,
 		nbs[2].NotebookID: store.NotebookStateRunning,
+		nbs[3].NotebookID: store.NotebookStateStopped,
 	}
 	for nbID, want := range wants {
 		got, err := st.GetNotebookByIDAndProjectID(nbID, "p0")
@@ -103,8 +110,8 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 		assert.Equal(t, want, got.State)
 	}
 
-	const wantCounter = 2
-	assert.Equal(t, wantCounter, nc.counter)
+	assert.Equal(t, 2, nc.createCounter)
+	assert.Equal(t, 1, nc.stopCounter)
 }
 
 type noopJobCreator struct {
@@ -117,10 +124,16 @@ func (n *noopJobCreator) createJob(ctx context.Context, job *store.Job, presult 
 }
 
 type noopNotebookCreator struct {
-	counter int
+	createCounter int
+	stopCounter   int
 }
 
 func (n *noopNotebookCreator) createNotebook(ctx context.Context, nb *store.Notebook) error {
-	n.counter++
+	n.createCounter++
+	return nil
+}
+
+func (n *noopNotebookCreator) stopNotebook(ctx context.Context, nb *store.Notebook) error {
+	n.stopCounter++
 	return nil
 }
