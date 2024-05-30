@@ -124,10 +124,11 @@ func TestGetNotebook(t *testing.T) {
 	defer tearDown()
 
 	err := st.CreateNotebook(&store.Notebook{
-		NotebookID: nbID,
-		TenantID:   fakeTenantID,
-		ProjectID:  defaultProjectID,
-		State:      store.NotebookStateQueued,
+		NotebookID:   nbID,
+		TenantID:     fakeTenantID,
+		ProjectID:    defaultProjectID,
+		State:        store.NotebookStateQueued,
+		QueuedAction: store.NotebookQueuedActionStart,
 	})
 	assert.NoError(t, err)
 
@@ -140,19 +141,21 @@ func TestGetNotebook(t *testing.T) {
 func TestStopNotebook(t *testing.T) {
 	const nbID = "nb0"
 	var tcs = []struct {
-		name  string
-		state store.NotebookState
-		want  *v1.Notebook
+		name   string
+		state  store.NotebookState
+		action store.NotebookQueuedAction
+		want   *v1.Notebook
 	}{
 		{
-			name:  "transit queued to stopping",
-			state: store.NotebookStateQueued,
-			want:  &v1.Notebook{Status: string(store.NotebookStateStopping)},
+			name:   "transit queued to stopping",
+			state:  store.NotebookStateQueued,
+			action: store.NotebookQueuedActionStart,
+			want:   &v1.Notebook{Status: string(store.NotebookQueuedActionStop)},
 		},
 		{
 			name:  "transit running to stopping",
 			state: store.NotebookStateRunning,
-			want:  &v1.Notebook{Status: string(store.NotebookStateStopping)},
+			want:  &v1.Notebook{Status: string(store.NotebookQueuedActionStop)},
 		},
 		{
 			name:  "keep failed state",
@@ -164,13 +167,25 @@ func TestStopNotebook(t *testing.T) {
 			state: store.NotebookStateStopped,
 			want:  &v1.Notebook{Status: string(store.NotebookStateStopped)},
 		},
+		{
+			name:   "keep deleting state",
+			state:  store.NotebookStateQueued,
+			action: store.NotebookQueuedActionDelete,
+			want:   &v1.Notebook{Status: string(store.NotebookQueuedActionDelete)},
+		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			err := st.CreateNotebook(&store.Notebook{NotebookID: nbID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
+			err := st.CreateNotebook(&store.Notebook{
+				NotebookID:   nbID,
+				State:        tc.state,
+				QueuedAction: tc.action,
+				TenantID:     fakeTenantID,
+				ProjectID:    defaultProjectID,
+			})
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, nil, nil)
@@ -184,14 +199,16 @@ func TestStopNotebook(t *testing.T) {
 func TestStartNotebook(t *testing.T) {
 	const nbID = "nb0"
 	var tcs = []struct {
-		name  string
-		state store.NotebookState
-		want  *v1.Notebook
+		name   string
+		state  store.NotebookState
+		action store.NotebookQueuedAction
+		want   *v1.Notebook
 	}{
 		{
-			name:  "transit stopping to queued",
-			state: store.NotebookStateQueued,
-			want:  &v1.Notebook{Status: string(store.NotebookStateQueued)},
+			name:   "transit stopping to queued",
+			state:  store.NotebookStateQueued,
+			action: store.NotebookQueuedActionStop,
+			want:   &v1.Notebook{Status: string(store.NotebookStateQueued)},
 		},
 		{
 			name:  "transit stopped to queued",
@@ -208,13 +225,25 @@ func TestStartNotebook(t *testing.T) {
 			state: store.NotebookStateRunning,
 			want:  &v1.Notebook{Status: string(store.NotebookStateRunning)},
 		},
+		{
+			name:   "keep deleting state",
+			state:  store.NotebookStateQueued,
+			action: store.NotebookQueuedActionDelete,
+			want:   &v1.Notebook{Status: string(store.NotebookQueuedActionDelete)},
+		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			err := st.CreateNotebook(&store.Notebook{NotebookID: nbID, State: tc.state, TenantID: fakeTenantID, ProjectID: defaultProjectID})
+			err := st.CreateNotebook(&store.Notebook{
+				NotebookID:   nbID,
+				State:        tc.state,
+				QueuedAction: tc.action,
+				TenantID:     fakeTenantID,
+				ProjectID:    defaultProjectID,
+			})
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, nil, nil)
@@ -223,4 +252,24 @@ func TestStartNotebook(t *testing.T) {
 			assert.Equal(t, tc.want.Status, resp.Status)
 		})
 	}
+}
+
+func TestDeleteNotebook(t *testing.T) {
+	const nbID = "nb0"
+
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	err := st.CreateNotebook(&store.Notebook{
+		NotebookID:   nbID,
+		State:        store.NotebookStateQueued,
+		QueuedAction: store.NotebookQueuedActionStart,
+		TenantID:     fakeTenantID,
+		ProjectID:    defaultProjectID,
+	})
+	assert.NoError(t, err)
+
+	srv := New(st, nil, nil, nil, nil)
+	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: nbID})
+	assert.NoError(t, err)
 }

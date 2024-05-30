@@ -67,6 +67,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		Image:               image,
 		Message:             msg,
 		State:               store.NotebookStateQueued,
+		QueuedAction:        store.NotebookQueuedActionStart,
 		TenantID:            fakeTenantID,
 		OrganizationID:      userInfo.OrganizationID,
 		ProjectID:           userInfo.ProjectID,
@@ -171,24 +172,30 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 		}
 		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
 	}
-	switch nb.State {
-	case store.NotebookStateQueued,
-		store.NotebookStateRunning:
-		if err := s.store.UpdateNotebookState(nb.NotebookID, nb.Version, store.NotebookStateStopping); err != nil {
-			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
-		}
-		nb.State = store.NotebookStateStopping
-	case store.NotebookStateFailed,
-		store.NotebookStateStopping,
-		store.NotebookStateStopped:
-	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "unexpected notebook state: %s", nb.State)
-	}
 
 	nbProto, err := nb.V1Notebook()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
 	}
+
+	switch nb.State {
+	case store.NotebookStateFailed,
+		store.NotebookStateStopped:
+		return nbProto, nil
+	case store.NotebookStateRunning:
+	case store.NotebookStateQueued:
+		if nb.QueuedAction == store.NotebookQueuedActionStop ||
+			nb.QueuedAction == store.NotebookQueuedActionDelete {
+			return nbProto, nil
+		}
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "unknown notebook state: %s", nb.State)
+	}
+
+	if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStop); err != nil {
+		return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
+	}
+	nbProto.Status = string(store.NotebookQueuedActionStop)
 	return nbProto, nil
 }
 
@@ -210,23 +217,56 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 		}
 		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
 	}
-	switch nb.State {
-	case store.NotebookStateStopping,
-		store.NotebookStateStopped:
-		if err := s.store.UpdateNotebookState(nb.NotebookID, nb.Version, store.NotebookStateQueued); err != nil {
-			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
-		}
-		nb.State = store.NotebookStateQueued
-	case store.NotebookStateQueued,
-		store.NotebookStateRunning,
-		store.NotebookStateFailed:
-	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "unexpected notebook state: %s", nb.State)
-	}
 
 	nbProto, err := nb.V1Notebook()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
 	}
+
+	switch nb.State {
+	case store.NotebookStateFailed,
+		store.NotebookStateRunning:
+		return nbProto, nil
+	case store.NotebookStateStopped:
+	case store.NotebookStateQueued:
+		if nb.QueuedAction == store.NotebookQueuedActionStart ||
+			nb.QueuedAction == store.NotebookQueuedActionDelete {
+			return nbProto, nil
+		}
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "unknown notebook state: %s", nb.State)
+	}
+
+	if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStart); err != nil {
+		return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
+	}
+	nbProto.Status = string(store.NotebookQueuedActionStart)
 	return nbProto, nil
+}
+
+// DeleteNotebook deletes a notebook.
+func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (*v1.DeleteNotebookResponse, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	nb, err := s.store.GetNotebookByIDAndProjectID(req.Id, userInfo.ProjectID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get notebook: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
+	}
+
+	if nb.QueuedAction != store.NotebookQueuedActionDelete {
+		if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionDelete); err != nil {
+			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
+		}
+	}
+	return &v1.DeleteNotebookResponse{}, nil
 }
