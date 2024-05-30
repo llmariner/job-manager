@@ -176,6 +176,7 @@ func (d *D) processQueuedNotebook(ctx context.Context, nb *store.Notebook) error
 
 	if err := nb.MutateMessage(func(nb *v1.Notebook) {
 		nb.StartedAt = time.Now().UTC().Unix()
+		nb.StoppedAt = 0
 	}); err != nil {
 		return err
 	}
@@ -195,6 +196,7 @@ func (d *D) processStoppingNotebook(ctx context.Context, nb *store.Notebook) err
 	log.Info("Successfully stopped the notebook")
 
 	if err := nb.MutateMessage(func(nb *v1.Notebook) {
+		nb.StartedAt = 0
 		nb.StoppedAt = time.Now().UTC().Unix()
 	}); err != nil {
 		return err

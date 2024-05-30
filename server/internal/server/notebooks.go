@@ -178,7 +178,7 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 		store.NotebookStateStopping,
 		store.NotebookStateStopped:
 	default:
-		return nil, status.Errorf(codes.Internal, "unexpected notebook state: %s", nb.State)
+		return nil, status.Errorf(codes.FailedPrecondition, "unexpected notebook state: %s", nb.State)
 	}
 
 	nbProto, err := nb.V1Notebook()
@@ -217,7 +217,7 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 		store.NotebookStateRunning,
 		store.NotebookStateFailed:
 	default:
-		return nil, status.Errorf(codes.Internal, "unexpected notebook state: %s", nb.State)
+		return nil, status.Errorf(codes.FailedPrecondition, "unexpected notebook state: %s", nb.State)
 	}
 
 	nbProto, err := nb.V1Notebook()
