@@ -34,7 +34,6 @@ if __name__ == "__main__":
     parser.add_argument("--per_device_train_batch_size", help="Batch size per training.", default=2, type=int, nargs="?")
 
     args = parser.parse_args()
-    print(args)
 
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=True,
@@ -58,9 +57,9 @@ if __name__ == "__main__":
     training_args = TrainingArguments(
         output_dir=args.output,
         overwrite_output_dir=True,
-        num_train_epochs=3,
+        num_train_epochs=args.num_train_epochs,
         # batch size per device during training
-        per_device_train_batch_size=2,
+        per_device_train_batch_size=args.per_device_train_batch_size,
         # number of steps before performing a backward/update pass
         gradient_accumulation_steps=2,
         # use gradient checkpointing to save memory
@@ -69,7 +68,7 @@ if __name__ == "__main__":
         save_strategy="epoch",
         logging_steps=10,
         # learning rate, based on QLoRA paper
-        learning_rate=2e-4,
+        learning_rate=args.learning_rate,
         # warmup ratio based on QLoRA paper
         warmup_ratio=0.03,
         # max gradient norm based on QLoRA paper
