@@ -82,14 +82,8 @@ message StopNotebookRequest {
   string id = 1;
 }
 
-message StopNotebookResponse {
-}
-
 message StartNotebookRequest {
   string id = 1;
-}
-
-message StartNotebookResponse {
 }
 
 service WorkspaceService {
@@ -115,12 +109,12 @@ service WorkspaceService {
     };
   }
 
-  rpc StopNotebook(StopNotebookRequest) returns (StopNotebookResponse) {
+  rpc StopNotebook(StopNotebookRequest) returns (Notebook) {
     option (google.api.http) = {
       post: "/v1/workspaces/notebooks/{id}/actions:stop"
     };
   }
-  rpc StartNotebook(StartNotebookRequest) returns (StartNotebookResponse) {
+  rpc StartNotebook(StartNotebookRequest) returns (Notebook) {
     option (google.api.http) = {
       post: "/v1/workspaces/notebooks/{id}/actions:start"
     };

@@ -150,7 +150,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1StartNotebookResponse"
+              "$ref": "#/definitions/v1Notebook"
             }
           },
           "default": {
@@ -180,7 +180,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1StopNotebookResponse"
+              "$ref": "#/definitions/v1Notebook"
             }
           },
           "default": {
@@ -253,6 +253,7 @@
         "details": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -287,6 +288,7 @@
         "notebooks": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Notebook"
           }
         },
@@ -364,12 +366,6 @@
           "format": "int32"
         }
       }
-    },
-    "v1StartNotebookResponse": {
-      "type": "object"
-    },
-    "v1StopNotebookResponse": {
-      "type": "object"
     }
   }
 }

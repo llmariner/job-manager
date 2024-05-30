@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -17,6 +18,7 @@ type jobCreatorI interface {
 
 type notebookCreatorI interface {
 	createNotebook(ctx context.Context, nb *store.Notebook) error
+	stopNotebook(ctx context.Context, nb *store.Notebook) error
 }
 
 // PreProcessorI is an interface for pre-processing jobs.
@@ -90,7 +92,7 @@ func (d *D) Start(ctx context.Context) error {
 	maxDelay := time.Second
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processQueuedJobs))
-	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processQueuedNotebooks))
+	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processNotebooks))
 
 	log := ctrl.LoggerFrom(ctx)
 	if err := g.Wait(); err != nil {
@@ -139,23 +141,33 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 	return d.store.UpdateJobState(job.JobID, job.Version, store.JobStateRunning)
 }
 
-func (d *D) processQueuedNotebooks(ctx context.Context) error {
-	nbs, err := d.store.ListQueuedNotebooks()
+func (d *D) processNotebooks(ctx context.Context) error {
+	nbs, err := d.store.ListQueuedOrStoppingNotebooks()
 	if err != nil {
 		return err
 	}
 	for _, nb := range nbs {
-		if err := d.processNotebook(ctx, nb); err != nil {
-			return err
+		log := ctrl.LoggerFrom(ctx).WithValues("notebookID", nb.NotebookID)
+		ctx = ctrl.LoggerInto(ctx, log)
+
+		switch nb.State {
+		case store.NotebookStateQueued:
+			if err := d.processQueuedNotebook(ctx, nb); err != nil {
+				return err
+			}
+		case store.NotebookStateStopping:
+			if err := d.processStoppingNotebook(ctx, nb); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unexpected notebook state: %s", nb.State)
 		}
 	}
 	return nil
 }
 
-func (d *D) processNotebook(ctx context.Context, nb *store.Notebook) error {
-	log := ctrl.LoggerFrom(ctx).WithValues("notebookID", nb.NotebookID)
-	ctx = ctrl.LoggerInto(ctx, log)
-
+func (d *D) processQueuedNotebook(ctx context.Context, nb *store.Notebook) error {
+	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating a k8s notebook resources")
 	if err := d.nbCreator.createNotebook(ctx, nb); err != nil {
 		return err
@@ -164,6 +176,7 @@ func (d *D) processNotebook(ctx context.Context, nb *store.Notebook) error {
 
 	if err := nb.MutateMessage(func(nb *v1.Notebook) {
 		nb.StartedAt = time.Now().UTC().Unix()
+		nb.StoppedAt = 0
 	}); err != nil {
 		return err
 	}
@@ -171,5 +184,26 @@ func (d *D) processNotebook(ctx context.Context, nb *store.Notebook) error {
 		nb.NotebookID,
 		nb.Version,
 		store.NotebookStateRunning,
+		nb.Message)
+}
+
+func (d *D) processStoppingNotebook(ctx context.Context, nb *store.Notebook) error {
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Stopping a k8s notebook resources")
+	if err := d.nbCreator.stopNotebook(ctx, nb); err != nil {
+		return err
+	}
+	log.Info("Successfully stopped the notebook")
+
+	if err := nb.MutateMessage(func(nb *v1.Notebook) {
+		nb.StartedAt = 0
+		nb.StoppedAt = time.Now().UTC().Unix()
+	}); err != nil {
+		return err
+	}
+	return d.store.UpdateNotebookStateAndMessage(
+		nb.NotebookID,
+		nb.Version,
+		store.NotebookStateStopped,
 		nb.Message)
 }

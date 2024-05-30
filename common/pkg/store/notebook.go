@@ -16,6 +16,8 @@ const (
 	NotebookStateQueued NotebookState = "queued"
 	// NotebookStateRunning is the state of a notebook that is currently running.
 	NotebookStateRunning NotebookState = "running"
+	// NotebookStateStopping is the state of a notebook that is stopping.
+	NotebookStateStopping NotebookState = "stopping"
 	// NotebookStateStopped is the state of a notebook that has been stopped.
 	NotebookStateStopped NotebookState = "stopped"
 	// NotebookStateFailed is the state of a notebook that has failed.
@@ -101,13 +103,31 @@ func (s *S) ListNotebooksByProjectIDWithPagination(projectID string, afterID uin
 	return nbs, hasMore, nil
 }
 
-// ListQueuedNotebooks finds queued notebooks.
-func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
+// ListQueuedOrStoppingNotebooks finds queued notebooks.
+func (s *S) ListQueuedOrStoppingNotebooks() ([]*Notebook, error) {
 	var nbs []*Notebook
-	if err := s.db.Where("state = ?", NotebookStateQueued).Order("notebook_id").Find(&nbs).Error; err != nil {
+	if err := s.db.Where("state = ? OR state = ?", NotebookStateQueued, NotebookStateStopping).Find(&nbs).Error; err != nil {
 		return nil, err
 	}
 	return nbs, nil
+}
+
+// UpdateNotebookState updates a notebook state.
+func (s *S) UpdateNotebookState(id string, currentVersion int, newState NotebookState) error {
+	result := s.db.Model(&Notebook{}).
+		Where("notebook_id = ?", id).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":   newState,
+			"version": currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
+	}
+	return nil
 }
 
 // UpdateNotebookStateAndMessage updates a notebook state and message.
