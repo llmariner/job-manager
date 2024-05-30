@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/llm-operator/common/pkg/id"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"google.golang.org/grpc/codes"
@@ -43,7 +43,10 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 
 	// TODO(aya): validate resources
 
-	nbID := newNotebookID()
+	nbID, err := id.GenerateID("nb-", 24)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "generate job ID: %s", err)
+	}
 	nbProto := &v1.Notebook{
 		Id:        nbID,
 		Name:      req.Name,
@@ -225,8 +228,4 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
 	}
 	return nbProto, nil
-}
-
-func newNotebookID() string {
-	return uuid.New().String()
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/llm-operator/common/pkg/id"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
@@ -78,7 +78,10 @@ func (s *S) CreateJob(
 		}
 	}
 
-	jobID := newJobID()
+	jobID, err := id.GenerateID("ftjob-", 24)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "generate job ID: %s", err)
+	}
 
 	var hp *v1.Job_Hyperparameters
 	if rhp := req.Hyperparameters; rhp != nil {
@@ -285,8 +288,4 @@ func (s *S) CancelJob(
 		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 	}
 	return jobProto, nil
-}
-
-func newJobID() string {
-	return uuid.New().String()
 }
