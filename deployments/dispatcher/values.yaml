@@ -19,7 +19,7 @@ global:
     accessKeyIdKey:
     secretAccessKeyKey:
 
-  llmOperatorBaseURL:
+  llmOperatorBaseUrl:
 
 pollingInterval: 10s
 job:

@@ -121,7 +121,7 @@ type Config struct {
 
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
 
-	LLMOperatorBaseURL string `yaml:"llmOperatorBaseURL"`
+	LLMOperatorBaseURL string `yaml:"llmOperatorBaseUrl"`
 }
 
 // Validate validates the configuration.
