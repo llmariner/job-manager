@@ -135,7 +135,7 @@ func TestGetNotebook(t *testing.T) {
 	srv := New(st, nil, nil, nil, nil)
 	resp, err := srv.GetNotebook(context.Background(), &v1.GetNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
-	assert.Equal(t, store.NotebookStateQueued, store.NotebookState(resp.Status))
+	assert.EqualValues(t, store.NotebookQueuedActionStart, store.NotebookState(resp.Status))
 }
 
 func TestStopNotebook(t *testing.T) {
@@ -208,12 +208,12 @@ func TestStartNotebook(t *testing.T) {
 			name:   "transit stopping to queued",
 			state:  store.NotebookStateQueued,
 			action: store.NotebookQueuedActionStop,
-			want:   &v1.Notebook{Status: string(store.NotebookStateQueued)},
+			want:   &v1.Notebook{Status: string(store.NotebookQueuedActionStart)},
 		},
 		{
 			name:  "transit stopped to queued",
 			state: store.NotebookStateStopped,
-			want:  &v1.Notebook{Status: string(store.NotebookStateQueued)},
+			want:  &v1.Notebook{Status: string(store.NotebookQueuedActionStart)},
 		},
 		{
 			name:  "keep failed state",

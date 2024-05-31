@@ -109,7 +109,7 @@ func (s *S) ListNotebooks(ctx context.Context, req *v1.ListNotebooksRequest) (*v
 		afterID = nb.ID
 	}
 
-	nbs, hasMore, err := s.store.ListNotebooksByProjectIDWithPagination(userInfo.ProjectID, afterID, int(limit))
+	nbs, hasMore, err := s.store.ListActiveNotebooksByProjectIDWithPagination(userInfo.ProjectID, afterID, int(limit))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "find notebooks: %s", err)
 	}
@@ -189,13 +189,17 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 			return nbProto, nil
 		}
 	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "unknown notebook state: %s", nb.State)
+		return nil, status.Errorf(codes.Internal, "unknown notebook state: %s", nb.State)
 	}
 
-	if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStop); err != nil {
+	nb, err = s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStop)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
 	}
-	nbProto.Status = string(store.NotebookQueuedActionStop)
+	nbProto, err = nb.V1Notebook()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
+	}
 	return nbProto, nil
 }
 
@@ -234,13 +238,17 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 			return nbProto, nil
 		}
 	default:
-		return nil, status.Errorf(codes.FailedPrecondition, "unknown notebook state: %s", nb.State)
+		return nil, status.Errorf(codes.Internal, "unknown notebook state: %s", nb.State)
 	}
 
-	if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStart); err != nil {
+	nb, err = s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionStart)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
 	}
-	nbProto.Status = string(store.NotebookQueuedActionStart)
+	nbProto, err = nb.V1Notebook()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
+	}
 	return nbProto, nil
 }
 
@@ -264,7 +272,7 @@ func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (
 	}
 
 	if nb.QueuedAction != store.NotebookQueuedActionDelete {
-		if err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionDelete); err != nil {
+		if _, err := s.store.SetNotebookQueuedAction(nb.NotebookID, nb.Version, store.NotebookQueuedActionDelete); err != nil {
 			return nil, status.Errorf(codes.Internal, "update notebook state: %s", err)
 		}
 	}

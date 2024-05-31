@@ -20,6 +20,8 @@ const (
 	NotebookStateStopped NotebookState = "stopped"
 	// NotebookStateFailed is the state of a notebook that has failed.
 	NotebookStateFailed NotebookState = "failed"
+	// NotebookStateDeleted is the state of a notebook that has been deleted.
+	NotebookStateDeleted NotebookState = "deleted"
 )
 
 // NotebookQueuedAction is the action of a queued notebook.
@@ -27,7 +29,7 @@ type NotebookQueuedAction string
 
 const (
 	// NotebookQueuedActionStart is the action to start a notebook.
-	NotebookQueuedActionStart NotebookQueuedAction = "queued"
+	NotebookQueuedActionStart NotebookQueuedAction = "starting"
 	// NotebookQueuedActionStop is the action to stop a notebook.
 	NotebookQueuedActionStop NotebookQueuedAction = "stopping"
 	// NotebookQueuedActionDelete is the action to delete a notebook.
@@ -45,7 +47,9 @@ type Notebook struct {
 	// Message is the marshalled JSON of the v1.Notebook.
 	Message []byte
 
-	State        NotebookState
+	State NotebookState
+	// QueuedAction is the action of the queued notebook. This field is only used when
+	// the state is NotebookStateQueued, and processed by the dispatcher.
 	QueuedAction NotebookQueuedAction
 
 	TenantID            string
@@ -99,10 +103,10 @@ func (s *S) GetNotebookByIDAndProjectID(id, projectID string) (*Notebook, error)
 	return &nb, nil
 }
 
-// ListNotebooksByProjectIDWithPagination finds notebooks with pagination. Notebooks are returned with a descending order of ID.
-func (s *S) ListNotebooksByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]*Notebook, bool, error) {
+// ListActiveNotebooksByProjectIDWithPagination finds active notebooks with pagination. Notebooks are returned with a descending order of ID.
+func (s *S) ListActiveNotebooksByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]*Notebook, bool, error) {
 	var nbs []*Notebook
-	q := s.db.Where("project_id = ?", projectID)
+	q := s.db.Where("project_id = ? AND state != ?", projectID, NotebookStateDeleted)
 	if afterID > 0 {
 		q = q.Where("id < ?", afterID)
 	}
@@ -128,8 +132,9 @@ func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
 }
 
 // SetNotebookQueuedAction sets a notebook queued action.
-func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction NotebookQueuedAction) error {
-	result := s.db.Model(&Notebook{}).
+func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction NotebookQueuedAction) (*Notebook, error) {
+	var nb Notebook
+	result := s.db.Model(&nb).
 		Where("notebook_id = ?", id).
 		Where("version = ?", currentVersion).
 		Updates(map[string]interface{}{
@@ -138,12 +143,12 @@ func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction Not
 			"version":       currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
-		return err
+		return nil, err
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
+		return nil, fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
 	}
-	return nil
+	return &nb, nil
 }
 
 // SetNonQueuedStateAndMessage sets a non-queued state and message.
@@ -162,18 +167,6 @@ func (s *S) SetNonQueuedStateAndMessage(id string, currentVersion int, newState 
 	}
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
-	}
-	return nil
-}
-
-// DeleteNotebook deletes a notebook.
-func (s *S) DeleteNotebook(id, projectID string) error {
-	res := s.db.Unscoped().Where("notebook_id = ? AND project_id = ?", id, projectID).Delete(&Notebook{})
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
 	}
 	return nil
 }

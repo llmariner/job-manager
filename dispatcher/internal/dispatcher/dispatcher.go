@@ -9,7 +9,6 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -221,11 +220,15 @@ func (d *D) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
 		return err
 	}
 	log.Info("Successfully deleted the notebook")
-	if err := d.store.DeleteNotebook(nb.NotebookID, nb.ProjectID); err != nil {
-		if err != gorm.ErrRecordNotFound {
-			return err
-		}
-		log.V(4).Info("Notebook is already deleted")
+	if err := nb.MutateMessage(func(nb *v1.Notebook) {
+		nb.StartedAt = 0
+		nb.StoppedAt = time.Now().UTC().Unix()
+	}); err != nil {
+		return err
 	}
-	return nil
+	return d.store.SetNonQueuedStateAndMessage(
+		nb.NotebookID,
+		nb.Version,
+		store.NotebookStateDeleted,
+		nb.Message)
 }
