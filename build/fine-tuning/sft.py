@@ -48,7 +48,8 @@ if __name__ == "__main__":
         # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
         # the dtype will be automatically derived from the model's weights."
         torch_dtype='auto',
-        # use_cache=False,
+        # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
+        use_cache=False,
         device_map=get_kbit_device_map(),
         quantization_config=quantization_config,
     )
@@ -64,6 +65,8 @@ if __name__ == "__main__":
         gradient_accumulation_steps=2,
         # use gradient checkpointing to save memory
         gradient_checkpointing=True,
+        # The use_reentrant parameter need be passed explicitly. use_reentrant=False is recommended.
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         # save checkpoint every epoch
         save_strategy="epoch",
         logging_steps=10,
@@ -96,7 +99,7 @@ if __name__ == "__main__":
         lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=None,
+        target_modules=["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
         modules_to_save=None,
     )
 
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         # The maximum sequence length to use for the `ConstantLengthDataset`
         # and for automatically creating the Dataset.
         # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
-        max_seq_length=None,
+        max_seq_length=1024,
         tokenizer=tokenizer,
         peft_config=peft_config,
         callbacks=None,
