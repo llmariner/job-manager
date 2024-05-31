@@ -6,13 +6,13 @@ mkdir base-model
 
 {{ range $path, $url := .BaseModelURLs }}
 mkdir -p $(dirname base-model/{{ $path }})
-curl --output base-model/{{ $path }} "{{ $url }}"
+curl --fail --silent --output base-model/{{ $path }} "{{ $url }}"
 {{ end }}
 
 mkdir dataset/
-curl -o dataset/train.json "{{.TrainingFileURL }}"
+curl --fail --silent --output dataset/train.json "{{.TrainingFileURL }}"
 {{if .ValidationFileURL }}
-curl -o dataset/test.json "{{.ValidationFileURL }}"
+curl --fail --silent --output dataset/test.json "{{.ValidationFileURL }}"
 {{ end }}
 
 mkdir output
@@ -30,4 +30,4 @@ accelerate launch \
 
 python ./convert-lora-to-ggml.py ./output
 
-curl --request PUT --upload-file output/ggml-adapter-model.bin "{{ .OutputModelURL }}"
+curl --fail --silent --request PUT --upload-file output/ggml-adapter-model.bin "{{ .OutputModelURL }}"
