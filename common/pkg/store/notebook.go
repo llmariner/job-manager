@@ -127,7 +127,7 @@ func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
 	return nbs, nil
 }
 
-// SetNotebookQueuedAction set a notebook queued action.
+// SetNotebookQueuedAction sets a notebook queued action.
 func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction NotebookQueuedAction) error {
 	result := s.db.Model(&Notebook{}).
 		Where("notebook_id = ?", id).
