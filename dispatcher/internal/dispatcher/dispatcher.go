@@ -16,9 +16,10 @@ type jobCreatorI interface {
 	createJob(ctx context.Context, job *store.Job, presult *PreProcessResult) error
 }
 
-type notebookCreatorI interface {
+type notebookManagerI interface {
 	createNotebook(ctx context.Context, nb *store.Notebook) error
 	stopNotebook(ctx context.Context, nb *store.Notebook) error
+	deleteNotebook(ctx context.Context, nb *store.Notebook) error
 }
 
 // PreProcessorI is an interface for pre-processing jobs.
@@ -40,7 +41,7 @@ func New(
 	store *store.S,
 	jobCreator jobCreatorI,
 	preProcessor PreProcessorI,
-	nbCreator notebookCreatorI,
+	nbCreator notebookManagerI,
 	pollingInterval time.Duration,
 ) *D {
 	return &D{
@@ -57,7 +58,7 @@ type D struct {
 	store        *store.S
 	jobCreator   jobCreatorI
 	preProcessor PreProcessorI
-	nbCreator    notebookCreatorI
+	nbCreator    notebookManagerI
 
 	pollingInterval time.Duration
 }
@@ -142,7 +143,7 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 }
 
 func (d *D) processNotebooks(ctx context.Context) error {
-	nbs, err := d.store.ListQueuedOrStoppingNotebooks()
+	nbs, err := d.store.ListQueuedNotebooks()
 	if err != nil {
 		return err
 	}
@@ -150,23 +151,27 @@ func (d *D) processNotebooks(ctx context.Context) error {
 		log := ctrl.LoggerFrom(ctx).WithValues("notebookID", nb.NotebookID)
 		ctx = ctrl.LoggerInto(ctx, log)
 
-		switch nb.State {
-		case store.NotebookStateQueued:
-			if err := d.processQueuedNotebook(ctx, nb); err != nil {
+		switch nb.QueuedAction {
+		case store.NotebookQueuedActionStart:
+			if err := d.startNotebook(ctx, nb); err != nil {
 				return err
 			}
-		case store.NotebookStateStopping:
-			if err := d.processStoppingNotebook(ctx, nb); err != nil {
+		case store.NotebookQueuedActionStop:
+			if err := d.stopNotebook(ctx, nb); err != nil {
+				return err
+			}
+		case store.NotebookQueuedActionDelete:
+			if err := d.deleteNotebook(ctx, nb); err != nil {
 				return err
 			}
 		default:
-			return fmt.Errorf("unexpected notebook state: %s", nb.State)
+			return fmt.Errorf("unknown notebook queued action: %s", nb.QueuedAction)
 		}
 	}
 	return nil
 }
 
-func (d *D) processQueuedNotebook(ctx context.Context, nb *store.Notebook) error {
+func (d *D) startNotebook(ctx context.Context, nb *store.Notebook) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating a k8s notebook resources")
 	if err := d.nbCreator.createNotebook(ctx, nb); err != nil {
@@ -180,14 +185,14 @@ func (d *D) processQueuedNotebook(ctx context.Context, nb *store.Notebook) error
 	}); err != nil {
 		return err
 	}
-	return d.store.UpdateNotebookStateAndMessage(
+	return d.store.SetNonQueuedStateAndMessage(
 		nb.NotebookID,
 		nb.Version,
 		store.NotebookStateRunning,
 		nb.Message)
 }
 
-func (d *D) processStoppingNotebook(ctx context.Context, nb *store.Notebook) error {
+func (d *D) stopNotebook(ctx context.Context, nb *store.Notebook) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Stopping a k8s notebook resources")
 	if err := d.nbCreator.stopNotebook(ctx, nb); err != nil {
@@ -201,9 +206,29 @@ func (d *D) processStoppingNotebook(ctx context.Context, nb *store.Notebook) err
 	}); err != nil {
 		return err
 	}
-	return d.store.UpdateNotebookStateAndMessage(
+	return d.store.SetNonQueuedStateAndMessage(
 		nb.NotebookID,
 		nb.Version,
 		store.NotebookStateStopped,
+		nb.Message)
+}
+
+func (d *D) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Deleting a k8s notebook resources")
+	if err := d.nbCreator.deleteNotebook(ctx, nb); err != nil {
+		return err
+	}
+	log.Info("Successfully deleted the notebook")
+	if err := nb.MutateMessage(func(nb *v1.Notebook) {
+		nb.StartedAt = 0
+		nb.StoppedAt = time.Now().UTC().Unix()
+	}); err != nil {
+		return err
+	}
+	return d.store.SetNonQueuedStateAndMessage(
+		nb.NotebookID,
+		nb.Version,
+		store.NotebookStateDeleted,
 		nb.Message)
 }

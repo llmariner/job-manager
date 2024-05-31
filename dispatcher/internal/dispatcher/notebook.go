@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -156,4 +157,32 @@ func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) 
 
 	scale := &autoscalingv1.Scale{Spec: autoscalingv1.ScaleSpec{Replicas: 0}}
 	return n.k8sClient.SubResource("scale").Update(ctx, &deploy, client.WithSubResourceBody(scale))
+}
+
+func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Deleting a deployment for a notebook")
+
+	var deploy appsv1.Deployment
+	name := util.GetK8sNotebookName(nb.NotebookID)
+
+	if err := n.k8sClient.Get(ctx, types.NamespacedName{
+		Name:      name,
+		Namespace: nb.KubernetesNamespace,
+	}, &deploy); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.V(4).Info("Deployment not found")
+			return nil
+		}
+		return err
+	}
+
+	if err := n.k8sClient.Delete(ctx, &deploy); err == nil {
+		if apierrors.IsNotFound(err) {
+			log.V(4).Info("Deployment not found")
+			return nil
+		}
+		return err
+	}
+	return nil
 }

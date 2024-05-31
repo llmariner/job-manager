@@ -37,7 +37,7 @@ func TestProcessQueuedJobs(t *testing.T) {
 
 	jc := &noopJobCreator{}
 	pp := &NoopPreProcessor{}
-	nc := &noopNotebookCreator{}
+	nc := &noopNotebookManager{}
 	d := New(st, jc, pp, nc, time.Second)
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
@@ -62,10 +62,11 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 
 	nbs := []*store.Notebook{
 		{
-			NotebookID: "nb0",
-			State:      store.NotebookStateQueued,
-			TenantID:   "tid0",
-			ProjectID:  "p0",
+			NotebookID:   "nb0",
+			State:        store.NotebookStateQueued,
+			QueuedAction: store.NotebookQueuedActionStart,
+			TenantID:     "tid0",
+			ProjectID:    "p0",
 		},
 		{
 			NotebookID: "nb1",
@@ -74,16 +75,25 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 			ProjectID:  "p0",
 		},
 		{
-			NotebookID: "nb2",
-			State:      store.NotebookStateQueued,
-			TenantID:   "tid1",
-			ProjectID:  "p0",
+			NotebookID:   "nb2",
+			State:        store.NotebookStateQueued,
+			QueuedAction: store.NotebookQueuedActionStart,
+			TenantID:     "tid1",
+			ProjectID:    "p0",
 		},
 		{
-			NotebookID: "nb3",
-			State:      store.NotebookStateStopping,
-			TenantID:   "tid1",
-			ProjectID:  "p0",
+			NotebookID:   "nb3",
+			State:        store.NotebookStateQueued,
+			QueuedAction: store.NotebookQueuedActionStop,
+			TenantID:     "tid1",
+			ProjectID:    "p0",
+		},
+		{
+			NotebookID:   "nb4",
+			State:        store.NotebookStateQueued,
+			QueuedAction: store.NotebookQueuedActionDelete,
+			TenantID:     "tid1",
+			ProjectID:    "p0",
 		},
 	}
 	for _, nb := range nbs {
@@ -93,7 +103,7 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 
 	jc := &noopJobCreator{}
 	pp := &NoopPreProcessor{}
-	nc := &noopNotebookCreator{}
+	nc := &noopNotebookManager{}
 	d := New(st, jc, pp, nc, time.Second)
 	err := d.processNotebooks(context.Background())
 	assert.NoError(t, err)
@@ -112,6 +122,7 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 
 	assert.Equal(t, 2, nc.createCounter)
 	assert.Equal(t, 1, nc.stopCounter)
+	assert.Equal(t, 1, nc.deleteCounter)
 }
 
 type noopJobCreator struct {
@@ -123,17 +134,23 @@ func (n *noopJobCreator) createJob(ctx context.Context, job *store.Job, presult 
 	return nil
 }
 
-type noopNotebookCreator struct {
+type noopNotebookManager struct {
 	createCounter int
 	stopCounter   int
+	deleteCounter int
 }
 
-func (n *noopNotebookCreator) createNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *noopNotebookManager) createNotebook(ctx context.Context, nb *store.Notebook) error {
 	n.createCounter++
 	return nil
 }
 
-func (n *noopNotebookCreator) stopNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *noopNotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {
 	n.stopCounter++
+	return nil
+}
+
+func (n *noopNotebookManager) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
+	n.deleteCounter++
 	return nil
 }
