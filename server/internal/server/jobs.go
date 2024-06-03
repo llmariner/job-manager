@@ -261,7 +261,7 @@ func (s *S) CancelJob(
 		return jobProto, nil
 	case store.JobStateQueued:
 	case store.JobStateRunning:
-		if err := s.k8sJobClient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
+		if err := s.k8sClient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
 		}
 	default:
