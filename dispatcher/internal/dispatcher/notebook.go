@@ -194,7 +194,12 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	svcConf.WithOwnerReferences(ownerRef)
 	ingConf.WithOwnerReferences(ownerRef)
 
-	for _, obj := range []any{svcConf, ingConf} {
+	// Secret is pre-created by server, and dispatcher only set the owner reference here.
+	// TODO(aya): garbage collect orphaned secrets
+	secConf := corev1apply.Secret(nb.NotebookID, nb.KubernetesNamespace).
+		WithOwnerReferences(ownerRef)
+
+	for _, obj := range []any{svcConf, ingConf, secConf} {
 		if _, err := n.applyObject(ctx, obj, patchOpts); err != nil {
 			return err
 		}
