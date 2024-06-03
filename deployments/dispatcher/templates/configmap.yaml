@@ -7,12 +7,14 @@ metadata:
 data:
   config.yaml: |
     pollingInterval: {{ .Values.pollingInterval }}
-    llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
     job:
       image: {{ .Values.job.image }}
       version: {{ .Values.job.version }}
       imagePullPolicy: {{ .Values.job.imagePullPolicy }}
       numGpus: {{ .Values.job.numGpus }}
+    notebook:
+      llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
+      ingressClassName: {{ .Values.global.ingress.ingressClassName }}
     modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
     fileManagerInternalServerAddr: {{ .Values.fileManagerInternalServerAddr }}
     objectStore:
