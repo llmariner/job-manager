@@ -8,14 +8,17 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	appsv1apply "k8s.io/client-go/applyconfigurations/apps/v1"
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	metav1apply "k8s.io/client-go/applyconfigurations/meta/v1"
+	netv1apply "k8s.io/client-go/applyconfigurations/networking/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,10 +35,12 @@ const (
 func NewNotebookManager(
 	k8sClient client.Client,
 	llmoBaseURL string,
+	ingressClassName string,
 ) *NotebookManager {
 	return &NotebookManager{
-		k8sClient:   k8sClient,
-		llmoBaseURL: llmoBaseURL,
+		k8sClient:        k8sClient,
+		llmoBaseURL:      llmoBaseURL,
+		ingressClassName: ingressClassName,
 	}
 }
 
@@ -43,14 +48,12 @@ func NewNotebookManager(
 type NotebookManager struct {
 	k8sClient client.Client
 
-	llmoBaseURL string
+	llmoBaseURL      string
+	ingressClassName string
 }
 
 func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook) error {
 	log := ctrl.LoggerFrom(ctx)
-
-	// TOOD: create additional resources for the notebook
-
 	log.Info("Creating a deployment for a notebook")
 
 	nbProto, err := nb.V1Notebook()
@@ -104,8 +107,13 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	}
 
 	// TODO: set volume mounts and volumes for the notebook
+	const (
+		appPort  = 8888
+		portName = "jupyter-web-ui"
+	)
+	var baseURL = "/v1/services/notebooks/" + nb.NotebookID
 
-	obj := appsv1apply.
+	deployConf := appsv1apply.
 		Deployment(name, nb.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
@@ -124,21 +132,84 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 						WithImagePullPolicy(corev1.PullIfNotPresent).
 						// TODO: rethink authentication method
 						WithCommand("start-notebook.py").
-						WithArgs("--IdentityProvider.token=''").
+						WithArgs(
+							"--IdentityProvider.token=''",
+							"--ServerApp.base_url="+baseURL).
 						WithPorts(corev1apply.ContainerPort().
-							WithName("web").
-							WithContainerPort(8888).
+							WithName(portName).
+							WithContainerPort(appPort).
 							WithProtocol(corev1.ProtocolTCP)).
 						WithEnv(envs...).
 						WithResources(resources)))))
 
-	uobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	svcConf := corev1apply.Service(name, nb.KubernetesNamespace).
+		WithLabels(labels).
+		WithAnnotations(map[string]string{
+			managedAnnotationKey:    "true",
+			notebookIDAnnotationKey: nb.NotebookID}).
+		WithSpec(corev1apply.ServiceSpec().
+			WithType(corev1.ServiceTypeClusterIP).
+			WithSelector(labels).
+			WithPorts(corev1apply.ServicePort().
+				WithName(portName).
+				WithPort(appPort).
+				WithTargetPort(intstr.FromString(portName)).
+				WithProtocol(corev1.ProtocolTCP)))
+
+	ingConf := netv1apply.Ingress(name, nb.KubernetesNamespace).
+		WithLabels(labels).
+		WithAnnotations(map[string]string{
+			managedAnnotationKey:    "true",
+			notebookIDAnnotationKey: nb.NotebookID}).
+		WithSpec(netv1apply.IngressSpec().
+			WithIngressClassName(n.ingressClassName).
+			WithRules(netv1apply.IngressRule().
+				WithHTTP(netv1apply.HTTPIngressRuleValue().
+					WithPaths(netv1apply.HTTPIngressPath().
+						WithPath(baseURL).
+						WithPathType(netv1.PathTypePrefix).
+						WithBackend(netv1apply.IngressBackend().
+							WithService(netv1apply.IngressServiceBackend().
+								WithName(name).
+								WithPort(netv1apply.ServiceBackendPort().
+									WithName(portName))))))))
+
+	patchOpts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
+	deploy, err := n.applyObject(ctx, deployConf, patchOpts)
 	if err != nil {
 		return err
 	}
-	patch := &unstructured.Unstructured{Object: uobj}
-	opts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
-	return n.k8sClient.Patch(ctx, patch, client.Apply, opts)
+
+	gvk := deploy.GetObjectKind().GroupVersionKind()
+	ownerRef := metav1apply.OwnerReference().
+		WithAPIVersion(gvk.GroupVersion().String()).
+		WithKind(gvk.Kind).
+		WithName(deploy.GetName()).
+		WithUID(deploy.GetUID()).
+		WithBlockOwnerDeletion(true).
+		WithController(true)
+
+	svcConf.WithOwnerReferences(ownerRef)
+	ingConf.WithOwnerReferences(ownerRef)
+
+	for _, obj := range []any{svcConf, ingConf} {
+		if _, err := n.applyObject(ctx, obj, patchOpts); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (n *NotebookManager) applyObject(ctx context.Context, applyConfig any, opts ...client.PatchOption) (client.Object, error) {
+	uobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(applyConfig)
+	if err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{Object: uobj}
+	if err := n.k8sClient.Patch(ctx, obj, client.Apply, opts...); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {

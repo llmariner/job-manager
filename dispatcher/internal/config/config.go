@@ -84,6 +84,23 @@ func (c *JobConfig) validate() error {
 	return nil
 }
 
+// NotebooksConfig is the notebooks configuration.
+type NotebooksConfig struct {
+	LLMOperatorBaseURL string `yaml:"llmOperatorBaseUrl"`
+	IngressClassName   string `yaml:"ingressClassName"`
+}
+
+// validate validates the notebooks configuration.
+func (c *NotebooksConfig) validate() error {
+	if c.LLMOperatorBaseURL == "" {
+		return fmt.Errorf("llm operator base url must be set")
+	}
+	if c.IngressClassName == "" {
+		return fmt.Errorf("ingress class name must be set")
+	}
+	return nil
+}
+
 // KueueConfig is the Kueue configuration.
 type KueueConfig struct {
 	Enable bool `yaml:"enable"`
@@ -106,7 +123,8 @@ func (c *KueueConfig) validate() error {
 type Config struct {
 	PollingInterval time.Duration `yaml:"pollingInterval"`
 
-	Job JobConfig `yaml:"job"`
+	Job      JobConfig       `yaml:"job"`
+	Notebook NotebooksConfig `yaml:"notebook"`
 
 	ModelManagerInternalServerAddr string `yaml:"modelManagerInternalServerAddr"`
 	FileManagerInternalServerAddr  string `yaml:"fileManagerInternalServerAddr"`
@@ -120,8 +138,6 @@ type Config struct {
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
-
-	LLMOperatorBaseURL string `yaml:"llmOperatorBaseUrl"`
 }
 
 // Validate validates the configuration.
@@ -131,6 +147,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.Job.validate(); err != nil {
 		return fmt.Errorf("job: %s", err)
+	}
+	if err := c.Notebook.validate(); err != nil {
+		return fmt.Errorf("notebook: %s", err)
 	}
 
 	if c.Debug.Standalone {
@@ -156,10 +175,6 @@ func (c *Config) Validate() error {
 
 	if err := c.KueueIntegration.validate(); err != nil {
 		return fmt.Errorf("kueue integration: %s", err)
-	}
-
-	if c.LLMOperatorBaseURL == "" {
-		return fmt.Errorf("llm operator base url must be set")
 	}
 	return nil
 }

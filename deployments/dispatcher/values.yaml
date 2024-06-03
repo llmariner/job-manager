@@ -21,6 +21,9 @@ global:
 
   llmOperatorBaseUrl:
 
+  ingress:
+    ingressClassName:
+
 pollingInterval: 10s
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
