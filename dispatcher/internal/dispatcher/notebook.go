@@ -113,7 +113,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	)
 	var baseURL = "/v1/services/notebooks/" + nb.NotebookID
 
-	deployObj := appsv1apply.
+	deployConf := appsv1apply.
 		Deployment(name, nb.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
@@ -142,7 +142,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 						WithEnv(envs...).
 						WithResources(resources)))))
 
-	svcObj := corev1apply.Service(name, nb.KubernetesNamespace).
+	svcConf := corev1apply.Service(name, nb.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
 			managedAnnotationKey:    "true",
@@ -156,7 +156,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 				WithTargetPort(intstr.FromString(portName)).
 				WithProtocol(corev1.ProtocolTCP)))
 
-	ingObj := netv1apply.Ingress(name, nb.KubernetesNamespace).
+	ingConf := netv1apply.Ingress(name, nb.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
 			managedAnnotationKey:    "true",
@@ -175,16 +175,41 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 									WithName(portName))))))))
 
 	patchOpts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
-	for _, obj := range []any{deployObj, svcObj, ingObj} {
-		uobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-		if err != nil {
-			return err
-		}
-		if err := n.k8sClient.Patch(ctx, &unstructured.Unstructured{Object: uobj}, client.Apply, patchOpts); err != nil {
+	deploy, err := n.applyObject(ctx, deployConf, patchOpts)
+	if err != nil {
+		return err
+	}
+
+	gvk := deploy.GetObjectKind().GroupVersionKind()
+	ownerRef := metav1apply.OwnerReference().
+		WithAPIVersion(gvk.GroupVersion().String()).
+		WithKind(gvk.Kind).
+		WithName(deploy.GetName()).
+		WithUID(deploy.GetUID()).
+		WithBlockOwnerDeletion(true).
+		WithController(true)
+
+	svcConf.WithOwnerReferences(ownerRef)
+	ingConf.WithOwnerReferences(ownerRef)
+
+	for _, obj := range []any{svcConf, ingConf} {
+		if _, err := n.applyObject(ctx, obj, patchOpts); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (n *NotebookManager) applyObject(ctx context.Context, applyConfig any, opts ...client.PatchOption) (client.Object, error) {
+	uobj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(applyConfig)
+	if err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{Object: uobj}
+	if err := n.k8sClient.Patch(ctx, obj, client.Apply, opts...); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {
