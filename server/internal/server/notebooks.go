@@ -66,7 +66,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, err
 	}
-	nbToken, err := id.GenerateID("", 24)
+	nbToken, err := id.GenerateID("", 48)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
 	}
