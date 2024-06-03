@@ -254,6 +254,6 @@ func (c *noopK8sClient) CancelJob(ctx context.Context, job *v1.Job, namespace st
 	return nil
 }
 
-func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string]string) error {
+func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error {
 	return nil
 }

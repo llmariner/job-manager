@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
@@ -38,15 +37,9 @@ func (c *DefaultK8sClient) CancelJob(ctx context.Context, job *v1.Job, namespace
 }
 
 // CreateSecret creates a secret.
-func (c *DefaultK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string]string) error {
-	encodedData := make(map[string][]byte, len(data))
-	for k, v := range data {
-		dst := make([]byte, base64.StdEncoding.EncodedLen(len(v)))
-		base64.StdEncoding.Encode(dst, []byte(v))
-		encodedData[k] = dst
-	}
+func (c *DefaultK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error {
 	opts := metav1.ApplyOptions{FieldManager: fieldManager, Force: true}
-	conf := corev1apply.Secret(name, namespace).WithData(encodedData)
+	conf := corev1apply.Secret(name, namespace).WithData(data)
 	_, err := c.client.CoreV1().Secrets(namespace).Apply(ctx, conf, opts)
 	return err
 }
