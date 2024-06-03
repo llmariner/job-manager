@@ -132,7 +132,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 						// TODO: rethink authentication method
 						WithCommand("start-notebook.py").
 						WithArgs(
-							"--IdentityProvider.token=''",
+							"--IdentityProvider.token=$(NOTEBOOK_TOKEN)",
 							"--ServerApp.base_url="+baseURL).
 						WithPorts(corev1apply.ContainerPort().
 							WithName(portName).

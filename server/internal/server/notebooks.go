@@ -66,8 +66,13 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, err
 	}
+	nbToken, err := id.GenerateID("", 48)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
+	}
 	if err := s.k8sClient.CreateSecret(ctx, nbID, userInfo.KubernetesNamespace, map[string]string{
 		"OPENAI_API_KEY": apikey,
+		"NOTEBOOK_TOKEN": nbToken,
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "create secret: %s", err)
 	}
@@ -86,6 +91,9 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err := s.store.CreateNotebook(nb); err != nil {
 		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)
 	}
+
+	// not stored, and set token only for the response
+	nbProto.Token = nbToken
 	return nbProto, nil
 }
 
