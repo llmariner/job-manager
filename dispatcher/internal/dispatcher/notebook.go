@@ -73,7 +73,6 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
 	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmoBaseURL))
-	// TODO: think the safe way to pass the user api key as the `OPENAI_API_KEY` envar.
 
 	req := corev1.ResourceList{}
 	limit := corev1.ResourceList{}
@@ -140,6 +139,9 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 							WithContainerPort(appPort).
 							WithProtocol(corev1.ProtocolTCP)).
 						WithEnv(envs...).
+						WithEnvFrom(corev1apply.EnvFromSource().
+							WithSecretRef(corev1apply.SecretEnvSource().
+								WithName(nb.NotebookID))).
 						WithResources(resources)))))
 
 	svcConf := corev1apply.Service(name, nb.KubernetesNamespace).
@@ -192,7 +194,12 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	svcConf.WithOwnerReferences(ownerRef)
 	ingConf.WithOwnerReferences(ownerRef)
 
-	for _, obj := range []any{svcConf, ingConf} {
+	// Secret is pre-created by server, and dispatcher only set the owner reference here.
+	// TODO(aya): garbage collect orphaned secrets
+	secConf := corev1apply.Secret(nb.NotebookID, nb.KubernetesNamespace).
+		WithOwnerReferences(ownerRef)
+
+	for _, obj := range []any{svcConf, ingConf, secConf} {
 		if _, err := n.applyObject(ctx, obj, patchOpts); err != nil {
 			return err
 		}

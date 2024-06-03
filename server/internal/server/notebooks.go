@@ -62,6 +62,16 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "marshal notebook: %s", err)
 	}
 
+	apikey, err := s.extractTokenFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.k8sClient.CreateSecret(ctx, nbID, userInfo.KubernetesNamespace, map[string]string{
+		"OPENAI_API_KEY": apikey,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "create secret: %s", err)
+	}
+
 	nb := &store.Notebook{
 		NotebookID:          nbID,
 		Image:               image,

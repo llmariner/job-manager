@@ -34,8 +34,9 @@ type modelClient interface {
 	GetModel(ctx context.Context, in *mv1.GetModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
-type k8sJobClient interface {
+type k8sClient interface {
 	CancelJob(ctx context.Context, job *v1.Job, namespace string) error
+	CreateSecret(ctx context.Context, name, namespace string, data map[string]string) error
 }
 
 // New creates a server.
@@ -43,7 +44,7 @@ func New(
 	store *store.S,
 	fileGetClient fileGetClient,
 	modelClient modelClient,
-	k8sJobClient k8sJobClient,
+	k8sClient k8sClient,
 	nbImageTypes map[string]string,
 ) *S {
 	nbtypes := make([]string, 0, len(nbImageTypes))
@@ -54,7 +55,7 @@ func New(
 		store:          store,
 		fileGetClient:  fileGetClient,
 		modelClient:    modelClient,
-		k8sJobClient:   k8sJobClient,
+		k8sClient:      k8sClient,
 		nbImageTypes:   nbImageTypes,
 		nbImageTypeStr: strings.Join(nbtypes, ", "),
 	}
@@ -72,7 +73,7 @@ type S struct {
 	store         *store.S
 	fileGetClient fileGetClient
 	modelClient   modelClient
-	k8sJobClient  k8sJobClient
+	k8sClient     k8sClient
 
 	nbImageTypes   map[string]string
 	nbImageTypeStr string
@@ -137,4 +138,15 @@ func (s *S) extractUserInfoFromContext(ctx context.Context) (*auth.UserInfo, err
 		return nil, status.Error(codes.Unauthenticated, "user info not found")
 	}
 	return userInfo, nil
+}
+
+func (s *S) extractTokenFromContext(ctx context.Context) (string, error) {
+	if !s.enableAuth {
+		return "token", nil
+	}
+	token, err := auth.ExtractTokenFromContext(ctx)
+	if err != nil {
+		return "", status.Errorf(codes.Internal, "extract token: %s", err)
+	}
+	return token, nil
 }

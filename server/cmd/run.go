@@ -110,7 +110,7 @@ func run(ctx context.Context, c *config.Config) error {
 	if err != nil {
 		return err
 	}
-	k8sJobClient := server.NewK8sJobClient(kubeClient)
+	k8sJobClient := server.NewK8sClient(kubeClient)
 
 	go func() {
 		s := server.New(st, fclient, mclient, k8sJobClient, c.NotebookConfig.ImageTypes)
