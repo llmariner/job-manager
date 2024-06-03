@@ -36,7 +36,7 @@ type modelClient interface {
 
 type k8sClient interface {
 	CancelJob(ctx context.Context, job *v1.Job, namespace string) error
-	CreateSecret(ctx context.Context, name, namespace string, data map[string]string) error
+	CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error
 }
 
 // New creates a server.
