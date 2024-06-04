@@ -114,7 +114,9 @@ func (p *JobClient) jobSpec(jobProto *v1.Job, presult *PreProcessResult) (*batch
 		WithRestartPolicy(corev1.RestartPolicyNever)
 	jobSpec := batchv1apply.JobSpec().
 		WithTTLSecondsAfterFinished(int32(jobTTL.Seconds())).
-		WithBackoffLimit(3).
+		// Do not allow retries to simplify the failure handling.
+		// TODO(kenji): Revisit.
+		WithBackoffLimit(0).
 		WithTemplate(corev1apply.PodTemplateSpec().
 			WithSpec(podSpec))
 	return jobSpec, nil
