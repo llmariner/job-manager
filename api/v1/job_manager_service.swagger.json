@@ -150,6 +150,26 @@
     }
   },
   "definitions": {
+    "IntegrationWandb": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -172,7 +192,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -196,6 +215,16 @@
         },
         "validationFile": {
           "type": "string"
+        },
+        "integrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Integration"
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -216,6 +245,17 @@
           "type": "integer",
           "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
+        }
+      }
+    },
+    "v1Integration": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "wandb": {
+          "$ref": "#/definitions/IntegrationWandb"
         }
       }
     },
@@ -291,6 +331,16 @@
         "validationFile": {
           "type": "string"
         },
+        "integrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Integration"
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "format": "int32"
+        },
         "projectId": {
           "type": "string"
         },
@@ -331,8 +381,7 @@
           "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
         }
-      },
-      "description": "batch_size and learning_rate_multiplier are not part of\n the OpenAI API spec, but we include here as these parameters are in CreateJobRequest."
+      }
     },
     "v1JobPhase": {
       "type": "string",
@@ -366,7 +415,6 @@
         "data": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Job"
           }
         },
@@ -381,7 +429,6 @@
         "jobs": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1InternalJob"
           }
         }

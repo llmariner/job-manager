@@ -8,6 +8,17 @@ option go_package = "github.com/llm-operator/job-manager/api/v1";
 
 // The API specification fllows OpenAPI API specification (https://platform.openai.com/docs/api-reference/fine-tuning/jobs).
 
+message Integration {
+  string type = 1;
+  message Wandb {
+    string project = 1;
+    string name = 2;
+    string entity = 3;
+    repeated string tags = 4;
+  }
+  Wandb wandb = 2;
+}
+
 message Job {
   string id = 1;
   int64 created_at = 2;
@@ -42,11 +53,13 @@ message Job {
   int32 trained_tokens = 12;
   string training_file = 13;
   string validation_file = 14;
+  repeated Integration integrations = 15;
+  int32 seed = 16;
 
   // The following fields are not part of the OpenAI API spec.
 
-  string project_id = 15;
-  string kubernetes_namespace = 16;
+  string project_id = 17;
+  string kubernetes_namespace = 18;
 }
 
 message CreateJobRequest {
@@ -68,6 +81,8 @@ message CreateJobRequest {
   // ft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel.
   string suffix = 4;
   string validation_file = 5;
+  repeated Integration integrations = 6;
+  int32 seed = 7;
 }
 
 message ListJobsRequest {
