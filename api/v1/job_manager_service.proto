@@ -114,11 +114,13 @@ message ListQueuedInternalJobsRequest {
 }
 
 message ListQueuedInternalJobsResponse {
-  repeated InternalJob jobs = 1;
+  string tenant_id = 1;
+  repeated InternalJob jobs = 2;
 }
 
 message GetInternalJobRequest {
   string id = 1;
+  string tenant_id = 2;
 }
 
 enum JobPhase {
