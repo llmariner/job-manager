@@ -111,11 +111,11 @@ message InternalJob {
 }
 
 message ListQueuedInternalJobsRequest {
+  string tenant_id = 1;
 }
 
 message ListQueuedInternalJobsResponse {
-  string tenant_id = 1;
-  repeated InternalJob jobs = 2;
+  repeated InternalJob jobs = 1;
 }
 
 message GetInternalJobRequest {

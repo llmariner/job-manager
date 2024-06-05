@@ -378,9 +378,6 @@
     "v1ListQueuedInternalJobsResponse": {
       "type": "object",
       "properties": {
-        "tenantId": {
-          "type": "string"
-        },
         "jobs": {
           "type": "array",
           "items": {
