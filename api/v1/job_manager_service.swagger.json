@@ -225,12 +225,6 @@
         "job": {
           "$ref": "#/definitions/v1Job"
         },
-        "tenantId": {
-          "type": "string"
-        },
-        "organizationId": {
-          "type": "string"
-        },
         "outputModelId": {
           "type": "string"
         },

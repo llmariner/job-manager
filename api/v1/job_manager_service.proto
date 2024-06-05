@@ -103,13 +103,11 @@ enum JobState {
 message InternalJob {
   Job job = 1;
 
-  string tenant_id = 2;
-  string organization_id = 3;
-  string output_model_id = 4;
-  string suffix = 5;
+  string output_model_id = 2;
+  string suffix = 3;
 
   // state is also stored in the job object, but this value takes precedence.
-  JobState state = 6;
+  JobState state = 4;
 }
 
 message ListQueuedInternalJobsRequest {
@@ -133,11 +131,13 @@ enum JobPhase {
 
 message UpdateJobPhaseRequest {
   string id = 1;
-  JobPhase phase = 2;
+  string tenant_id = 2;
+
+  JobPhase phase = 3;
   // message describing the details of the job phase. currently only used for failed jobs.
-  string message = 3;
+  string message = 4;
   // model_id is optional.
-  string model_id = 4;
+  string model_id = 5;
 }
 
 message UpdateJobPhaseResponse {
