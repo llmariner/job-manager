@@ -91,6 +91,58 @@ message CancelJobRequest {
   string id = 1;
 }
 
+enum JobState {
+  JOB_STATE_UNSPECIFIED = 0;
+  JOB_STATE_QUEUED = 1;
+  JOB_STATE_RUNNING = 2;
+  JOB_STATE_FAILED = 3;
+  JOB_STATE_SUCCEEDED = 4;
+  JOB_STATE_CANCELED = 5;
+}
+
+message InternalJob {
+  Job job = 1;
+
+  string tenant_id = 2;
+  string organization_id = 3;
+  string output_model_id = 4;
+  string suffix = 5;
+
+  // state is also stored in the job object, but this value takes precedence.
+  JobState state = 6;
+}
+
+message ListQueuedInternalJobsRequest {
+}
+
+message ListQueuedInternalJobsResponse {
+  repeated InternalJob jobs = 1;
+}
+
+message GetInternalJobRequest {
+  string id = 1;
+}
+
+enum JobPhase {
+  JOB_PHASE_UNSPECIFIED = 0;
+  JOB_PHASE_PREPROCESSED = 1;
+  JOB_PHASE_JOB_CREATED = 2;
+  JOB_PHASE_FINETUNED = 3;
+  JOB_PHASE_FAILED = 4;
+}
+
+message UpdateJobPhaseRequest {
+  string id = 1;
+  JobPhase phase = 2;
+  // message describing the details of the job phase. currently only used for failed jobs.
+  string message = 3;
+  // model_id is optional.
+  string model_id = 4;
+}
+
+message UpdateJobPhaseResponse {
+}
+
 service FineTuningService {
   rpc CreateJob(CreateJobRequest) returns (Job) {
     option (google.api.http) = {
@@ -116,4 +168,11 @@ service FineTuningService {
       post: "/v1/fine_tuning/jobs/{id}/cancel"
     };
   }
+}
+
+service FineTuningWorkerService {
+  rpc ListQueuedInternalJobs(ListQueuedInternalJobsRequest) returns (ListQueuedInternalJobsResponse);
+  rpc GetInternalJob(GetInternalJobRequest) returns (InternalJob);
+  // UpdateJobPhase updates the job status depending on the phase.
+  rpc UpdateJobPhase(UpdateJobPhaseRequest) returns (UpdateJobPhaseResponse);
 }

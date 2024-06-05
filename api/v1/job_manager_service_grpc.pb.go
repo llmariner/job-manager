@@ -218,3 +218,170 @@ var FineTuningService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/v1/job_manager_service.proto",
 }
+
+const (
+	FineTuningWorkerService_ListQueuedInternalJobs_FullMethodName = "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs"
+	FineTuningWorkerService_GetInternalJob_FullMethodName         = "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob"
+	FineTuningWorkerService_UpdateJobPhase_FullMethodName         = "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase"
+)
+
+// FineTuningWorkerServiceClient is the client API for FineTuningWorkerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FineTuningWorkerServiceClient interface {
+	ListQueuedInternalJobs(ctx context.Context, in *ListQueuedInternalJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalJobsResponse, error)
+	GetInternalJob(ctx context.Context, in *GetInternalJobRequest, opts ...grpc.CallOption) (*InternalJob, error)
+	// UpdateJobPhase updates the job status depending on the phase.
+	UpdateJobPhase(ctx context.Context, in *UpdateJobPhaseRequest, opts ...grpc.CallOption) (*UpdateJobPhaseResponse, error)
+}
+
+type fineTuningWorkerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFineTuningWorkerServiceClient(cc grpc.ClientConnInterface) FineTuningWorkerServiceClient {
+	return &fineTuningWorkerServiceClient{cc}
+}
+
+func (c *fineTuningWorkerServiceClient) ListQueuedInternalJobs(ctx context.Context, in *ListQueuedInternalJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalJobsResponse, error) {
+	out := new(ListQueuedInternalJobsResponse)
+	err := c.cc.Invoke(ctx, FineTuningWorkerService_ListQueuedInternalJobs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fineTuningWorkerServiceClient) GetInternalJob(ctx context.Context, in *GetInternalJobRequest, opts ...grpc.CallOption) (*InternalJob, error) {
+	out := new(InternalJob)
+	err := c.cc.Invoke(ctx, FineTuningWorkerService_GetInternalJob_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fineTuningWorkerServiceClient) UpdateJobPhase(ctx context.Context, in *UpdateJobPhaseRequest, opts ...grpc.CallOption) (*UpdateJobPhaseResponse, error) {
+	out := new(UpdateJobPhaseResponse)
+	err := c.cc.Invoke(ctx, FineTuningWorkerService_UpdateJobPhase_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FineTuningWorkerServiceServer is the server API for FineTuningWorkerService service.
+// All implementations must embed UnimplementedFineTuningWorkerServiceServer
+// for forward compatibility
+type FineTuningWorkerServiceServer interface {
+	ListQueuedInternalJobs(context.Context, *ListQueuedInternalJobsRequest) (*ListQueuedInternalJobsResponse, error)
+	GetInternalJob(context.Context, *GetInternalJobRequest) (*InternalJob, error)
+	// UpdateJobPhase updates the job status depending on the phase.
+	UpdateJobPhase(context.Context, *UpdateJobPhaseRequest) (*UpdateJobPhaseResponse, error)
+	mustEmbedUnimplementedFineTuningWorkerServiceServer()
+}
+
+// UnimplementedFineTuningWorkerServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedFineTuningWorkerServiceServer struct {
+}
+
+func (UnimplementedFineTuningWorkerServiceServer) ListQueuedInternalJobs(context.Context, *ListQueuedInternalJobsRequest) (*ListQueuedInternalJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListQueuedInternalJobs not implemented")
+}
+func (UnimplementedFineTuningWorkerServiceServer) GetInternalJob(context.Context, *GetInternalJobRequest) (*InternalJob, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInternalJob not implemented")
+}
+func (UnimplementedFineTuningWorkerServiceServer) UpdateJobPhase(context.Context, *UpdateJobPhaseRequest) (*UpdateJobPhaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateJobPhase not implemented")
+}
+func (UnimplementedFineTuningWorkerServiceServer) mustEmbedUnimplementedFineTuningWorkerServiceServer() {
+}
+
+// UnsafeFineTuningWorkerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FineTuningWorkerServiceServer will
+// result in compilation errors.
+type UnsafeFineTuningWorkerServiceServer interface {
+	mustEmbedUnimplementedFineTuningWorkerServiceServer()
+}
+
+func RegisterFineTuningWorkerServiceServer(s grpc.ServiceRegistrar, srv FineTuningWorkerServiceServer) {
+	s.RegisterService(&FineTuningWorkerService_ServiceDesc, srv)
+}
+
+func _FineTuningWorkerService_ListQueuedInternalJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListQueuedInternalJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FineTuningWorkerServiceServer).ListQueuedInternalJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FineTuningWorkerService_ListQueuedInternalJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FineTuningWorkerServiceServer).ListQueuedInternalJobs(ctx, req.(*ListQueuedInternalJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FineTuningWorkerService_GetInternalJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInternalJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FineTuningWorkerServiceServer).GetInternalJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FineTuningWorkerService_GetInternalJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FineTuningWorkerServiceServer).GetInternalJob(ctx, req.(*GetInternalJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FineTuningWorkerService_UpdateJobPhase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateJobPhaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FineTuningWorkerServiceServer).UpdateJobPhase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FineTuningWorkerService_UpdateJobPhase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FineTuningWorkerServiceServer).UpdateJobPhase(ctx, req.(*UpdateJobPhaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// FineTuningWorkerService_ServiceDesc is the grpc.ServiceDesc for FineTuningWorkerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var FineTuningWorkerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "llmoperator.fine_tuning.server.v1.FineTuningWorkerService",
+	HandlerType: (*FineTuningWorkerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListQueuedInternalJobs",
+			Handler:    _FineTuningWorkerService_ListQueuedInternalJobs_Handler,
+		},
+		{
+			MethodName: "GetInternalJob",
+			Handler:    _FineTuningWorkerService_GetInternalJob_Handler,
+		},
+		{
+			MethodName: "UpdateJobPhase",
+			Handler:    _FineTuningWorkerService_UpdateJobPhase_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/job_manager_service.proto",
+}
