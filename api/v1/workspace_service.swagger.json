@@ -253,7 +253,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -288,7 +287,6 @@
         "notebooks": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Notebook"
           }
         },

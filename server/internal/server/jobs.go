@@ -78,6 +78,19 @@ func (s *S) CreateJob(
 		}
 	}
 
+	for _, i := range req.Integrations {
+		if i.Type != "wandb" {
+			return nil, status.Errorf(codes.InvalidArgument, "unsupported integration type: %s", i.Type)
+		}
+		wandb := i.Wandb
+		if wandb == nil {
+			return nil, status.Errorf(codes.InvalidArgument, "wandb is required")
+		}
+		if wandb.Project == "" {
+			return nil, status.Errorf(codes.InvalidArgument, "wandb project is required")
+		}
+	}
+
 	jobID, err := id.GenerateIDForK8SResource("ftjob-")
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "generate job id: %s", err)
@@ -102,6 +115,8 @@ func (s *S) CreateJob(
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
 		OrganizationId:  userInfo.OrganizationID,
+		Integrations:    req.Integrations,
+		Seed:            req.Seed,
 
 		ProjectId:           userInfo.ProjectID,
 		KubernetesNamespace: userInfo.KubernetesNamespace,
