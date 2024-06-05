@@ -27,6 +27,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", help="Model path.", type=str)
     parser.add_argument("--dataset", help="Dataset path.", type=str)
     parser.add_argument("--output", help="Output path.", type=str)
+    parser.add_argument("--report-to", help="The integration to report the results and logs to.", default="none", type=str)
+    parser.add_argument("--wandb-project", help="Name of W&B project.", type=str)
 
     # TODO(kenji): Revisit the default values.
     parser.add_argument("--learning_rate", help="Learning rate.", default=2e-4, type=float, nargs="?")
@@ -34,6 +36,9 @@ if __name__ == "__main__":
     parser.add_argument("--per_device_train_batch_size", help="Batch size per training.", default=2, type=int, nargs="?")
 
     args = parser.parse_args()
+
+    if args.report_to == "wandb":
+        os.environ["WANDB_PROJECT"] = args.wandb_project
 
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=True,
@@ -82,7 +87,7 @@ if __name__ == "__main__":
         bf16=True,
         # use tf32 precision
         tf32=True,
-        report_to="none",
+        report_to=args.report_to,
     )
 
     raw_datasets = load_dataset(args.dataset)
