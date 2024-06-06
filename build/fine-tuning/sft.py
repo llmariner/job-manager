@@ -27,8 +27,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", help="Model path.", type=str)
     parser.add_argument("--dataset", help="Dataset path.", type=str)
     parser.add_argument("--output", help="Output path.", type=str)
-    parser.add_argument("--report-to", help="The integration to report the results and logs to.", default="none", type=str)
-    parser.add_argument("--wandb-project", help="Name of W&B project.", type=str)
+    parser.add_argument("--report_to", help="The integration to report the results and logs to.", default="none", type=str)
+    parser.add_argument("--wandb_project", help="Name of W&B project.", type=str)
 
     # TODO(kenji): Revisit the default values.
     parser.add_argument("--learning_rate", help="Learning rate.", default=2e-4, type=float, nargs="?")
