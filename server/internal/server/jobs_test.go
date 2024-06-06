@@ -331,7 +331,7 @@ func TestUpdateJobPhase(t *testing.T) {
 		},
 		{
 			name:      "phase job created, previous state is not queued",
-			prevState: store.JobStatusFailed,
+			prevState: store.JobStateFailed,
 			req: &v1.UpdateJobPhaseRequest{
 				Phase: v1.JobPhase_JOB_PHASE_JOB_CREATED,
 			},
@@ -362,7 +362,7 @@ func TestUpdateJobPhase(t *testing.T) {
 				Phase:   v1.JobPhase_JOB_PHASE_FAILED,
 				Message: "error",
 			},
-			wantState: store.JobStatusFailed,
+			wantState: store.JobStateFailed,
 		},
 	}
 	for _, test := range tests {

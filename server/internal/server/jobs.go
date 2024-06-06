@@ -341,7 +341,7 @@ func (ws *WS) GetInternalJob(ctx context.Context, req *v1.GetInternalJobRequest)
 	job, err := ws.store.GetJobByJobID(req.Id)
 	if err != nil {
 		if job.TenantID != req.TenantId {
-			return nil, status.Error(codes.PermissionDenied, "job not found")
+			return nil, status.Error(codes.NotFound, "job not found")
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
@@ -373,7 +373,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 	job, err := ws.store.GetJobByJobID(req.Id)
 	if err != nil {
 		if job.TenantID != req.TenantId {
-			return nil, status.Error(codes.PermissionDenied, "job not found")
+			return nil, status.Error(codes.NotFound, "job not found")
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
@@ -424,7 +424,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		}); err != nil {
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
-		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStatusFailed, job.Message); err != nil {
+		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateFailed, job.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
 	default:
