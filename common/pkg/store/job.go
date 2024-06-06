@@ -16,8 +16,8 @@ const (
 	JobStateQueued JobState = "queued"
 	// JobStateRunning represents the running state.
 	JobStateRunning JobState = "running"
-	// JobStatusFailed represents the failed state.
-	JobStatusFailed JobState = "failed"
+	// JobStateFailed represents the failed state.
+	JobStateFailed JobState = "failed"
 	// JobStateSucceeded represents the succeeded state.
 	JobStateSucceeded JobState = "succeeded"
 	// JobStateCancelled represents the cancelled state.

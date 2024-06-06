@@ -267,7 +267,7 @@ func (s *S) CancelJob(
 	switch job.State {
 	case
 		store.JobStateSucceeded,
-		store.JobStatusFailed,
+		store.JobStateFailed,
 		store.JobStateCancelled:
 		return jobProto, nil
 	case store.JobStateQueued:
