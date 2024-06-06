@@ -114,7 +114,7 @@ func (s *LifecycleManager) Reconcile(
 	}
 	// TODO(aya): handle status mismatch
 	switch jobData.State {
-	case store.JobStateSucceeded, store.JobStatusFailed:
+	case store.JobStateSucceeded, store.JobStateFailed:
 		// do nothing, already complete
 		log.V(2).Info("Job is already completed", "state", jobData.State)
 		return ctrl.Result{}, nil
@@ -157,7 +157,7 @@ func (s *LifecycleManager) Reconcile(
 		if err := s.store.UpdateJobStateAndMessage(
 			jobID,
 			jobData.Version,
-			store.JobStatusFailed,
+			store.JobStateFailed,
 			jobData.Message,
 		); err != nil {
 			log.Error(err, "Failed to update job state")
