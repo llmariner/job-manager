@@ -85,7 +85,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		Message:             msg,
 		State:               store.NotebookStateQueued,
 		QueuedAction:        store.NotebookQueuedActionStart,
-		TenantID:            fakeTenantID,
+		TenantID:            userInfo.TenantID,
 		OrganizationID:      userInfo.OrganizationID,
 		ProjectID:           userInfo.ProjectID,
 		KubernetesNamespace: userInfo.KubernetesNamespace,

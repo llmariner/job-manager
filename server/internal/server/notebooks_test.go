@@ -81,7 +81,7 @@ func TestListNotebooks(t *testing.T) {
 		nb := &store.Notebook{
 			NotebookID: nbProto.Id,
 			Message:    msg,
-			TenantID:   fakeTenantID,
+			TenantID:   defaultTenantID,
 			ProjectID:  defaultProjectID,
 		}
 		err = st.CreateNotebook(nb)
@@ -125,7 +125,7 @@ func TestGetNotebook(t *testing.T) {
 
 	err := st.CreateNotebook(&store.Notebook{
 		NotebookID:   nbID,
-		TenantID:     fakeTenantID,
+		TenantID:     defaultTenantID,
 		ProjectID:    defaultProjectID,
 		State:        store.NotebookStateQueued,
 		QueuedAction: store.NotebookQueuedActionStart,
@@ -183,7 +183,7 @@ func TestStopNotebook(t *testing.T) {
 				NotebookID:   nbID,
 				State:        tc.state,
 				QueuedAction: tc.action,
-				TenantID:     fakeTenantID,
+				TenantID:     defaultTenantID,
 				ProjectID:    defaultProjectID,
 			})
 			assert.NoError(t, err)
@@ -241,7 +241,7 @@ func TestStartNotebook(t *testing.T) {
 				NotebookID:   nbID,
 				State:        tc.state,
 				QueuedAction: tc.action,
-				TenantID:     fakeTenantID,
+				TenantID:     defaultTenantID,
 				ProjectID:    defaultProjectID,
 			})
 			assert.NoError(t, err)
@@ -264,7 +264,7 @@ func TestDeleteNotebook(t *testing.T) {
 		NotebookID:   nbID,
 		State:        store.NotebookStateQueued,
 		QueuedAction: store.NotebookQueuedActionStart,
-		TenantID:     fakeTenantID,
+		TenantID:     defaultTenantID,
 		ProjectID:    defaultProjectID,
 	})
 	assert.NoError(t, err)

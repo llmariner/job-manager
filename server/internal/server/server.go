@@ -21,6 +21,7 @@ import (
 
 const (
 	defaultProjectID = "default"
+	defaultTenantID  = "default-tenant-id"
 
 	defaultPageSize = 20
 	maxPageSize     = 100
@@ -130,6 +131,7 @@ func (s *S) extractUserInfoFromContext(ctx context.Context) (*auth.UserInfo, err
 			OrganizationID:      "default",
 			ProjectID:           defaultProjectID,
 			KubernetesNamespace: "default",
+			TenantID:            defaultTenantID,
 		}, nil
 	}
 	var ok bool
