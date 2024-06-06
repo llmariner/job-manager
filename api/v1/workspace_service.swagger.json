@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "WorkspaceService"
+    },
+    {
+      "name": "WorkspaceWorkerService"
     }
   ],
   "consumes": [
@@ -282,6 +285,20 @@
     "v1DeleteNotebookResponse": {
       "type": "object"
     },
+    "v1InternalNotebook": {
+      "type": "object",
+      "properties": {
+        "notebook": {
+          "$ref": "#/definitions/v1Notebook"
+        },
+        "state": {
+          "$ref": "#/definitions/v1NotebookState"
+        },
+        "queuedAction": {
+          "$ref": "#/definitions/v1NotebookQueuedAction"
+        }
+      }
+    },
     "v1ListNotebooksResponse": {
       "type": "object",
       "properties": {
@@ -294,6 +311,18 @@
         },
         "hasMore": {
           "type": "boolean"
+        }
+      }
+    },
+    "v1ListQueuedInternalNotebooksResponse": {
+      "type": "object",
+      "properties": {
+        "notebooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1InternalNotebook"
+          }
         }
       }
     },
@@ -359,6 +388,28 @@
         }
       }
     },
+    "v1NotebookQueuedAction": {
+      "type": "string",
+      "enum": [
+        "NOTEBOOK_QUEUED_ACTION_UNKNOWN",
+        "NOTEBOOK_QUEUED_ACTION_STARTING",
+        "NOTEBOOK_QUEUED_ACTION_STOPPING",
+        "NOTEBOOK_QUEUED_ACTION_DELETING"
+      ],
+      "default": "NOTEBOOK_QUEUED_ACTION_UNKNOWN"
+    },
+    "v1NotebookState": {
+      "type": "string",
+      "enum": [
+        "NOTEBOOK_STATE_UNKNOWN",
+        "NOTEBOOK_STATE_QUEUED",
+        "NOTEBOOK_STATE_RUNNING",
+        "NOTEBOOK_STATE_STOPPED",
+        "NOTEBOOK_STATE_FAILED",
+        "NOTEBOOK_STATE_DELETED"
+      ],
+      "default": "NOTEBOOK_STATE_UNKNOWN"
+    },
     "v1Resources": {
       "type": "object",
       "properties": {
@@ -376,6 +427,9 @@
           "format": "int32"
         }
       }
+    },
+    "v1UpdateNotebookStateResponse": {
+      "type": "object"
     }
   }
 }
