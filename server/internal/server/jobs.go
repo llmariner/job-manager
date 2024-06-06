@@ -314,18 +314,12 @@ func (ws *WS) ListQueuedInternalJobs(ctx context.Context, req *v1.ListQueuedInte
 
 	var ijobs []*v1.InternalJob
 	for _, job := range jobs {
-		jobProto, err := job.V1Job()
+		jobProto, err := job.V1InternalJob()
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "convert job to internal job: %s", err)
 		}
-		ijobs = append(ijobs, &v1.InternalJob{
-			Job:           jobProto,
-			OutputModelId: job.OutputModelID,
-			Suffix:        job.Suffix,
-			State:         v1.JobState(v1.JobState_value[string(job.State)]),
-		})
+		ijobs = append(ijobs, jobProto)
 	}
-
 	return &v1.ListQueuedInternalJobsResponse{Jobs: ijobs}, nil
 }
 
@@ -349,16 +343,11 @@ func (ws *WS) GetInternalJob(ctx context.Context, req *v1.GetInternalJobRequest)
 		return nil, status.Errorf(codes.Internal, "get job: %s", err)
 	}
 
-	jobProto, err := job.V1Job()
+	jobProto, err := job.V1InternalJob()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert job to internal job: %s", err)
 	}
-	return &v1.InternalJob{
-		Job:           jobProto,
-		OutputModelId: job.OutputModelID,
-		Suffix:        job.Suffix,
-		State:         v1.JobState(v1.JobState_value[string(job.State)]),
-	}, nil
+	return jobProto, nil
 }
 
 // UpdateJobPhase updates the job status depending on the given phase.
@@ -382,9 +371,9 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 	}
 
 	switch req.Phase {
-	case v1.JobPhase_JOB_PHASE_UNSPECIFIED:
+	case v1.UpdateJobPhaseRequest_UNSPECIFIED:
 		return nil, status.Error(codes.InvalidArgument, "phase is required")
-	case v1.JobPhase_JOB_PHASE_PREPROCESSED:
+	case v1.UpdateJobPhaseRequest_PREPROCESSED:
 		if job.State != store.JobStateQueued {
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s", job.State)
 		}
@@ -394,14 +383,14 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if err := ws.store.UpdateOutputModelID(req.Id, job.Version, req.ModelId); err != nil {
 			return nil, status.Errorf(codes.Internal, "update output model ID: %s", err)
 		}
-	case v1.JobPhase_JOB_PHASE_JOB_CREATED:
+	case v1.UpdateJobPhaseRequest_JOB_CREATED:
 		if job.State != store.JobStateQueued {
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s", job.State)
 		}
 		if err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateRunning); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
-	case v1.JobPhase_JOB_PHASE_FINETUNED:
+	case v1.UpdateJobPhaseRequest_FINETUNED:
 		if job.State != store.JobStateRunning {
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
 		}
@@ -417,7 +406,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateSucceeded, job.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
-	case v1.JobPhase_JOB_PHASE_FAILED:
+	case v1.UpdateJobPhaseRequest_FAILED:
 		if err := job.MutateMessage(func(j *v1.Job) {
 			j.FinishedAt = time.Now().UTC().Unix()
 			j.Error = &v1.Job_Error{Message: req.Message}

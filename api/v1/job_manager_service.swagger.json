@@ -170,6 +170,29 @@
         }
       }
     },
+    "InternalJobState": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "QUEUED",
+        "RUNNING",
+        "FAILED",
+        "SUCCEEDED",
+        "CANCELED"
+      ],
+      "default": "UNSPECIFIED"
+    },
+    "UpdateJobPhaseRequestPhase": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "PREPROCESSED",
+        "JOB_CREATED",
+        "FINETUNED",
+        "FAILED"
+      ],
+      "default": "UNSPECIFIED"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -274,7 +297,7 @@
           "type": "string"
         },
         "state": {
-          "$ref": "#/definitions/v1JobState",
+          "$ref": "#/definitions/InternalJobState",
           "description": "state is also stored in the job object, but this value takes precedence."
         }
       }
@@ -386,29 +409,6 @@
         }
       },
       "description": "batch_size and learning_rate_multiplier are not part of\n the OpenAI API spec, but we include here as these parameters are in CreateJobRequest."
-    },
-    "v1JobPhase": {
-      "type": "string",
-      "enum": [
-        "JOB_PHASE_UNSPECIFIED",
-        "JOB_PHASE_PREPROCESSED",
-        "JOB_PHASE_JOB_CREATED",
-        "JOB_PHASE_FINETUNED",
-        "JOB_PHASE_FAILED"
-      ],
-      "default": "JOB_PHASE_UNSPECIFIED"
-    },
-    "v1JobState": {
-      "type": "string",
-      "enum": [
-        "JOB_STATE_UNSPECIFIED",
-        "JOB_STATE_QUEUED",
-        "JOB_STATE_RUNNING",
-        "JOB_STATE_FAILED",
-        "JOB_STATE_SUCCEEDED",
-        "JOB_STATE_CANCELED"
-      ],
-      "default": "JOB_STATE_UNSPECIFIED"
     },
     "v1ListJobsResponse": {
       "type": "object",

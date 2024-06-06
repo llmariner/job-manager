@@ -307,7 +307,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase pre-processed",
 			prevState: store.JobStateQueued,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.JobPhase_JOB_PHASE_PREPROCESSED,
+				Phase:   v1.UpdateJobPhaseRequest_PREPROCESSED,
 				ModelId: "model0",
 			},
 			wantState: store.JobStateQueued,
@@ -316,7 +316,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase pre-processed, previous state is not queued",
 			prevState: store.JobStateRunning,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.JobPhase_JOB_PHASE_PREPROCESSED,
+				Phase:   v1.UpdateJobPhaseRequest_PREPROCESSED,
 				ModelId: "model0",
 			},
 			wantError: true,
@@ -325,7 +325,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase job created",
 			prevState: store.JobStateQueued,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase: v1.JobPhase_JOB_PHASE_JOB_CREATED,
+				Phase: v1.UpdateJobPhaseRequest_JOB_CREATED,
 			},
 			wantState: store.JobStateRunning,
 		},
@@ -333,7 +333,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase job created, previous state is not queued",
 			prevState: store.JobStateFailed,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase: v1.JobPhase_JOB_PHASE_JOB_CREATED,
+				Phase: v1.UpdateJobPhaseRequest_JOB_CREATED,
 			},
 			wantError: true,
 		},
@@ -341,7 +341,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase fine-tuned",
 			prevState: store.JobStateRunning,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.JobPhase_JOB_PHASE_FINETUNED,
+				Phase:   v1.UpdateJobPhaseRequest_FINETUNED,
 				ModelId: "model0",
 			},
 			wantState: store.JobStateSucceeded,
@@ -350,7 +350,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase fine-tuned, previous state is not running",
 			prevState: store.JobStateCancelled,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.JobPhase_JOB_PHASE_FINETUNED,
+				Phase:   v1.UpdateJobPhaseRequest_FINETUNED,
 				ModelId: "model0",
 			},
 			wantError: true,
@@ -359,7 +359,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			name:      "phase job failed",
 			prevState: store.JobStateRunning,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.JobPhase_JOB_PHASE_FAILED,
+				Phase:   v1.UpdateJobPhaseRequest_FAILED,
 				Message: "error",
 			},
 			wantState: store.JobStateFailed,
