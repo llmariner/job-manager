@@ -224,6 +224,179 @@ func TestJobCancel(t *testing.T) {
 	}
 }
 
+func TestListQueuedInternalJobs(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	jobs := []*store.Job{
+		{
+			State:    store.JobStateQueued,
+			TenantID: "t0",
+		},
+		{
+			State:    store.JobStateRunning,
+			TenantID: "t0",
+		},
+		{
+			State:    store.JobStateQueued,
+			TenantID: "t1",
+		},
+		{
+			State:    store.JobStateQueued,
+			TenantID: "t0",
+		},
+	}
+	for i, job := range jobs {
+		jobProto := &v1.Job{
+			Id: fmt.Sprintf("job%d", i),
+		}
+		msg, err := proto.Marshal(jobProto)
+		assert.NoError(t, err)
+		assert.NoError(t, st.CreateJob(&store.Job{
+			JobID:    jobProto.Id,
+			State:    job.State,
+			Message:  msg,
+			TenantID: job.TenantID,
+		}))
+	}
+
+	srv := NewWorkerServiceServer(st)
+	req := &v1.ListQueuedInternalJobsRequest{TenantId: "t0"}
+	got, err := srv.ListQueuedInternalJobs(context.Background(), req)
+	assert.NoError(t, err)
+
+	want := []string{"job0", "job3"}
+	assert.Len(t, got.Jobs, 2)
+	assert.Equal(t, want[0], got.Jobs[0].Job.Id)
+	assert.Equal(t, want[1], got.Jobs[1].Job.Id)
+}
+
+func TestGetInternalJob(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	err := st.CreateJob(&store.Job{
+		JobID:     "job0",
+		TenantID:  "t0",
+		State:     store.JobStateRunning,
+		ProjectID: defaultProjectID,
+	})
+	assert.NoError(t, err)
+
+	srv := NewWorkerServiceServer(st)
+	req := &v1.GetInternalJobRequest{Id: "job0", TenantId: "t0"}
+	resp, err := srv.GetInternalJob(context.Background(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
+}
+
+func TestUpdateJobPhase(t *testing.T) {
+	var tests = []struct {
+		name      string
+		prevState store.JobState
+		req       *v1.UpdateJobPhaseRequest
+		wantError bool
+		wantState store.JobState
+	}{
+		{
+			name:      "no phase",
+			req:       &v1.UpdateJobPhaseRequest{},
+			wantError: true,
+		},
+		{
+			name:      "phase pre-processed",
+			prevState: store.JobStateQueued,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.JobPhase_JOB_PHASE_PREPROCESSED,
+				ModelId: "model0",
+			},
+			wantState: store.JobStateQueued,
+		},
+		{
+			name:      "phase pre-processed, previous state is not queued",
+			prevState: store.JobStateRunning,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.JobPhase_JOB_PHASE_PREPROCESSED,
+				ModelId: "model0",
+			},
+			wantError: true,
+		},
+		{
+			name:      "phase job created",
+			prevState: store.JobStateQueued,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase: v1.JobPhase_JOB_PHASE_JOB_CREATED,
+			},
+			wantState: store.JobStateRunning,
+		},
+		{
+			name:      "phase job created, previous state is not queued",
+			prevState: store.JobStatusFailed,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase: v1.JobPhase_JOB_PHASE_JOB_CREATED,
+			},
+			wantError: true,
+		},
+		{
+			name:      "phase fine-tuned",
+			prevState: store.JobStateRunning,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.JobPhase_JOB_PHASE_FINETUNED,
+				ModelId: "model0",
+			},
+			wantState: store.JobStateSucceeded,
+		},
+		{
+			name:      "phase fine-tuned, previous state is not running",
+			prevState: store.JobStateCancelled,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.JobPhase_JOB_PHASE_FINETUNED,
+				ModelId: "model0",
+			},
+			wantError: true,
+		},
+		{
+			name:      "phase job failed",
+			prevState: store.JobStateRunning,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.JobPhase_JOB_PHASE_FAILED,
+				Message: "error",
+			},
+			wantState: store.JobStatusFailed,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			st, tearDown := store.NewTest(t)
+			defer tearDown()
+
+			const jobID = "job0"
+			const tenantID = "t0"
+			err := st.CreateJob(&store.Job{
+				JobID:    jobID,
+				TenantID: tenantID,
+				State:    test.prevState,
+			})
+			assert.NoError(t, err)
+
+			test.req.Id = jobID
+			test.req.TenantId = tenantID
+
+			srv := NewWorkerServiceServer(st)
+			_, err = srv.UpdateJobPhase(context.Background(), test.req)
+			if test.wantError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			job, err := st.GetJobByJobID(jobID)
+			assert.NoError(t, err)
+			assert.Equal(t, test.wantState, job.State)
+		})
+	}
+}
+
 type noopFileGetClient struct {
 	ids map[string]bool
 }

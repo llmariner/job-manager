@@ -300,3 +300,135 @@ func (s *S) CancelJob(
 	}
 	return jobProto, nil
 }
+
+// ListQueuedInternalJobs lists all queued internal jobs for the specified tenant.
+func (ws *WS) ListQueuedInternalJobs(ctx context.Context, req *v1.ListQueuedInternalJobsRequest) (resp *v1.ListQueuedInternalJobsResponse, err error) {
+	if req.TenantId == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	}
+
+	jobs, err := ws.store.ListQueuedJobsByTenantID(req.TenantId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list queued jobs: %s", err)
+	}
+
+	var ijobs []*v1.InternalJob
+	for _, job := range jobs {
+		jobProto, err := job.V1Job()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "convert job to internal job: %s", err)
+		}
+		ijobs = append(ijobs, &v1.InternalJob{
+			Job:           jobProto,
+			OutputModelId: job.OutputModelID,
+			Suffix:        job.Suffix,
+			State:         v1.JobState(v1.JobState_value[string(job.State)]),
+		})
+	}
+
+	return &v1.ListQueuedInternalJobsResponse{Jobs: ijobs}, nil
+}
+
+// GetInternalJob gets an internal job.
+func (ws *WS) GetInternalJob(ctx context.Context, req *v1.GetInternalJobRequest) (resp *v1.InternalJob, err error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	if req.TenantId == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	}
+
+	job, err := ws.store.GetJobByJobID(req.Id)
+	if err != nil {
+		if job.TenantID != req.TenantId {
+			return nil, status.Error(codes.PermissionDenied, "job not found")
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+
+	jobProto, err := job.V1Job()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert job to internal job: %s", err)
+	}
+	return &v1.InternalJob{
+		Job:           jobProto,
+		OutputModelId: job.OutputModelID,
+		Suffix:        job.Suffix,
+		State:         v1.JobState(v1.JobState_value[string(job.State)]),
+	}, nil
+}
+
+// UpdateJobPhase updates the job status depending on the given phase.
+func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest) (resp *v1.UpdateJobPhaseResponse, err error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	if req.TenantId == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	}
+
+	job, err := ws.store.GetJobByJobID(req.Id)
+	if err != nil {
+		if job.TenantID != req.TenantId {
+			return nil, status.Error(codes.PermissionDenied, "job not found")
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+
+	switch req.Phase {
+	case v1.JobPhase_JOB_PHASE_UNSPECIFIED:
+		return nil, status.Error(codes.InvalidArgument, "phase is required")
+	case v1.JobPhase_JOB_PHASE_PREPROCESSED:
+		if job.State != store.JobStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s", job.State)
+		}
+		if req.ModelId == "" {
+			return nil, status.Error(codes.InvalidArgument, "model id is required for preprocessed phase")
+		}
+		if err := ws.store.UpdateOutputModelID(req.Id, job.Version, req.ModelId); err != nil {
+			return nil, status.Errorf(codes.Internal, "update output model ID: %s", err)
+		}
+	case v1.JobPhase_JOB_PHASE_JOB_CREATED:
+		if job.State != store.JobStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s", job.State)
+		}
+		if err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateRunning); err != nil {
+			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+		}
+	case v1.JobPhase_JOB_PHASE_FINETUNED:
+		if job.State != store.JobStateRunning {
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
+		}
+		if req.ModelId == "" {
+			return nil, status.Error(codes.InvalidArgument, "model id is required for fine-tuned phase")
+		}
+		if err := job.MutateMessage(func(j *v1.Job) {
+			j.FinishedAt = time.Now().UTC().Unix()
+			j.FineTunedModel = req.ModelId
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateSucceeded, job.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+		}
+	case v1.JobPhase_JOB_PHASE_FAILED:
+		if err := job.MutateMessage(func(j *v1.Job) {
+			j.FinishedAt = time.Now().UTC().Unix()
+			j.Error = &v1.Job_Error{Message: req.Message}
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStatusFailed, job.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+		}
+	default:
+		return nil, status.Errorf(codes.Internal, "unknown phase: %v", req.Phase)
+	}
+	return &v1.UpdateJobPhaseResponse{}, nil
+}
