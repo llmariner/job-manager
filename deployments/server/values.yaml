@@ -17,6 +17,7 @@ global:
 
 httpPort: 8080
 grpcPort: 8081
+workerServiceGRPCPort: 8082
 
 # The following default values work if model-manager-server runs in the same namespace.
 fileManagerServerAddr: file-manager-server-grpc:8081

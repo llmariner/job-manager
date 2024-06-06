@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"strings"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"google.golang.org/protobuf/proto"
@@ -58,6 +59,32 @@ func (j *Job) V1Job() (*v1.Job, error) {
 	}
 	jobProto.Status = string(j.State)
 	return &jobProto, nil
+}
+
+// V1InternalJob converts a job to v1.InternalJob.
+func (j *Job) V1InternalJob() (*v1.InternalJob, error) {
+	job, err := j.V1Job()
+	if err != nil {
+		return nil, err
+	}
+	state, err := convertToV1JobState(j.State)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.InternalJob{
+		Job:           job,
+		OutputModelId: j.OutputModelID,
+		Suffix:        j.Suffix,
+		State:         state,
+	}, nil
+}
+
+func convertToV1JobState(state JobState) (v1.InternalJob_State, error) {
+	v, ok := v1.InternalJob_State_value[strings.ToUpper(string(state))]
+	if !ok {
+		return v1.InternalJob_UNSPECIFIED, fmt.Errorf("unknown job state: %s", state)
+	}
+	return v1.InternalJob_State(v), nil
 }
 
 // MutateMessage mutates the message field of a job.
