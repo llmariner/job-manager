@@ -17,10 +17,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	fakeTenantID = "fake-tenant-id"
-)
-
 // CreateJob creates a new job.
 func (s *S) CreateJob(
 	ctx context.Context,
@@ -131,7 +127,7 @@ func (s *S) CreateJob(
 		State:               store.JobStateQueued,
 		Message:             msg,
 		Suffix:              req.Suffix,
-		TenantID:            fakeTenantID,
+		TenantID:            userInfo.TenantID,
 		OrganizationID:      userInfo.OrganizationID,
 		ProjectID:           userInfo.ProjectID,
 		KubernetesNamespace: userInfo.KubernetesNamespace,
