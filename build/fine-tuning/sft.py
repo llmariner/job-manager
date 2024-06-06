@@ -9,13 +9,14 @@ import argparse
 import torch
 
 from datasets import load_dataset
-from transformers import AutoTokenizer, TrainingArguments, BitsAndBytesConfig
+from transformers import AutoTokenizer, BitsAndBytesConfig
 from peft import LoraConfig
 
 from tqdm.rich import tqdm
 
 from trl import (
     SFTTrainer,
+    SFTConfig,
     get_kbit_device_map,
 )
 
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     )
 
     # TODO(kenji): Revisit these parameters.
-    training_args = TrainingArguments(
+    training_args = SFTConfig(
         output_dir=args.output,
         overwrite_output_dir=True,
         num_train_epochs=args.num_train_epochs,
@@ -88,6 +89,17 @@ if __name__ == "__main__":
         # use tf32 precision
         tf32=True,
         report_to=args.report_to,
+
+        # The name of the text field of the dataset, in case this is passed by a user,
+        # the trainer will automatically create a `ConstantLengthDataset` based on the `dataset_text_field` argument.
+        dataset_text_field=None,
+        # Used only in case `dataset_text_field` is passed. This argument is used by the `ConstantLengthDataset`
+        # to pack the sequences of the dataset.
+        packing=False,
+        # The maximum sequence length to use for the `ConstantLengthDataset`
+        # and for automatically creating the Dataset.
+        # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
+        max_seq_length=1024,
     )
 
     raw_datasets = load_dataset(args.dataset)
@@ -114,16 +126,6 @@ if __name__ == "__main__":
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        # The name of the text field of the dataset, in case this is passed by a user,
-        # the trainer will automatically create a `ConstantLengthDataset` based on the `dataset_text_field` argument.
-        dataset_text_field=None,
-        # Used only in case `dataset_text_field` is passed. This argument is used by the `ConstantLengthDataset`
-        # to pack the sequences of the dataset.
-        packing=False,
-        # The maximum sequence length to use for the `ConstantLengthDataset`
-        # and for automatically creating the Dataset.
-        # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
-        max_seq_length=1024,
         tokenizer=tokenizer,
         peft_config=peft_config,
         callbacks=None,
