@@ -30,6 +30,9 @@ job:
   version: latest
   imagePullPolicy: IfNotPresent
   numGpus: 1
+  wandbApiKeySecret:
+    name:
+    key:
 
 # The following default values work if model-manager-server runs in the same namespace.
 fileManagerInternalServerAddr: file-manager-server-internal-grpc:8082

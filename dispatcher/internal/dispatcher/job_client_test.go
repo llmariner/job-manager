@@ -87,7 +87,7 @@ func TestToAddtionalSFTArgs(t *testing.T) {
 		want string
 	}{
 		{
-			name: "basic",
+			name: "hyperparameters",
 			job: &v1.Job{
 				Hyperparameters: &v1.Job_Hyperparameters{
 					BatchSize:              32,
@@ -98,6 +98,20 @@ func TestToAddtionalSFTArgs(t *testing.T) {
 			want: "--per_device_train_batch_size=32 --learning_rate=0.100000 --num_train_epochs=10",
 		},
 		{
+			name: "integration",
+			job: &v1.Job{
+				Integrations: []*v1.Integration{
+					{
+						Type: "wandb",
+						Wandb: &v1.Integration_Wandb{
+							Project: "my-project",
+						},
+					},
+				},
+			},
+			want: "--report_to=wandb --wandb_project=my-project",
+		},
+		{
 			name: "empty",
 			job:  &v1.Job{},
 			want: "",
@@ -105,7 +119,8 @@ func TestToAddtionalSFTArgs(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got := toAddtionalSFTArgs(tc.job)
+			got, err := toAddtionalSFTArgs(tc.job)
+			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
 	}
