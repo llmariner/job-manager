@@ -27,7 +27,7 @@ global:
 pollingInterval: 10s
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
-  version: latest
+  version: 0.130.0
   imagePullPolicy: IfNotPresent
   numGpus: 1
   wandbApiKeySecret:
