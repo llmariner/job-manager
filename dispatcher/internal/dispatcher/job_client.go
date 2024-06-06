@@ -109,6 +109,22 @@ func (p *JobClient) jobSpec(jobProto *v1.Job, presult *PreProcessResult) (*batch
 		WithImagePullPolicy(p.jobConfig.ImagePullPolicy).
 		WithCommand("/bin/bash", "-c", cmd).
 		WithResources(p.res())
+
+	if s := p.jobConfig.WandbAPIKeySecret; s.Name != "" {
+		if s.Key == "" {
+			return nil, fmt.Errorf("wandb secret key is not set")
+		}
+
+		// TODO(kenji): Injecting the WANDB_API_KEY environment variable is
+		// required to access, but ideally we should avoid exposing the secret to the job.
+		container = container.WithEnv(corev1apply.EnvVar().
+			WithName("WANDB_API_KEY").
+			WithValueFrom(corev1apply.EnvVarSource().
+				WithSecretKeyRef(corev1apply.SecretKeySelector().
+					WithName(s.Name).
+					WithKey(s.Key))))
+	}
+
 	podSpec := corev1apply.PodSpec().
 		WithContainers(container).
 		WithRestartPolicy(corev1.RestartPolicyNever)
@@ -148,6 +164,11 @@ func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, er
 	if p.jobConfig.NumGPUs > 0 {
 		numProcessors = p.jobConfig.NumGPUs
 	}
+	additionalSFTArgs, err := toAddtionalSFTArgs(jobProto)
+	if err != nil {
+		return "", err
+	}
+
 	params := Params{
 		BaseModelName:     jobProto.Model,
 		BaseModelURLs:     presult.BaseModelURLs,
@@ -156,7 +177,7 @@ func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, er
 		OutputModelURL:    presult.OutputModelURL,
 
 		NumProcessors:     numProcessors,
-		AdditionalSFTArgs: toAddtionalSFTArgs(jobProto),
+		AdditionalSFTArgs: additionalSFTArgs,
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {
@@ -170,24 +191,40 @@ func (p *JobClient) getQueueName(namespace string) string {
 	return p.kueueConfig.DefaultQueueName
 }
 
-func toAddtionalSFTArgs(jobProto *v1.Job) string {
-	hp := jobProto.Hyperparameters
-	if hp == nil {
-		return ""
-	}
+func toAddtionalSFTArgs(jobProto *v1.Job) (string, error) {
 	args := []string{}
-	if v := hp.BatchSize; v > 0 {
-		args = append(args, fmt.Sprintf("--per_device_train_batch_size=%d", v))
+	if hp := jobProto.Hyperparameters; hp != nil {
+
+		if v := hp.BatchSize; v > 0 {
+			args = append(args, fmt.Sprintf("--per_device_train_batch_size=%d", v))
+		}
+		if v := hp.LearningRateMultiplier; v > 0 {
+			args = append(args, fmt.Sprintf("--learning_rate=%f", v))
+		}
+		if v := hp.NEpochs; v > 0 {
+			args = append(args, fmt.Sprintf("--num_train_epochs=%d", v))
+		}
 	}
-	if v := hp.LearningRateMultiplier; v > 0 {
-		args = append(args, fmt.Sprintf("--learning_rate=%f", v))
+
+	if is := jobProto.Integrations; len(is) > 0 {
+		if len(is) > 1 {
+			return "", fmt.Errorf("multiple integrations are not supported")
+		}
+		i := is[0]
+		if i.Type != "wandb" {
+			return "", fmt.Errorf("unsupported integration type: %s", i.Type)
+		}
+		w := i.Wandb
+		if w == nil {
+			return "", fmt.Errorf("wandb integration is not set")
+		}
+		args = append(args, "--report_to=wandb", fmt.Sprintf("--wandb_project=%s", w.Project))
 	}
-	if v := hp.NEpochs; v > 0 {
-		args = append(args, fmt.Sprintf("--num_train_epochs=%d", v))
-	}
-	return strings.Join(args, " ")
+
+	return strings.Join(args, " "), nil
 
 }
+
 func isManagedJob(annotations map[string]string) bool {
 	return annotations[managedJobAnnotationKey] == "true"
 }

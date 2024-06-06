@@ -53,12 +53,20 @@ type KubernetesManagerConfig struct {
 	PprofBindAddress   string `yaml:"pprofBindAddress"`
 }
 
+// WandbAPIKeySecretConfig is the W&B API key secret configuration.
+type WandbAPIKeySecretConfig struct {
+	Name string `yaml:"name"`
+	Key  string `yaml:"key"`
+}
+
 // JobConfig is the job configuration.
 type JobConfig struct {
 	Image           string            `yaml:"image"`
 	Version         string            `yaml:"version"`
 	ImagePullPolicy corev1.PullPolicy `yaml:"imagePullPolicy"`
 	NumGPUs         int               `yaml:"numGpus"`
+
+	WandbAPIKeySecret WandbAPIKeySecretConfig `yaml:"wandbApiKeySecret"`
 }
 
 // validate validates the job configuration.
