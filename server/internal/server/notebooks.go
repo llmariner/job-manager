@@ -49,13 +49,15 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	}
 
 	nbProto := &v1.Notebook{
-		Id:        nbID,
-		Name:      req.Name,
-		CreatedAt: time.Now().UTC().Unix(),
-		Image:     image,
-		Resources: req.Resources,
-		Envs:      req.Envs,
-		Status:    string(store.NotebookStateQueued),
+		Id:                  nbID,
+		Name:                req.Name,
+		CreatedAt:           time.Now().UTC().Unix(),
+		Image:               image,
+		Resources:           req.Resources,
+		Envs:                req.Envs,
+		Status:              string(store.NotebookStateQueued),
+		ProjectId:           userInfo.ProjectID,
+		KubernetesNamespace: userInfo.KubernetesNamespace,
 	}
 	msg, err := proto.Marshal(nbProto)
 	if err != nil {
