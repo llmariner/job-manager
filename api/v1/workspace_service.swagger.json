@@ -253,6 +253,7 @@
         "details": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -287,6 +288,7 @@
         "notebooks": {
           "type": "array",
           "items": {
+            "type": "object",
             "$ref": "#/definitions/v1Notebook"
           }
         },
@@ -337,6 +339,12 @@
         "token": {
           "type": "string",
           "description": "this field is populated only when a new notebook is created."
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "kubernetesNamespace": {
+          "type": "string"
         }
       }
     },

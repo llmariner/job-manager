@@ -27,6 +27,9 @@ message Notebook {
 
   // this field is populated only when a new notebook is created.
   string token = 11;
+
+  string project_id = 12;
+  string kubernetes_namespace = 13;
 }
 
 message Resources {
