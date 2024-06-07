@@ -11,7 +11,7 @@ import (
 // Config is the configuration.
 type Config struct {
 	GRPCPort              int `yaml:"grpcPort"`
-	WorkerServiceGRPCPort int `yaml:"workerServiceGRPCPort"`
+	WorkerServiceGRPCPort int `yaml:"workerServiceGrpcPort"`
 	HTTPPort              int `yaml:"httpPort"`
 
 	FileManagerServerAddr  string `yaml:"fileManagerServerAddr"`

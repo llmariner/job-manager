@@ -32,6 +32,9 @@ spec:
         - name: http
           containerPort: {{ .Values.httpPort }}
           protocol: TCP
+        - name: worker-service-grpc
+          containerPort: {{ .Values.workerServiceGrpcPort }}
+          protocol: TCP
         volumeMounts:
         - name: config
           mountPath: /etc/config
