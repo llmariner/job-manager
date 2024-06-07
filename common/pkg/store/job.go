@@ -119,7 +119,7 @@ func (s *S) GetJobByJobID(jobID string) (*Job, error) {
 	return &job, nil
 }
 
-// GetJobByJobIDAndProjectID gets a job by its job ID and tenant ID.
+// GetJobByJobIDAndProjectID gets a job by its job ID and project ID.
 func (s *S) GetJobByJobIDAndProjectID(jobID, projectID string) (*Job, error) {
 	var job Job
 	if err := s.db.Where("job_id = ? AND project_id = ?", jobID, projectID).Take(&job).Error; err != nil {
