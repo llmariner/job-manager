@@ -125,7 +125,6 @@ message InternalJob {
 }
 
 message ListQueuedInternalJobsRequest {
-  string tenant_id = 1;
 }
 
 message ListQueuedInternalJobsResponse {
@@ -134,12 +133,10 @@ message ListQueuedInternalJobsResponse {
 
 message GetInternalJobRequest {
   string id = 1;
-  string tenant_id = 2;
 }
 
 message UpdateJobPhaseRequest {
   string id = 1;
-  string tenant_id = 2;
 
   enum Phase {
     UNSPECIFIED = 0;
@@ -148,11 +145,11 @@ message UpdateJobPhaseRequest {
     FINETUNED = 3;
     FAILED = 4;
   }
-  Phase phase = 3;
+  Phase phase = 2;
   // message describing the details of the job phase. currently only used for failed jobs.
-  string message = 4;
+  string message = 3;
   // model_id is optional.
-  string model_id = 5;
+  string model_id = 4;
 }
 
 message UpdateJobPhaseResponse {

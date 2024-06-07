@@ -281,19 +281,19 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 	notebooks := []*store.Notebook{
 		{
 			State:    store.NotebookStateQueued,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 		{
 			State:    store.NotebookStateRunning,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 		{
 			State:    store.NotebookStateQueued,
-			TenantID: "t1",
+			TenantID: "different-tenant",
 		},
 		{
 			State:    store.NotebookStateQueued,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 	}
 	for i, notebook := range notebooks {
@@ -311,7 +311,7 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 	}
 
 	srv := NewWorkerServiceServer(st)
-	req := &v1.ListQueuedInternalNotebooksRequest{TenantId: "t0"}
+	req := &v1.ListQueuedInternalNotebooksRequest{}
 	got, err := srv.ListQueuedInternalNotebooks(context.Background(), req)
 	assert.NoError(t, err)
 
@@ -396,10 +396,9 @@ func TestUpdateNotebookState(t *testing.T) {
 			defer tearDown()
 
 			const notebookID = "notebook0"
-			const tenantID = "t0"
 			err := st.CreateNotebook(&store.Notebook{
 				NotebookID:   notebookID,
-				TenantID:     tenantID,
+				TenantID:     defaultTenantID,
 				State:        test.prevState,
 				QueuedAction: test.prevAction,
 			})
@@ -407,9 +406,8 @@ func TestUpdateNotebookState(t *testing.T) {
 
 			srv := NewWorkerServiceServer(st)
 			_, err = srv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
-				Id:       notebookID,
-				TenantId: tenantID,
-				State:    test.state,
+				Id:    notebookID,
+				State: test.state,
 			})
 			if test.wantError {
 				assert.Error(t, err)

@@ -250,8 +250,6 @@ func (s *S) CancelJob(
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	// TODO(kenji): Check if a job is visible for a organization/project in the context.
-
 	job, err := s.store.GetJobByJobIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -303,11 +301,12 @@ func (s *S) CancelJob(
 
 // ListQueuedInternalJobs lists all queued internal jobs for the specified tenant.
 func (ws *WS) ListQueuedInternalJobs(ctx context.Context, req *v1.ListQueuedInternalJobsRequest) (resp *v1.ListQueuedInternalJobsResponse, err error) {
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	jobs, err := ws.store.ListQueuedJobsByTenantID(req.TenantId)
+	jobs, err := ws.store.ListQueuedJobsByTenantID(clusterInfo.TenantID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list queued jobs: %s", err)
 	}
@@ -325,22 +324,24 @@ func (ws *WS) ListQueuedInternalJobs(ctx context.Context, req *v1.ListQueuedInte
 
 // GetInternalJob gets an internal job.
 func (ws *WS) GetInternalJob(ctx context.Context, req *v1.GetInternalJobRequest) (resp *v1.InternalJob, err error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
-	}
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
 	}
 
 	job, err := ws.store.GetJobByJobID(req.Id)
 	if err != nil {
-		if job.TenantID != req.TenantId {
-			return nil, status.Error(codes.NotFound, "job not found")
-		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
 		}
 		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+	if job.TenantID != clusterInfo.TenantID {
+		return nil, status.Error(codes.NotFound, "job not found")
 	}
 
 	jobProto, err := job.V1InternalJob()
@@ -352,11 +353,13 @@ func (ws *WS) GetInternalJob(ctx context.Context, req *v1.GetInternalJobRequest)
 
 // UpdateJobPhase updates the job status depending on the given phase.
 func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest) (resp *v1.UpdateJobPhaseResponse, err error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
-	}
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
 	}
 
 	job, err := ws.store.GetJobByJobID(req.Id)
@@ -366,7 +369,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "get job: %s", err)
 	}
-	if job.TenantID != req.TenantId {
+	if job.TenantID != clusterInfo.TenantID {
 		return nil, status.Error(codes.NotFound, "job not found")
 	}
 

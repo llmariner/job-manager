@@ -8,8 +8,16 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/server/internal/config"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	defaultClusterID = "default"
 )
 
 // NewWorkerServiceServer creates a new worker service server.
@@ -26,15 +34,28 @@ type WS struct {
 
 	srv   *grpc.Server
 	store *store.S
+
+	enableAuth bool
 }
 
 // Run runs the worker service server.
-func (ws *WS) Run(ctx context.Context, port int) error {
+func (ws *WS) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
 	log.Printf("Starting worker service server on port %d", port)
 
-	// TODO(aya): configure request authN/Z
+	var opts []grpc.ServerOption
+	if authConfig.Enable {
+		ai, err := auth.NewWorkerInterceptor(ctx, auth.WorkerConfig{
+			RBACServerAddr: authConfig.RBACInternalServerAddr,
+		})
+		if err != nil {
+			return err
+		}
+		opts = append(opts, grpc.ChainUnaryInterceptor(ai.Unary()))
+		ws.enableAuth = true
+	}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(opts...)
+
 	v1.RegisterFineTuningWorkerServiceServer(srv, ws)
 	v1.RegisterWorkspaceWorkerServiceServer(srv, ws)
 	reflection.Register(srv)
@@ -54,4 +75,18 @@ func (ws *WS) Run(ctx context.Context, port int) error {
 // Stop stops the worker service server.
 func (ws *WS) Stop() {
 	ws.srv.Stop()
+}
+
+func (ws *WS) extractClusterInfoFromContext(ctx context.Context) (*auth.ClusterInfo, error) {
+	if !ws.enableAuth {
+		return &auth.ClusterInfo{
+			ClusterID: defaultClusterID,
+			TenantID:  defaultTenantID,
+		}, nil
+	}
+	clusterInfo, ok := auth.ExtractClusterInfoFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user info not found")
+	}
+	return clusterInfo, nil
 }
