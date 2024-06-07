@@ -273,3 +273,153 @@ func TestDeleteNotebook(t *testing.T) {
 	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 }
+
+func TestListQueuedInternalNotebooks(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	notebooks := []*store.Notebook{
+		{
+			State:    store.NotebookStateQueued,
+			TenantID: "t0",
+		},
+		{
+			State:    store.NotebookStateRunning,
+			TenantID: "t0",
+		},
+		{
+			State:    store.NotebookStateQueued,
+			TenantID: "t1",
+		},
+		{
+			State:    store.NotebookStateQueued,
+			TenantID: "t0",
+		},
+	}
+	for i, notebook := range notebooks {
+		notebookProto := &v1.Notebook{
+			Id: fmt.Sprintf("nb%d", i),
+		}
+		msg, err := proto.Marshal(notebookProto)
+		assert.NoError(t, err)
+		assert.NoError(t, st.CreateNotebook(&store.Notebook{
+			NotebookID: notebookProto.Id,
+			State:      notebook.State,
+			Message:    msg,
+			TenantID:   notebook.TenantID,
+		}))
+	}
+
+	srv := NewWorkerServiceServer(st)
+	req := &v1.ListQueuedInternalNotebooksRequest{TenantId: "t0"}
+	got, err := srv.ListQueuedInternalNotebooks(context.Background(), req)
+	assert.NoError(t, err)
+
+	want := []string{"nb0", "nb3"}
+	assert.Len(t, got.Notebooks, 2)
+	assert.Equal(t, want[0], got.Notebooks[0].Notebook.Id)
+	assert.Equal(t, want[1], got.Notebooks[1].Notebook.Id)
+}
+
+func TestUpdateNotebookState(t *testing.T) {
+	var tests = []struct {
+		name       string
+		prevState  store.NotebookState
+		prevAction store.NotebookQueuedAction
+		state      v1.NotebookState
+		wantError  bool
+		wantState  store.NotebookState
+	}{
+		{
+			name:      "no state",
+			wantError: true,
+		},
+		{
+			name:       "unknown state",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionStart,
+			state:      9999,
+			wantError:  true,
+		},
+		{
+			name:       "set running state",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionStart,
+			state:      v1.NotebookState_RUNNING,
+			wantState:  store.NotebookStateRunning,
+		},
+		{
+			name:      "set running state, previous state is not queued",
+			prevState: store.NotebookStateRunning,
+			state:     v1.NotebookState_RUNNING,
+			wantError: true,
+		},
+		{
+			name:       "set running state, previous action is not starting",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionDelete,
+			state:      v1.NotebookState_RUNNING,
+			wantError:  true,
+		},
+		{
+			name:       "set stopped state",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionStop,
+			state:      v1.NotebookState_STOPPED,
+			wantState:  store.NotebookStateStopped,
+		},
+		{
+			name:       "set stopped state, previous action is not stopping",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionDelete,
+			state:      v1.NotebookState_STOPPED,
+			wantError:  true,
+		},
+		{
+			name:       "set deleted state",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionDelete,
+			state:      v1.NotebookState_DELETED,
+			wantState:  store.NotebookStateDeleted,
+		},
+		{
+			name:       "set deleted state, previous action is not deleting",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionStop,
+			state:      v1.NotebookState_DELETED,
+			wantError:  true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			st, tearDown := store.NewTest(t)
+			defer tearDown()
+
+			const notebookID = "notebook0"
+			const tenantID = "t0"
+			err := st.CreateNotebook(&store.Notebook{
+				NotebookID:   notebookID,
+				TenantID:     tenantID,
+				State:        test.prevState,
+				QueuedAction: test.prevAction,
+			})
+			assert.NoError(t, err)
+
+			srv := NewWorkerServiceServer(st)
+			_, err = srv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
+				Id:       notebookID,
+				TenantId: tenantID,
+				State:    test.state,
+			})
+			if test.wantError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			notebook, err := st.GetNotebookByID(notebookID)
+			assert.NoError(t, err)
+			assert.Equal(t, test.wantState, notebook.State)
+		})
+	}
+}

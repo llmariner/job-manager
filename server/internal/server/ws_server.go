@@ -22,6 +22,7 @@ func NewWorkerServiceServer(s *store.S) *WS {
 // WS is a server for worker services.
 type WS struct {
 	v1.UnimplementedFineTuningWorkerServiceServer
+	v1.UnimplementedWorkspaceWorkerServiceServer
 
 	srv   *grpc.Server
 	store *store.S
@@ -35,6 +36,7 @@ func (ws *WS) Run(ctx context.Context, port int) error {
 
 	srv := grpc.NewServer()
 	v1.RegisterFineTuningWorkerServiceServer(srv, ws)
+	v1.RegisterWorkspaceWorkerServiceServer(srv, ws)
 	reflection.Register(srv)
 
 	ws.srv = srv

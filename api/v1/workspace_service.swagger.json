@@ -391,24 +391,24 @@
     "v1NotebookQueuedAction": {
       "type": "string",
       "enum": [
-        "NOTEBOOK_QUEUED_ACTION_UNKNOWN",
-        "NOTEBOOK_QUEUED_ACTION_STARTING",
-        "NOTEBOOK_QUEUED_ACTION_STOPPING",
-        "NOTEBOOK_QUEUED_ACTION_DELETING"
+        "ACTION_UNSPECIFIED",
+        "STARTING",
+        "STOPPING",
+        "DELETING"
       ],
-      "default": "NOTEBOOK_QUEUED_ACTION_UNKNOWN"
+      "default": "ACTION_UNSPECIFIED"
     },
     "v1NotebookState": {
       "type": "string",
       "enum": [
-        "NOTEBOOK_STATE_UNKNOWN",
-        "NOTEBOOK_STATE_QUEUED",
-        "NOTEBOOK_STATE_RUNNING",
-        "NOTEBOOK_STATE_STOPPED",
-        "NOTEBOOK_STATE_FAILED",
-        "NOTEBOOK_STATE_DELETED"
+        "STATE_UNSPECIFIED",
+        "QUEUED",
+        "RUNNING",
+        "STOPPED",
+        "FAILED",
+        "DELETED"
       ],
-      "default": "NOTEBOOK_STATE_UNKNOWN"
+      "default": "STATE_UNSPECIFIED"
     },
     "v1Resources": {
       "type": "object",

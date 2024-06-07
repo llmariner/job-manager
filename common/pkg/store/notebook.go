@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"strings"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"google.golang.org/protobuf/proto"
@@ -74,6 +75,27 @@ func (n *Notebook) V1Notebook() (*v1.Notebook, error) {
 	return &nbProto, nil
 }
 
+// V1InternalNotebook converts a notebook to a v1.InternalNotebook.
+func (n *Notebook) V1InternalNotebook() (*v1.InternalNotebook, error) {
+	nbProto, err := n.V1Notebook()
+	if err != nil {
+		return nil, err
+	}
+	state, err := convertToV1NotebookState(n.State)
+	if err != nil {
+		return nil, err
+	}
+	action, err := convertToNotebookQueuedAction(n.QueuedAction)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.InternalNotebook{
+		Notebook:     nbProto,
+		State:        state,
+		QueuedAction: action,
+	}, nil
+}
+
 // MutateMessage mutates the message field of a notebook.
 func (n *Notebook) MutateMessage(mutateFn func(nb *v1.Notebook)) error {
 	nbProto, err := n.V1Notebook()
@@ -89,9 +111,38 @@ func (n *Notebook) MutateMessage(mutateFn func(nb *v1.Notebook)) error {
 	return nil
 }
 
+func convertToV1NotebookState(state NotebookState) (v1.NotebookState, error) {
+	v, ok := v1.NotebookState_value[strings.ToUpper(string(state))]
+	if !ok {
+		return 0, fmt.Errorf("unknown notebook state: %s", state)
+	}
+	return v1.NotebookState(v), nil
+}
+
+func convertToNotebookQueuedAction(action NotebookQueuedAction) (v1.NotebookQueuedAction, error) {
+	if action == "" {
+		// when the status is not queued, the queued action is not set.
+		return v1.NotebookQueuedAction_ACTION_UNSPECIFIED, nil
+	}
+	v, ok := v1.NotebookQueuedAction_value[strings.ToUpper(string(action))]
+	if !ok {
+		return 0, fmt.Errorf("unknown notebook queued action: %s", action)
+	}
+	return v1.NotebookQueuedAction(v), nil
+}
+
 // CreateNotebook creates a new notebook.
 func (s *S) CreateNotebook(nb *Notebook) error {
 	return s.db.Create(nb).Error
+}
+
+// GetNotebookByID gets a notebook by its notebook ID.
+func (s *S) GetNotebookByID(id string) (*Notebook, error) {
+	var nb Notebook
+	if err := s.db.Where("notebook_id = ?", id).Take(&nb).Error; err != nil {
+		return nil, err
+	}
+	return &nb, nil
 }
 
 // GetNotebookByIDAndProjectID gets a notebook by its notebook ID and project ID.
@@ -126,6 +177,15 @@ func (s *S) ListActiveNotebooksByProjectIDWithPagination(projectID string, after
 func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
 	var nbs []*Notebook
 	if err := s.db.Where("state = ?", NotebookStateQueued).Find(&nbs).Error; err != nil {
+		return nil, err
+	}
+	return nbs, nil
+}
+
+// ListQueuedNotebooksByTenantID finds queued notebooks by tenant ID.
+func (s *S) ListQueuedNotebooksByTenantID(tenantID string) ([]*Notebook, error) {
+	var nbs []*Notebook
+	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, NotebookStateQueued).Find(&nbs).Error; err != nil {
 		return nil, err
 	}
 	return nbs, nil

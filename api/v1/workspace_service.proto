@@ -128,24 +128,23 @@ service WorkspaceService {
 }
 
 enum NotebookState {
-  NOTEBOOK_STATE_UNKNOWN = 0;
-  NOTEBOOK_STATE_QUEUED = 1;
-  NOTEBOOK_STATE_RUNNING = 2;
-  NOTEBOOK_STATE_STOPPED = 3;
-  NOTEBOOK_STATE_FAILED = 4;
-  NOTEBOOK_STATE_DELETED = 5;
+  STATE_UNSPECIFIED = 0;
+  QUEUED = 1;
+  RUNNING = 2;
+  STOPPED = 3;
+  FAILED = 4;
+  DELETED = 5;
 }
 
 enum NotebookQueuedAction {
-  NOTEBOOK_QUEUED_ACTION_UNKNOWN = 0;
-  NOTEBOOK_QUEUED_ACTION_STARTING = 1;
-  NOTEBOOK_QUEUED_ACTION_STOPPING = 2;
-  NOTEBOOK_QUEUED_ACTION_DELETING = 3;
+  ACTION_UNSPECIFIED = 0;
+  STARTING = 1;
+  STOPPING = 2;
+  DELETING = 3;
 }
 
 message InternalNotebook {
   Notebook notebook = 1;
-
   NotebookState state = 2;
   NotebookQueuedAction queued_action = 3;
 }
