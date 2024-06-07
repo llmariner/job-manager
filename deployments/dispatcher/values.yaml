@@ -24,6 +24,11 @@ global:
   ingress:
     ingressClassName:
 
+  worker:
+    registrationKeySecret:
+      name:
+      key:
+
 pollingInterval: 10s
 job:
   image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
