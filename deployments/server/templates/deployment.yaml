@@ -32,7 +32,7 @@ spec:
         - name: http
           containerPort: {{ .Values.httpPort }}
           protocol: TCP
-        - name: worker-service-grpc
+        - name: ws-grpc
           containerPort: {{ .Values.workerServiceGrpcPort }}
           protocol: TCP
         volumeMounts:
