@@ -128,13 +128,13 @@ func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostP
 		return &dispatcher.NoopPreProcessor{}, &dispatcher.NoopPostProcessor{}, nil
 	}
 
-	conn, err := grpc.Dial(c.FileManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(c.FileManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}
-	fclient := fv1.NewFilesInternalServiceClient(conn)
+	fclient := fv1.NewFilesWorkerServiceClient(conn)
 
-	conn, err = grpc.Dial(c.ModelManagerWorkerServiceServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.Dial(c.ModelManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}

@@ -134,8 +134,8 @@ type Config struct {
 	Job      JobConfig       `yaml:"job"`
 	Notebook NotebooksConfig `yaml:"notebook"`
 
-	ModelManagerWorkerServiceServerAddr string `yaml:"modelManagerWorkerServiceServerAddr"`
-	FileManagerInternalServerAddr       string `yaml:"fileManagerInternalServerAddr"`
+	FileManagerServerWorkerServiceAddr  string `yaml:"fileManagerServerWorkerServiceAddr"`
+	ModelManagerServerWorkerServiceAddr string `yaml:"modelManagerServerWorkerServiceAddr"`
 
 	Database db.Config `yaml:"database"`
 
@@ -165,11 +165,11 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("sqlite path must be set")
 		}
 	} else {
-		if c.ModelManagerWorkerServiceServerAddr == "" {
-			return fmt.Errorf("model manager worker service server address must be set")
+		if c.FileManagerServerWorkerServiceAddr == "" {
+			return fmt.Errorf("file manager server worker service address must be set")
 		}
-		if c.FileManagerInternalServerAddr == "" {
-			return fmt.Errorf("file manager internal server address must be set")
+		if c.ModelManagerServerWorkerServiceAddr == "" {
+			return fmt.Errorf("model manager server worker service address must be set")
 		}
 
 		if err := c.ObjectStore.validate(); err != nil {
