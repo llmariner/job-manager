@@ -369,6 +369,10 @@
         },
         "kubernetesNamespace": {
           "type": "string"
+        },
+        "clusterId": {
+          "type": "string",
+          "description": "cluster_id is the ID of the cluster where he job runs."
         }
       }
     },

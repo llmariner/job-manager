@@ -57,6 +57,8 @@ type Notebook struct {
 	OrganizationID      string
 	ProjectID           string `gorm:"index"`
 	KubernetesNamespace string
+	// ClusterID is the ID of the cluster where the job runs.
+	ClusterID string
 
 	Version int
 }

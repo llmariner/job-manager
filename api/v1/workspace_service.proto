@@ -30,6 +30,8 @@ message Notebook {
 
   string project_id = 12;
   string kubernetes_namespace = 13;
+  // cluster_id is the ID of the cluster where the notebook runs.
+  string cluster_id = 19;
 }
 
 message Resources {
