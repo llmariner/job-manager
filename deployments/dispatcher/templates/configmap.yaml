@@ -18,7 +18,7 @@ data:
     notebook:
       llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
       ingressClassName: {{ .Values.global.ingress.ingressClassName }}
-    modelManagerInternalServerAddr: {{ .Values.modelManagerInternalServerAddr }}
+    modelManagerWorkerServiceServerAddr: {{ .Values.modelManagerWorkerServiceServerAddr }}
     fileManagerInternalServerAddr: {{ .Values.fileManagerInternalServerAddr }}
     objectStore:
       s3:
