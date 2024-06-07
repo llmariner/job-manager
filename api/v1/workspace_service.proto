@@ -150,7 +150,6 @@ message InternalNotebook {
 }
 
 message ListQueuedInternalNotebooksRequest {
-  string tenant_id = 1;
 }
 
 message ListQueuedInternalNotebooksResponse {
@@ -159,8 +158,7 @@ message ListQueuedInternalNotebooksResponse {
 
 message UpdateNotebookStateRequest {
   string id = 1;
-  string tenant_id = 2;
-  NotebookState state = 3;
+  NotebookState state = 2;
 }
 
 message UpdateNotebookStateResponse {

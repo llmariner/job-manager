@@ -231,19 +231,19 @@ func TestListQueuedInternalJobs(t *testing.T) {
 	jobs := []*store.Job{
 		{
 			State:    store.JobStateQueued,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 		{
 			State:    store.JobStateRunning,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 		{
 			State:    store.JobStateQueued,
-			TenantID: "t1",
+			TenantID: "different-tenant",
 		},
 		{
 			State:    store.JobStateQueued,
-			TenantID: "t0",
+			TenantID: defaultTenantID,
 		},
 	}
 	for i, job := range jobs {
@@ -261,7 +261,7 @@ func TestListQueuedInternalJobs(t *testing.T) {
 	}
 
 	srv := NewWorkerServiceServer(st)
-	req := &v1.ListQueuedInternalJobsRequest{TenantId: "t0"}
+	req := &v1.ListQueuedInternalJobsRequest{}
 	got, err := srv.ListQueuedInternalJobs(context.Background(), req)
 	assert.NoError(t, err)
 
@@ -277,14 +277,14 @@ func TestGetInternalJob(t *testing.T) {
 
 	err := st.CreateJob(&store.Job{
 		JobID:     "job0",
-		TenantID:  "t0",
+		TenantID:  defaultTenantID,
 		State:     store.JobStateRunning,
 		ProjectID: defaultProjectID,
 	})
 	assert.NoError(t, err)
 
 	srv := NewWorkerServiceServer(st)
-	req := &v1.GetInternalJobRequest{Id: "job0", TenantId: "t0"}
+	req := &v1.GetInternalJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalJob(context.Background(), req)
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
@@ -371,16 +371,14 @@ func TestUpdateJobPhase(t *testing.T) {
 			defer tearDown()
 
 			const jobID = "job0"
-			const tenantID = "t0"
 			err := st.CreateJob(&store.Job{
 				JobID:    jobID,
-				TenantID: tenantID,
+				TenantID: defaultTenantID,
 				State:    test.prevState,
 			})
 			assert.NoError(t, err)
 
 			test.req.Id = jobID
-			test.req.TenantId = tenantID
 
 			srv := NewWorkerServiceServer(st)
 			_, err = srv.UpdateJobPhase(context.Background(), test.req)

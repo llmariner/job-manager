@@ -301,11 +301,12 @@ func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (
 
 // ListQueuedInternalNotebooks lists queued internal notebooks.
 func (ws *WS) ListQueuedInternalNotebooks(ctx context.Context, req *v1.ListQueuedInternalNotebooksRequest) (*v1.ListQueuedInternalNotebooksResponse, error) {
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	nbs, err := ws.store.ListQueuedNotebooksByTenantID(req.TenantId)
+	nbs, err := ws.store.ListQueuedNotebooksByTenantID(clusterInfo.TenantID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list queued notebooks: %s", err)
 	}
@@ -324,11 +325,13 @@ func (ws *WS) ListQueuedInternalNotebooks(ctx context.Context, req *v1.ListQueue
 
 // UpdateNotebookState updates a notebook state.
 func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookStateRequest) (*v1.UpdateNotebookStateResponse, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
-	}
-	if req.TenantId == "" {
-		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
 	}
 
 	nb, err := ws.store.GetNotebookByID(req.Id)
@@ -338,7 +341,7 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		}
 		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
 	}
-	if nb.TenantID != req.TenantId {
+	if nb.TenantID != clusterInfo.TenantID {
 		return nil, status.Error(codes.NotFound, "notebook not found")
 	}
 
