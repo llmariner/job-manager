@@ -94,7 +94,7 @@ func (s *S) CreateNotebook(nb *Notebook) error {
 	return s.db.Create(nb).Error
 }
 
-// GetNotebookByIDAndProjectID gets a notebook by its notebook ID and tenant ID.
+// GetNotebookByIDAndProjectID gets a notebook by its notebook ID and project ID.
 func (s *S) GetNotebookByIDAndProjectID(id, projectID string) (*Notebook, error) {
 	var nb Notebook
 	if err := s.db.Where("notebook_id = ? AND project_id = ?", id, projectID).Take(&nb).Error; err != nil {
