@@ -361,13 +361,13 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 
 	job, err := ws.store.GetJobByJobID(req.Id)
 	if err != nil {
-		if job.TenantID != req.TenantId {
-			return nil, status.Error(codes.NotFound, "job not found")
-		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get job: %s", err)
 		}
 		return nil, status.Errorf(codes.Internal, "get job: %s", err)
+	}
+	if job.TenantID != req.TenantId {
+		return nil, status.Error(codes.NotFound, "job not found")
 	}
 
 	switch req.Phase {
