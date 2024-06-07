@@ -298,3 +298,102 @@ func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (
 	}
 	return &v1.DeleteNotebookResponse{}, nil
 }
+
+// ListQueuedInternalNotebooks lists queued internal notebooks.
+func (ws *WS) ListQueuedInternalNotebooks(ctx context.Context, req *v1.ListQueuedInternalNotebooksRequest) (*v1.ListQueuedInternalNotebooksResponse, error) {
+	if req.TenantId == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	}
+
+	nbs, err := ws.store.ListQueuedNotebooksByTenantID(req.TenantId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list queued notebooks: %s", err)
+	}
+
+	var inbs []*v1.InternalNotebook
+	for _, nb := range nbs {
+		inb, err := nb.V1InternalNotebook()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "convert notebook to proto: %s", err)
+		}
+		inbs = append(inbs, inb)
+	}
+
+	return &v1.ListQueuedInternalNotebooksResponse{Notebooks: inbs}, nil
+}
+
+// UpdateNotebookState updates a notebook state.
+func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookStateRequest) (*v1.UpdateNotebookStateResponse, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	if req.TenantId == "" {
+		return nil, status.Error(codes.InvalidArgument, "tenant id is required")
+	}
+
+	nb, err := ws.store.GetNotebookByID(req.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "notebook not found")
+		}
+		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
+	}
+	if nb.TenantID != req.TenantId {
+		return nil, status.Error(codes.NotFound, "notebook not found")
+	}
+
+	if nb.State != store.NotebookStateQueued {
+		return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued state: %s", nb.State)
+	}
+	switch req.State {
+	case v1.NotebookState_STATE_UNSPECIFIED:
+		return nil, status.Error(codes.InvalidArgument, "state is required")
+	case v1.NotebookState_RUNNING:
+		if nb.QueuedAction != store.NotebookQueuedActionStart {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not starting: %s", nb.QueuedAction)
+		}
+		if err := nb.MutateMessage(func(nb *v1.Notebook) {
+			nb.StartedAt = time.Now().UTC().Unix()
+			nb.StoppedAt = 0
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateRunning, nb.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
+		}
+	case v1.NotebookState_STOPPED:
+		if nb.QueuedAction != store.NotebookQueuedActionStop {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not stopping: %s", nb.QueuedAction)
+		}
+		if err := nb.MutateMessage(func(nb *v1.Notebook) {
+			nb.StartedAt = 0
+			nb.StoppedAt = time.Now().UTC().Unix()
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateStopped, nb.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
+		}
+	case v1.NotebookState_DELETED:
+		if nb.QueuedAction != store.NotebookQueuedActionDelete {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not deleting: %s", nb.QueuedAction)
+		}
+		if err := nb.MutateMessage(func(nb *v1.Notebook) {
+			nb.StartedAt = 0
+			if nb.StoppedAt == 0 {
+				nb.StoppedAt = time.Now().UTC().Unix()
+			}
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateDeleted, nb.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
+		}
+	case v1.NotebookState_QUEUED,
+		v1.NotebookState_FAILED:
+		return nil, status.Errorf(codes.FailedPrecondition, "unexpected state: %s", req.State)
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "unknown state: %s", req.State)
+	}
+	return &v1.UpdateNotebookStateResponse{}, nil
+}
