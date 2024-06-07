@@ -134,11 +134,11 @@ func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostP
 	}
 	fclient := fv1.NewFilesInternalServiceClient(conn)
 
-	conn, err = grpc.Dial(c.ModelManagerInternalServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.Dial(c.ModelManagerWorkerServiceServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}
-	mclient := mv1.NewModelsInternalServiceClient(conn)
+	mclient := mv1.NewModelsWorkerServiceClient(conn)
 	s3Client := s3.NewClient(c.ObjectStore.S3)
 
 	preProcessor := dispatcher.NewPreProcessor(fclient, mclient, s3Client)
