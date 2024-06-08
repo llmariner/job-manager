@@ -8,7 +8,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/llm-operator/common v0.3.0
 	github.com/llm-operator/file-manager v0.42.0
-	github.com/llm-operator/model-manager v0.62.0
+	github.com/llm-operator/model-manager v0.66.0
 	github.com/llm-operator/rbac-manager v0.69.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
