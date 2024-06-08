@@ -9,7 +9,7 @@ require (
 	github.com/llm-operator/common v0.3.0
 	github.com/llm-operator/file-manager v0.42.0
 	github.com/llm-operator/model-manager v0.66.0
-	github.com/llm-operator/rbac-manager v0.69.0
+	github.com/llm-operator/rbac-manager v0.73.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.6.0

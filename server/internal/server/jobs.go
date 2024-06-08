@@ -101,6 +101,12 @@ func (s *S) CreateJob(
 		}
 	}
 
+	if len(userInfo.AssignedKubernetesEnvs) == 0 {
+		return nil, status.Errorf(codes.Internal, "no kuberentes cluster/namespace for a job")
+	}
+	// TODO(kenji): Revisit. We might want dispatcher to pick up a cluster/namespace.
+	kenv := userInfo.AssignedKubernetesEnvs[0]
+
 	jobProto := &v1.Job{
 		Id:              jobID,
 		CreatedAt:       time.Now().UTC().Unix(),
@@ -115,7 +121,8 @@ func (s *S) CreateJob(
 		Seed:            req.Seed,
 
 		ProjectId:           userInfo.ProjectID,
-		KubernetesNamespace: userInfo.KubernetesNamespace,
+		KubernetesNamespace: kenv.Namespace,
+		ClusterId:           kenv.ClusterID,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
@@ -130,7 +137,7 @@ func (s *S) CreateJob(
 		TenantID:            userInfo.TenantID,
 		OrganizationID:      userInfo.OrganizationID,
 		ProjectID:           userInfo.ProjectID,
-		KubernetesNamespace: userInfo.KubernetesNamespace,
+		KubernetesNamespace: kenv.Namespace,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
