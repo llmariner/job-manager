@@ -90,8 +90,8 @@ github.com/llm-operator/common v0.3.0 h1:xkZfXIzfXYKxK6pqInWnrDPrZ9fb54i5OPs1y6V
 github.com/llm-operator/common v0.3.0/go.mod h1:NQpm0/EQnyXz/a67TftLWF3Ju0hgaalViND67s2sRVs=
 github.com/llm-operator/file-manager v0.42.0 h1:goio9P/xWcvbSNZJuyzUqLwnyx4+4LdVmhMPPT0aHck=
 github.com/llm-operator/file-manager v0.42.0/go.mod h1:eV8QWrx9/Hj4psgj20uENm8WWg+l5zt+nVZ7zM+QgJk=
-github.com/llm-operator/model-manager v0.62.0 h1:pve+/4apM0UPAVWrqTw1oSJS+as7dHMIEv7otT2QOZw=
-github.com/llm-operator/model-manager v0.62.0/go.mod h1:CJ9+o4rdUZY6eJNUNwukVJNHUn6Gtit2aWUPQRF40ZU=
+github.com/llm-operator/model-manager v0.66.0 h1:nbJ2XupD43h6xtE7LaiU+L+UFQ6kgqUXh0uyE03Burs=
+github.com/llm-operator/model-manager v0.66.0/go.mod h1:tJtpueTgJY/yabzI0oGAPCVMvH2KWs/2ZiDX42rekgc=
 github.com/llm-operator/rbac-manager v0.69.0 h1:evDaZao1KxlVEUA0Xb7rKOy+voIIM2KFTww2oQmGe6E=
 github.com/llm-operator/rbac-manager v0.69.0/go.mod h1:Rag6+LXB2MDvwOXp+WmPOF8XXCXEuUjDxxgLdqSjSjM=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
