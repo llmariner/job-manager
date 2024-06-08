@@ -19,7 +19,7 @@ data:
       llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
       ingressClassName: {{ .Values.global.ingress.ingressClassName }}
     fileManagerServerWorkerServiceAddr: {{ .Values.fileManagerServerWorkerServiceAddr }}
-    modelManagerServerAddr: {{ .Values.modelManagerServerWorkerServiceAddr }}
+    modelManagerServerWorkerServiceAddr: {{ .Values.modelManagerServerWorkerServiceAddr }}
     objectStore:
       s3:
         endpointUrl: {{ .Values.global.objectStore.s3.endpointUrl }}
