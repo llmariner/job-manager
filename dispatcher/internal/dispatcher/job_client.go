@@ -12,7 +12,6 @@ import (
 	_ "embed"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	corev1 "k8s.io/api/core/v1"
@@ -58,32 +57,26 @@ type JobClient struct {
 	kueueConfig config.KueueConfig
 }
 
-func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *PreProcessResult) error {
+func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult *PreProcessResult) error {
 	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
 	log := ctrl.LoggerFrom(ctx)
-
 	log.Info("Creating a k8s Job resource for a job")
 
-	jobProto, err := jobData.V1Job()
-	if err != nil {
-		return err
-	}
-
-	spec, err := p.jobSpec(jobProto, presult)
+	spec, err := p.jobSpec(ijob.Job, presult)
 	if err != nil {
 		return err
 	}
 
 	obj := batchv1apply.
-		Job(util.GetK8sJobName(jobData.JobID), jobData.KubernetesNamespace).
+		Job(util.GetK8sJobName(ijob.Job.Id), ijob.Job.KubernetesNamespace).
 		WithAnnotations(map[string]string{
 			managedJobAnnotationKey: "true",
-			jobIDAnnotationKey:      jobData.JobID}).
+			jobIDAnnotationKey:      ijob.Job.Id}).
 		WithSpec(spec)
 
 	if p.kueueConfig.Enable {
 		obj.WithLabels(map[string]string{
-			kueueQueueNameLabelKey: p.getQueueName(jobData.KubernetesNamespace),
+			kueueQueueNameLabelKey: p.getQueueName(ijob.Job.KubernetesNamespace),
 		})
 	}
 
@@ -96,11 +89,10 @@ func (p *JobClient) createJob(ctx context.Context, jobData *store.Job, presult *
 	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
 
-func (p *JobClient) jobSpec(jobProto *v1.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
-	cmd, err := p.cmd(jobProto, presult)
+func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
+	cmd, err := p.cmd(job, presult)
 	if err != nil {
 		return nil, err
-
 	}
 
 	container := corev1apply.Container().
@@ -148,7 +140,7 @@ func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
 		})
 }
 
-func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, error) {
+func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) {
 	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 	type Params struct {
 		BaseModelName     string
@@ -164,13 +156,13 @@ func (p *JobClient) cmd(jobProto *v1.Job, presult *PreProcessResult) (string, er
 	if p.jobConfig.NumGPUs > 0 {
 		numProcessors = p.jobConfig.NumGPUs
 	}
-	additionalSFTArgs, err := toAddtionalSFTArgs(jobProto)
+	additionalSFTArgs, err := toAddtionalSFTArgs(job)
 	if err != nil {
 		return "", err
 	}
 
 	params := Params{
-		BaseModelName:     jobProto.Model,
+		BaseModelName:     job.Model,
 		BaseModelURLs:     presult.BaseModelURLs,
 		TrainingFileURL:   presult.TrainingFileURL,
 		ValidationFileURL: presult.ValidationFileURL,
@@ -191,9 +183,9 @@ func (p *JobClient) getQueueName(namespace string) string {
 	return p.kueueConfig.DefaultQueueName
 }
 
-func toAddtionalSFTArgs(jobProto *v1.Job) (string, error) {
+func toAddtionalSFTArgs(job *v1.Job) (string, error) {
 	args := []string{}
-	if hp := jobProto.Hyperparameters; hp != nil {
+	if hp := job.Hyperparameters; hp != nil {
 
 		if v := hp.BatchSize; v > 0 {
 			args = append(args, fmt.Sprintf("--per_device_train_batch_size=%d", v))
@@ -206,7 +198,7 @@ func toAddtionalSFTArgs(jobProto *v1.Job) (string, error) {
 		}
 	}
 
-	if is := jobProto.Integrations; len(is) > 0 {
+	if is := job.Integrations; len(is) > 0 {
 		if len(is) > 1 {
 			return "", fmt.Errorf("multiple integrations are not supported")
 		}

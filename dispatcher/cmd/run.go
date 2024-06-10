@@ -57,11 +57,6 @@ var runCmd = &cobra.Command{
 func run(ctx context.Context, c *config.Config) error {
 	ctrl.SetLogger(logr.FromSlogHandler(slog.Default().Handler()))
 
-	st, err := newStore(c)
-	if err != nil {
-		return err
-	}
-
 	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
 	if err != nil {
 		return err
@@ -96,14 +91,15 @@ func run(ctx context.Context, c *config.Config) error {
 	if err != nil {
 		return err
 	}
+	ftClient := v1.NewFineTuningWorkerServiceClient(conn)
 	wsClient := v1.NewWorkspaceWorkerServiceClient(conn)
 
-	if err := dispatcher.New(st, wsClient, jc, preProcessor, nb, c.PollingInterval).
+	if err := dispatcher.New(ftClient, wsClient, jc, preProcessor, nb, c.PollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := dispatcher.NewLifecycleManager(st, mgr.GetClient(), postProcessor).
+	if err := dispatcher.NewLifecycleManager(ftClient, mgr.GetClient(), postProcessor).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}

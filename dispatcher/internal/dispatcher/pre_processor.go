@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
@@ -65,17 +65,12 @@ type PreProcessResult struct {
 }
 
 // Process runs the pre-process.
-func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcessResult, error) {
+func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PreProcessResult, error) {
 	log := ctrl.LoggerFrom(ctx)
-
-	jobProto, err := job.V1Job()
-	if err != nil {
-		return nil, err
-	}
 
 	ctx = auth.AppendWorkerAuthorization(ctx)
 	mresp, err := p.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
-		Id: jobProto.Model,
+		Id: job.Job.Model,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("get base model path: %s", err)
@@ -105,12 +100,12 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 		baseModelURLs[strings.TrimPrefix(path, mresp.Path+"/")] = url
 	}
 
-	trainingFileURL, err := p.getPresignedURLForFile(ctx, jobProto.TrainingFile)
+	trainingFileURL, err := p.getPresignedURLForFile(ctx, job.Job.TrainingFile)
 	if err != nil {
 		return nil, err
 	}
 	var validationFileURL string
-	if f := jobProto.ValidationFile; f != "" {
+	if f := job.Job.ValidationFile; f != "" {
 		validationFileURL, err = p.getPresignedURLForFile(ctx, f)
 		if err != nil {
 			return nil, err
@@ -118,10 +113,10 @@ func (p *PreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcess
 	}
 
 	rresp, err := p.modelClient.RegisterModel(ctx, &mv1.RegisterModelRequest{
-		BaseModel:      jobProto.Model,
+		BaseModel:      job.Job.Model,
 		Suffix:         job.Suffix,
-		OrganizationId: job.OrganizationID,
-		ProjectId:      job.ProjectID,
+		OrganizationId: job.Job.OrganizationId,
+		ProjectId:      job.Job.ProjectId,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("register model: %s", err)

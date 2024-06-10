@@ -7,14 +7,13 @@ import (
 	"time"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"golang.org/x/sync/errgroup"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type jobCreatorI interface {
-	createJob(ctx context.Context, job *store.Job, presult *PreProcessResult) error
+	createJob(ctx context.Context, job *v1.InternalJob, presult *PreProcessResult) error
 }
 
 type notebookManagerI interface {
@@ -25,7 +24,7 @@ type notebookManagerI interface {
 
 // PreProcessorI is an interface for pre-processing jobs.
 type PreProcessorI interface {
-	Process(ctx context.Context, job *store.Job) (*PreProcessResult, error)
+	Process(ctx context.Context, job *v1.InternalJob) (*PreProcessResult, error)
 }
 
 // NoopPreProcessor is a no-op implementation of PreProcessorI.
@@ -33,13 +32,13 @@ type NoopPreProcessor struct {
 }
 
 // Process is a no-op implementation of Process.
-func (p *NoopPreProcessor) Process(ctx context.Context, job *store.Job) (*PreProcessResult, error) {
+func (p *NoopPreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PreProcessResult, error) {
 	return &PreProcessResult{}, nil
 }
 
 // New returns a new dispatcher.
 func New(
-	store *store.S,
+	ftClient v1.FineTuningWorkerServiceClient,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	jobCreator jobCreatorI,
 	preProcessor PreProcessorI,
@@ -47,7 +46,7 @@ func New(
 	pollingInterval time.Duration,
 ) *D {
 	return &D{
-		store:           store,
+		ftClient:        ftClient,
 		wsClient:        wsClient,
 		jobCreator:      jobCreator,
 		preProcessor:    preProcessor,
@@ -58,7 +57,7 @@ func New(
 
 // D is a dispatcher.
 type D struct {
-	store    *store.S
+	ftClient v1.FineTuningWorkerServiceClient
 	wsClient v1.WorkspaceWorkerServiceClient
 
 	jobCreator   jobCreatorI
@@ -110,12 +109,13 @@ func (d *D) Start(ctx context.Context) error {
 }
 
 func (d *D) processQueuedJobs(ctx context.Context) error {
-	jobs, err := d.store.ListQueuedJobs()
+	ctx = auth.AppendWorkerAuthorization(ctx)
+	resp, err := d.ftClient.ListQueuedInternalJobs(ctx, &v1.ListQueuedInternalJobsRequest{})
 	if err != nil {
 		return err
 	}
 
-	for _, job := range jobs {
+	for _, job := range resp.Jobs {
 		if err := d.processJob(ctx, job); err != nil {
 			return err
 		}
@@ -123,20 +123,25 @@ func (d *D) processQueuedJobs(ctx context.Context) error {
 	return nil
 }
 
-func (d *D) processJob(ctx context.Context, job *store.Job) error {
-	log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.JobID)
-	ctx = ctrl.LoggerInto(ctx, log)
+func (d *D) processJob(ctx context.Context, job *v1.InternalJob) error {
+	log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.Job.Id)
 	log.Info("Processing job")
+
+	ctx = ctrl.LoggerInto(ctx, log)
+	ctx = auth.AppendWorkerAuthorization(ctx)
 
 	log.Info("Started pre-processing")
 	presult, err := d.preProcessor.Process(ctx, job)
 	if err != nil {
 		return err
 	}
-	if err := d.store.UpdateOutputModelID(job.JobID, job.Version, presult.OutputModelID); err != nil {
+	if _, err := d.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+		Id:      job.Job.Id,
+		Phase:   v1.UpdateJobPhaseRequest_PREPROCESSED,
+		ModelId: presult.OutputModelID,
+	}); err != nil {
 		return err
 	}
-	job.Version++
 	log.Info("Successfuly completed pre-processing")
 
 	log.Info("Creating a k8s job")
@@ -144,7 +149,11 @@ func (d *D) processJob(ctx context.Context, job *store.Job) error {
 		return err
 	}
 	log.Info("Successfully created the k8s job")
-	return d.store.UpdateJobState(job.JobID, job.Version, store.JobStateRunning)
+	_, err = d.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+		Id:    job.Job.Id,
+		Phase: v1.UpdateJobPhaseRequest_JOB_CREATED,
+	})
+	return err
 }
 
 func (d *D) processNotebooks(ctx context.Context) error {
