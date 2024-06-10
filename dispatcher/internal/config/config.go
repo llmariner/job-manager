@@ -134,6 +134,7 @@ type Config struct {
 	Job      JobConfig       `yaml:"job"`
 	Notebook NotebooksConfig `yaml:"notebook"`
 
+	JobManagerServerWorkerServiceAddr   string `yaml:"jobManagerServerWorkerServiceAddr"`
 	FileManagerServerWorkerServiceAddr  string `yaml:"fileManagerServerWorkerServiceAddr"`
 	ModelManagerServerWorkerServiceAddr string `yaml:"modelManagerServerWorkerServiceAddr"`
 
@@ -165,6 +166,9 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("sqlite path must be set")
 		}
 	} else {
+		if c.JobManagerServerWorkerServiceAddr == "" {
+			return fmt.Errorf("job manager server worker service address must be set")
+		}
 		if c.FileManagerServerWorkerServiceAddr == "" {
 			return fmt.Errorf("file manager server worker service address must be set")
 		}

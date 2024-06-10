@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/llm-operator/common/pkg/db"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
@@ -91,7 +92,13 @@ func run(ctx context.Context, c *config.Config) error {
 
 	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName)
 
-	if err := dispatcher.New(st, jc, preProcessor, nb, c.PollingInterval).
+	conn, err := grpc.Dial(c.JobManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	wsClient := v1.NewWorkspaceWorkerServiceClient(conn)
+
+	if err := dispatcher.New(st, wsClient, jc, preProcessor, nb, c.PollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
