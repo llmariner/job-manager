@@ -146,6 +146,7 @@ message UpdateJobPhaseRequest {
     JOB_CREATED = 2;
     FINETUNED = 3;
     FAILED = 4;
+    REQUEUE = 5;
   }
   Phase phase = 2;
   // message describing the details of the job phase. currently only used for failed jobs.
