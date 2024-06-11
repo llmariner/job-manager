@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/llm-operator/job-manager/common/pkg/store"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
@@ -30,17 +30,17 @@ type PostProcessor struct {
 }
 
 // Process processes the job.
-func (p *PostProcessor) Process(ctx context.Context, job *store.Job) error {
+func (p *PostProcessor) Process(ctx context.Context, job *v1.InternalJob) error {
 	log := ctrl.LoggerFrom(ctx)
 
-	if job.OutputModelID == "" {
+	if job.OutputModelId == "" {
 		return fmt.Errorf("output model ID is not populated")
 	}
 
 	log.Info("Publishing the model")
 	ctx = auth.AppendWorkerAuthorization(ctx)
 	if _, err := p.modelClient.PublishModel(ctx, &mv1.PublishModelRequest{
-		Id: job.OutputModelID,
+		Id: job.OutputModelId,
 	}); err != nil {
 		return err
 	}

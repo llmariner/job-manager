@@ -7,8 +7,10 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -20,7 +22,7 @@ import (
 
 // PostProcessorI is an interface for post-processing.
 type PostProcessorI interface {
-	Process(ctx context.Context, job *store.Job) error
+	Process(ctx context.Context, job *v1.InternalJob) error
 }
 
 // NoopPostProcessor is a no-op implementation of PostProcessorI.
@@ -28,18 +30,18 @@ type NoopPostProcessor struct {
 }
 
 // Process is a no-op implementation of Process.
-func (p *NoopPostProcessor) Process(ctx context.Context, job *store.Job) error {
+func (p *NoopPostProcessor) Process(ctx context.Context, job *v1.InternalJob) error {
 	return nil
 }
 
 // NewLifecycleManager returns a new LifecycleManager.
 func NewLifecycleManager(
-	store *store.S,
+	ftClient v1.FineTuningWorkerServiceClient,
 	client client.Client,
 	postProcessor PostProcessorI,
 ) *LifecycleManager {
 	return &LifecycleManager{
-		store:         store,
+		ftClient:      ftClient,
 		k8sClient:     client,
 		postProcessor: postProcessor,
 	}
@@ -47,7 +49,7 @@ func NewLifecycleManager(
 
 // LifecycleManager manages job lifecycle and sync status.
 type LifecycleManager struct {
-	store         *store.S
+	ftClient      v1.FineTuningWorkerServiceClient
 	k8sClient     client.Client
 	postProcessor PostProcessorI
 }
@@ -78,6 +80,7 @@ func (s *LifecycleManager) Reconcile(
 	jobID := util.GetJobID(req.Name)
 	log = log.WithValues("jobID", jobID)
 	ctx = ctrl.LoggerInto(ctx, log)
+	ctx = auth.AppendWorkerAuthorization(ctx)
 
 	var job batchv1.Job
 	if err := s.k8sClient.Get(ctx, req.NamespacedName, &job); err != nil {
@@ -86,15 +89,22 @@ func (s *LifecycleManager) Reconcile(
 			return ctrl.Result{}, err
 		}
 
-		jobData, err := s.store.GetJobByJobID(jobID)
+		ijob, err := s.ftClient.GetInternalJob(ctx, &v1.GetInternalJobRequest{Id: jobID})
 		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				log.Info("Job not found in both store and k8s")
+				return ctrl.Result{}, nil
+			}
 			log.Error(err, "Failed to get Job from jobID")
 			return ctrl.Result{}, err
 		}
-		if jobData.State == store.JobStateRunning {
+		if ijob.State == v1.InternalJob_RUNNING {
 			// set back to the pending status if job is accidentally deleted.
-			if err = s.store.UpdateJobState(jobData.JobID, jobData.Version, store.JobStateQueued); err != nil {
-				log.Error(err, "Failed to update job state")
+			if _, err = s.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+				Id:    jobID,
+				Phase: v1.UpdateJobPhaseRequest_REQUEUE,
+			}); err != nil {
+				log.Error(err, "Failed to update job phase")
 				return ctrl.Result{}, err
 			}
 		}
@@ -107,18 +117,19 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, nil
 	}
 
-	jobData, err := s.store.GetJobByJobID(jobID)
+	ijob, err := s.ftClient.GetInternalJob(ctx, &v1.GetInternalJobRequest{Id: jobID})
 	if err != nil {
 		log.Error(err, "Failed to get Job from jobID")
 		return ctrl.Result{}, err
 	}
-	// TODO(aya): handle status mismatch
-	switch jobData.State {
-	case store.JobStateSucceeded, store.JobStateFailed:
+	switch ijob.State {
+	case v1.InternalJob_RUNNING:
+		// valid state, continue
+	case v1.InternalJob_SUCCEEDED, v1.InternalJob_FAILED:
 		// do nothing, already complete
-		log.V(2).Info("Job is already completed", "state", jobData.State)
+		log.V(2).Info("Job is already completed", "state", ijob.State)
 		return ctrl.Result{}, nil
-	case store.JobStateCancelled:
+	case v1.InternalJob_CANCELED:
 		// TODO(aya): rethink cleanup method (e.g., post-processed data)
 		var (
 			expired        bool
@@ -137,6 +148,11 @@ func (s *LifecycleManager) Reconcile(
 		}
 		log.Info("Deleting the cancelled and expired job")
 		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
+	default:
+		// queued, unspecifed, or unknown are not valid states
+		// this error could not be recovered by k8s reconciliation, so just log and return
+		log.Error(fmt.Errorf("unexpected job state: %v", ijob.State), "Job state is invalid")
+		return ctrl.Result{}, nil
 	}
 
 	if job.Status.Failed > 0 {
@@ -147,20 +163,12 @@ func (s *LifecycleManager) Reconcile(
 				break
 			}
 		}
-		if err := jobData.MutateMessage(func(j *v1.Job) {
-			j.FinishedAt = time.Now().UTC().Unix()
-			j.Error = &v1.Job_Error{Message: message}
+		if _, err = s.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+			Id:      jobID,
+			Phase:   v1.UpdateJobPhaseRequest_FAILED,
+			Message: message,
 		}); err != nil {
-			log.Error(err, "Failed to mutate message")
-			return ctrl.Result{}, err
-		}
-		if err := s.store.UpdateJobStateAndMessage(
-			jobID,
-			jobData.Version,
-			store.JobStateFailed,
-			jobData.Message,
-		); err != nil {
-			log.Error(err, "Failed to update job state")
+			log.Error(err, "Failed to update job phase")
 			return ctrl.Result{}, err
 		}
 		log.Info("Job failed", "msg", message)
@@ -169,29 +177,20 @@ func (s *LifecycleManager) Reconcile(
 	log.Info("Job successfully completed")
 
 	log.Info("Running post-processing")
-	if err := s.postProcessor.Process(ctx, jobData); err != nil {
+	if err := s.postProcessor.Process(ctx, ijob); err != nil {
 		log.Error(err, "Failed to post process")
 		return ctrl.Result{}, err
 	}
 	log.Info("Post-processing successfully completed")
 
-	if err := jobData.MutateMessage(func(j *v1.Job) {
-		j.FinishedAt = time.Now().UTC().Unix()
-		j.FineTunedModel = jobData.OutputModelID
+	if _, err = s.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+		Id:      jobID,
+		Phase:   v1.UpdateJobPhaseRequest_FINETUNED,
+		ModelId: ijob.OutputModelId,
 	}); err != nil {
-		log.Error(err, "Failed to mutate message")
+		log.Error(err, "Failed to update job phase")
 		return ctrl.Result{}, err
 	}
-	if err := s.store.UpdateJobStateAndMessage(
-		jobID,
-		jobData.Version,
-		store.JobStateSucceeded,
-		jobData.Message,
-	); err != nil {
-		log.Error(err, "Failed to update job state")
-		return ctrl.Result{}, err
-	}
-
 	log.Info("Finished processing job")
 	return ctrl.Result{}, nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/stretchr/testify/assert"
@@ -31,17 +30,13 @@ func TestPreProcess(t *testing.T) {
 
 	p := NewPreProcessor(fc, mc, sc)
 
-	jobProto := &v1.Job{
-		Model:          "model-id",
-		TrainingFile:   "training-file-id",
-		ValidationFile: "validation-file-id",
-	}
-	b, err := proto.Marshal(jobProto)
-	assert.NoError(t, err)
-
-	job := &store.Job{
-		JobID:   "job-id",
-		Message: b,
+	job := &v1.InternalJob{
+		Job: &v1.Job{
+			Id:             "job-id",
+			Model:          "model-id",
+			TrainingFile:   "training-file-id",
+			ValidationFile: "validation-file-id",
+		},
 	}
 
 	got, err := p.Process(context.Background(), job)

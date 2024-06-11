@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/llm-operator/job-manager/common/pkg/store"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -17,9 +17,9 @@ func TestPostProcessor(t *testing.T) {
 	}
 
 	p := NewPostProcessor(mc)
-	job := &store.Job{
-		JobID:         "job-id",
-		OutputModelID: "output-model-id",
+	job := &v1.InternalJob{
+		Job:           &v1.Job{Id: "job-id"},
+		OutputModelId: "output-model-id",
 	}
 
 	err := p.Process(context.Background(), job)
