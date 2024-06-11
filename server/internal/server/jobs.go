@@ -426,6 +426,13 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateFailed, job.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
+	case v1.UpdateJobPhaseRequest_REQUEUE:
+		if job.State != store.JobStateRunning {
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
+		}
+		if err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateQueued); err != nil {
+			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unknown phase: %v", req.Phase)
 	}

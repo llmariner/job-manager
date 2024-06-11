@@ -364,6 +364,24 @@ func TestUpdateJobPhase(t *testing.T) {
 			},
 			wantState: store.JobStateFailed,
 		},
+		{
+			name:      "phase requeue",
+			prevState: store.JobStateRunning,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.UpdateJobPhaseRequest_REQUEUE,
+				ModelId: "model0",
+			},
+			wantState: store.JobStateQueued,
+		},
+		{
+			name:      "phase requeue, previous state is not running",
+			prevState: store.JobStateCancelled,
+			req: &v1.UpdateJobPhaseRequest{
+				Phase:   v1.UpdateJobPhaseRequest_REQUEUE,
+				ModelId: "model0",
+			},
+			wantError: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
