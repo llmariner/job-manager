@@ -5,8 +5,10 @@ import (
 	"testing"
 	"time"
 
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 )
 
 func TestProcessQueuedJobs(t *testing.T) {
@@ -35,10 +37,11 @@ func TestProcessQueuedJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
+	ws := &fakeWorkspaceWorkerServiceClient{}
 	jc := &noopJobCreator{}
 	pp := &NoopPreProcessor{}
 	nc := &noopNotebookManager{}
-	d := New(st, jc, pp, nc, time.Second)
+	d := New(st, ws, jc, pp, nc, time.Second)
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
@@ -60,69 +63,48 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 	st, teardown := store.NewTest(t)
 	defer teardown()
 
-	nbs := []*store.Notebook{
+	nbs := []*v1.InternalNotebook{
 		{
-			NotebookID:   "nb0",
-			State:        store.NotebookStateQueued,
-			QueuedAction: store.NotebookQueuedActionStart,
-			TenantID:     "tid0",
-			ProjectID:    "p0",
+			Notebook: &v1.Notebook{
+				Id: "nb0",
+			},
+			State:        v1.NotebookState_QUEUED,
+			QueuedAction: v1.NotebookQueuedAction_STARTING,
 		},
 		{
-			NotebookID: "nb1",
-			State:      store.NotebookStateStopped,
-			TenantID:   "tid0",
-			ProjectID:  "p0",
+			Notebook: &v1.Notebook{
+				Id: "nb1",
+			},
+			State:        v1.NotebookState_QUEUED,
+			QueuedAction: v1.NotebookQueuedAction_STOPPING,
 		},
 		{
-			NotebookID:   "nb2",
-			State:        store.NotebookStateQueued,
-			QueuedAction: store.NotebookQueuedActionStart,
-			TenantID:     "tid1",
-			ProjectID:    "p0",
+			Notebook: &v1.Notebook{
+				Id: "nb2",
+			},
+			State:        v1.NotebookState_QUEUED,
+			QueuedAction: v1.NotebookQueuedAction_DELETING,
 		},
-		{
-			NotebookID:   "nb3",
-			State:        store.NotebookStateQueued,
-			QueuedAction: store.NotebookQueuedActionStop,
-			TenantID:     "tid1",
-			ProjectID:    "p0",
-		},
-		{
-			NotebookID:   "nb4",
-			State:        store.NotebookStateQueued,
-			QueuedAction: store.NotebookQueuedActionDelete,
-			TenantID:     "tid1",
-			ProjectID:    "p0",
-		},
-	}
-	for _, nb := range nbs {
-		err := st.CreateNotebook(nb)
-		assert.NoError(t, err)
 	}
 
+	ws := &fakeWorkspaceWorkerServiceClient{notebooks: nbs, updatedState: map[string]v1.NotebookState{}}
 	jc := &noopJobCreator{}
 	pp := &NoopPreProcessor{}
 	nc := &noopNotebookManager{}
-	d := New(st, jc, pp, nc, time.Second)
+	d := New(st, ws, jc, pp, nc, time.Second)
 	err := d.processNotebooks(context.Background())
 	assert.NoError(t, err)
 
-	wants := map[string]store.NotebookState{
-		nbs[0].NotebookID: store.NotebookStateRunning,
-		nbs[1].NotebookID: store.NotebookStateStopped,
-		nbs[2].NotebookID: store.NotebookStateRunning,
-		nbs[3].NotebookID: store.NotebookStateStopped,
+	wants := map[string]v1.NotebookState{
+		nbs[0].Notebook.Id: v1.NotebookState_RUNNING,
+		nbs[1].Notebook.Id: v1.NotebookState_STOPPED,
+		nbs[2].Notebook.Id: v1.NotebookState_DELETED,
 	}
 	for nbID, want := range wants {
-		got, err := st.GetNotebookByIDAndProjectID(nbID, "p0")
-		assert.NoError(t, err)
-		assert.Equal(t, want, got.State)
+		got, ok := ws.updatedState[nbID]
+		assert.True(t, ok)
+		assert.Equal(t, want, got)
 	}
-
-	assert.Equal(t, 2, nc.createCounter)
-	assert.Equal(t, 1, nc.stopCounter)
-	assert.Equal(t, 1, nc.deleteCounter)
 }
 
 type noopJobCreator struct {
@@ -140,17 +122,33 @@ type noopNotebookManager struct {
 	deleteCounter int
 }
 
-func (n *noopNotebookManager) createNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *noopNotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	n.createCounter++
 	return nil
 }
 
-func (n *noopNotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *noopNotebookManager) stopNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	n.stopCounter++
 	return nil
 }
 
-func (n *noopNotebookManager) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *noopNotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	n.deleteCounter++
 	return nil
+}
+
+type fakeWorkspaceWorkerServiceClient struct {
+	notebooks    []*v1.InternalNotebook
+	updatedState map[string]v1.NotebookState
+}
+
+func (c *fakeWorkspaceWorkerServiceClient) ListQueuedInternalNotebooks(ctx context.Context, in *v1.ListQueuedInternalNotebooksRequest, opts ...grpc.CallOption) (*v1.ListQueuedInternalNotebooksResponse, error) {
+	return &v1.ListQueuedInternalNotebooksResponse{
+		Notebooks: c.notebooks,
+	}, nil
+}
+
+func (c *fakeWorkspaceWorkerServiceClient) UpdateNotebookState(ctx context.Context, in *v1.UpdateNotebookStateRequest, opts ...grpc.CallOption) (*v1.UpdateNotebookStateResponse, error) {
+	c.updatedState[in.Id] = in.State
+	return &v1.UpdateNotebookStateResponse{}, nil
 }

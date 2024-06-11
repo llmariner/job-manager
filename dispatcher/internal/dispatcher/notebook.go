@@ -3,7 +3,7 @@ package dispatcher
 import (
 	"context"
 
-	"github.com/llm-operator/job-manager/common/pkg/store"
+	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -52,16 +52,11 @@ type NotebookManager struct {
 	ingressClassName string
 }
 
-func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating a deployment for a notebook")
 
-	nbProto, err := nb.V1Notebook()
-	if err != nil {
-		return err
-	}
-
-	name := util.GetK8sNotebookName(nb.NotebookID)
+	name := util.GetK8sNotebookName(nb.Notebook.Id)
 	labels := map[string]string{
 		"app.kubernetes.io/name":       "llmo-notebook",
 		"app.kubernetes.io/instance":   name,
@@ -69,14 +64,14 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 	}
 
 	var envs []*corev1apply.EnvVarApplyConfiguration
-	for k, v := range nbProto.Envs {
+	for k, v := range nb.Notebook.Envs {
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
 	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmoBaseURL))
 
 	req := corev1.ResourceList{}
 	limit := corev1.ResourceList{}
-	if r := nbProto.Resources; r != nil {
+	if r := nb.Notebook.Resources; r != nil {
 		if cpu := r.CpuMilicore; cpu != nil {
 			if cpu.Requests > 0 {
 				req[corev1.ResourceCPU] = *resource.NewMilliQuantity(int64(r.CpuMilicore.Requests), resource.DecimalSI)
@@ -110,14 +105,14 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 		appPort  = 8888
 		portName = "jupyter-web-ui"
 	)
-	var baseURL = "/v1/services/notebooks/" + nb.NotebookID
+	var baseURL = "/v1/services/notebooks/" + nb.Notebook.Id
 
 	deployConf := appsv1apply.
-		Deployment(name, nb.KubernetesNamespace).
+		Deployment(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
 			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.NotebookID}).
+			notebookIDAnnotationKey: nb.Notebook.Id}).
 		WithSpec(appsv1apply.DeploymentSpec().
 			WithReplicas(1).
 			WithSelector(metav1apply.LabelSelector().
@@ -127,7 +122,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 				WithSpec(corev1apply.PodSpec().
 					WithContainers(corev1apply.Container().
 						WithName("jupyterlab").
-						WithImage(nb.Image).
+						WithImage(nb.Notebook.Image).
 						WithImagePullPolicy(corev1.PullIfNotPresent).
 						// TODO: rethink authentication method
 						WithCommand("start-notebook.py").
@@ -141,14 +136,14 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 						WithEnv(envs...).
 						WithEnvFrom(corev1apply.EnvFromSource().
 							WithSecretRef(corev1apply.SecretEnvSource().
-								WithName(nb.NotebookID))).
+								WithName(nb.Notebook.Id))).
 						WithResources(resources)))))
 
-	svcConf := corev1apply.Service(name, nb.KubernetesNamespace).
+	svcConf := corev1apply.Service(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
 			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.NotebookID}).
+			notebookIDAnnotationKey: nb.Notebook.Id}).
 		WithSpec(corev1apply.ServiceSpec().
 			WithType(corev1.ServiceTypeClusterIP).
 			WithSelector(labels).
@@ -158,11 +153,11 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 				WithTargetPort(intstr.FromString(portName)).
 				WithProtocol(corev1.ProtocolTCP)))
 
-	ingConf := netv1apply.Ingress(name, nb.KubernetesNamespace).
+	ingConf := netv1apply.Ingress(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
 			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.NotebookID}).
+			notebookIDAnnotationKey: nb.Notebook.Id}).
 		WithSpec(netv1apply.IngressSpec().
 			WithIngressClassName(n.ingressClassName).
 			WithRules(netv1apply.IngressRule().
@@ -196,7 +191,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *store.Notebook
 
 	// Secret is pre-created by server, and dispatcher only set the owner reference here.
 	// TODO(aya): garbage collect orphaned secrets
-	secConf := corev1apply.Secret(nb.NotebookID, nb.KubernetesNamespace).
+	secConf := corev1apply.Secret(nb.Notebook.Id, nb.Notebook.KubernetesNamespace).
 		WithOwnerReferences(ownerRef)
 
 	for _, obj := range []any{svcConf, ingConf, secConf} {
@@ -219,16 +214,16 @@ func (n *NotebookManager) applyObject(ctx context.Context, applyConfig any, opts
 	return obj, nil
 }
 
-func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *NotebookManager) stopNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Stopping a deployment for a notebook")
 
 	var deploy appsv1.Deployment
-	name := util.GetK8sNotebookName(nb.NotebookID)
+	name := util.GetK8sNotebookName(nb.Notebook.Id)
 
 	if err := n.k8sClient.Get(ctx, types.NamespacedName{
 		Name:      name,
-		Namespace: nb.KubernetesNamespace,
+		Namespace: nb.Notebook.KubernetesNamespace,
 	}, &deploy); err != nil {
 		return err
 	}
@@ -237,16 +232,16 @@ func (n *NotebookManager) stopNotebook(ctx context.Context, nb *store.Notebook) 
 	return n.k8sClient.SubResource("scale").Update(ctx, &deploy, client.WithSubResourceBody(scale))
 }
 
-func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *store.Notebook) error {
+func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Deleting a deployment for a notebook")
 
 	var deploy appsv1.Deployment
-	name := util.GetK8sNotebookName(nb.NotebookID)
+	name := util.GetK8sNotebookName(nb.Notebook.Id)
 
 	if err := n.k8sClient.Get(ctx, types.NamespacedName{
 		Name:      name,
-		Namespace: nb.KubernetesNamespace,
+		Namespace: nb.Notebook.KubernetesNamespace,
 	}, &deploy); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.V(4).Info("Deployment not found")
