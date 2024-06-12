@@ -127,6 +127,16 @@ func (c *KueueConfig) validate() error {
 	return nil
 }
 
+// WorkerTLSConfig is the worker TLS configuration.
+type WorkerTLSConfig struct {
+	Enable bool `yaml:"enable"`
+}
+
+// WorkerConfig is the worker configuration.
+type WorkerConfig struct {
+	TLS WorkerTLSConfig `yaml:"tls"`
+}
+
 // Config is the configuration.
 type Config struct {
 	PollingInterval time.Duration `yaml:"pollingInterval"`
@@ -147,6 +157,8 @@ type Config struct {
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
+
+	Worker WorkerConfig `yaml:"workerConfig"`
 }
 
 // Validate validates the configuration.
