@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"log/slog"
 
 	"github.com/go-logr/logr"
@@ -15,6 +16,7 @@ import (
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -87,7 +89,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName)
 
-	conn, err := grpc.Dial(c.JobManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
 	if err != nil {
 		return err
 	}
@@ -131,13 +133,14 @@ func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostP
 		return &dispatcher.NoopPreProcessor{}, &dispatcher.NoopPostProcessor{}, nil
 	}
 
-	conn, err := grpc.Dial(c.FileManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	option := grpcOption(c)
+	conn, err := grpc.Dial(c.FileManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return nil, nil, err
 	}
 	fclient := fv1.NewFilesWorkerServiceClient(conn)
 
-	conn, err = grpc.Dial(c.ModelManagerServerWorkerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.Dial(c.ModelManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -160,4 +163,11 @@ func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
 func init() {
 	runCmd.Flags().StringP(flagConfig, "c", "", "Configuration file path")
 	_ = runCmd.MarkFlagRequired(flagConfig)
+}
+
+func grpcOption(c *config.Config) grpc.DialOption {
+	if c.Worker.TLS.Enable {
+		return grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
+	}
+	return grpc.WithTransportCredentials(insecure.NewCredentials())
 }
