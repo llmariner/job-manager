@@ -11,6 +11,7 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
+	"github.com/llm-operator/job-manager/server/internal/k8s"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
@@ -35,17 +36,12 @@ type modelClient interface {
 	GetModel(ctx context.Context, in *mv1.GetModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
-type k8sClient interface {
-	CancelJob(ctx context.Context, job *v1.Job, namespace string) error
-	CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error
-}
-
 // New creates a server.
 func New(
 	store *store.S,
 	fileGetClient fileGetClient,
 	modelClient modelClient,
-	k8sClient k8sClient,
+	k8sClientFactory k8s.ClientFactory,
 	nbImageTypes map[string]string,
 ) *S {
 	nbtypes := make([]string, 0, len(nbImageTypes))
@@ -53,12 +49,12 @@ func New(
 		nbtypes = append(nbtypes, t)
 	}
 	return &S{
-		store:          store,
-		fileGetClient:  fileGetClient,
-		modelClient:    modelClient,
-		k8sClient:      k8sClient,
-		nbImageTypes:   nbImageTypes,
-		nbImageTypeStr: strings.Join(nbtypes, ", "),
+		store:            store,
+		fileGetClient:    fileGetClient,
+		modelClient:      modelClient,
+		k8sClientFactory: k8sClientFactory,
+		nbImageTypes:     nbImageTypes,
+		nbImageTypeStr:   strings.Join(nbtypes, ", "),
 	}
 }
 
@@ -71,10 +67,10 @@ type S struct {
 
 	enableAuth bool
 
-	store         *store.S
-	fileGetClient fileGetClient
-	modelClient   modelClient
-	k8sClient     k8sClient
+	store            *store.S
+	fileGetClient    fileGetClient
+	modelClient      modelClient
+	k8sClientFactory k8s.ClientFactory
 
 	nbImageTypes   map[string]string
 	nbImageTypeStr string

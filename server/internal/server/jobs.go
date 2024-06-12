@@ -257,6 +257,17 @@ func (s *S) CancelJob(
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
+	token, err := s.extractTokenFromContext(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "extract token: %s", err)
+	}
+	// TODO(aya): Revisit. We might want dispatcher to pick up a cluster/namespace.
+	kenv := userInfo.AssignedKubernetesEnvs[0]
+	kclient, err := s.k8sClientFactory.NewClient(kenv, token)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "create k8s client: %s", err)
+	}
+
 	job, err := s.store.GetJobByJobIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -277,7 +288,7 @@ func (s *S) CancelJob(
 		return jobProto, nil
 	case store.JobStateQueued:
 	case store.JobStateRunning:
-		if err := s.k8sClient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
+		if err := kclient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
 			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
 		}
 	default:

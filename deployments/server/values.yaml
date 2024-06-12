@@ -26,6 +26,7 @@ workerServiceGrpcPort: 8082
 # The following default values work if model-manager-server runs in the same namespace.
 fileManagerServerAddr: file-manager-server-grpc:8081
 modelManagerServerAddr: model-manager-server-grpc:8081
+sessionManagerServerEndpoint: http://session-manager-server-http:8080/v1
 
 database:
   database: job_manager
@@ -40,9 +41,6 @@ notebook:
     jupyter-lab-full: mirror.gcr.io/cschranz/gpu-jupyter:v1.7_cuda-12.3_ubuntu-22.04
 
 replicaCount: 1
-
-serviceAccount:
-  create: true
 
 image:
   repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-server

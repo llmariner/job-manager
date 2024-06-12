@@ -16,7 +16,6 @@ spec:
       annotations:
         checksum/config: {{ sha256sum (toJson .Values) }}
     spec:
-      serviceAccountName: {{ include "job-manager-server.serviceAccountName" . }}
       containers:
       - name: job-manager-server
         image: "{{ .Values.image.repository }}:{{ default .Chart.Version .Values.version }}"
