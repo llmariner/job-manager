@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/llm-operator/common/pkg/db"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -40,7 +39,6 @@ func (c *ObjectStoreConfig) validate() error {
 type DebugConfig struct {
 	KubeconfigPath string `yaml:"kubeconfigPath"`
 	Standalone     bool   `yaml:"standalone"`
-	SqlitePath     string `yaml:"sqlitePath"`
 }
 
 // KubernetesManagerConfig is the Kubernetes manager configuration.
@@ -148,8 +146,6 @@ type Config struct {
 	FileManagerServerWorkerServiceAddr  string `yaml:"fileManagerServerWorkerServiceAddr"`
 	ModelManagerServerWorkerServiceAddr string `yaml:"modelManagerServerWorkerServiceAddr"`
 
-	Database db.Config `yaml:"database"`
-
 	ObjectStore ObjectStoreConfig `yaml:"objectStore"`
 
 	Debug DebugConfig `yaml:"debug"`
@@ -173,11 +169,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("notebook: %s", err)
 	}
 
-	if c.Debug.Standalone {
-		if c.Debug.SqlitePath == "" {
-			return fmt.Errorf("sqlite path must be set")
-		}
-	} else {
+	if !c.Debug.Standalone {
 		if c.JobManagerServerWorkerServiceAddr == "" {
 			return fmt.Errorf("job manager server worker service address must be set")
 		}
@@ -190,10 +182,6 @@ func (c *Config) Validate() error {
 
 		if err := c.ObjectStore.validate(); err != nil {
 			return fmt.Errorf("object store: %s", err)
-		}
-
-		if err := c.Database.Validate(); err != nil {
-			return fmt.Errorf("database: %s", err)
 		}
 	}
 

@@ -9,9 +9,9 @@ import (
 
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/k8s"
+	"github.com/llm-operator/job-manager/server/internal/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"

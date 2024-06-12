@@ -6,10 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/go-logr/logr"
-	"github.com/llm-operator/common/pkg/db"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llm-operator/job-manager/dispatcher/internal/s3"
@@ -18,8 +16,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -106,26 +102,6 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	return mgr.Start(ctx)
-}
-
-func newStore(c *config.Config) (*store.S, error) {
-	if c.Debug.Standalone {
-		dbInst, err := gorm.Open(sqlite.Open(c.Debug.SqlitePath), &gorm.Config{})
-		if err != nil {
-			return nil, err
-		}
-		st := store.New(dbInst)
-		if err := st.AutoMigrate(); err != nil {
-			return nil, err
-		}
-		return st, nil
-	}
-
-	dbInst, err := db.OpenDB(c.Database)
-	if err != nil {
-		return nil, err
-	}
-	return store.New(dbInst), nil
 }
 
 func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostProcessorI, error) {

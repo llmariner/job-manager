@@ -1,13 +1,4 @@
 global:
-  database:
-    host:
-    port:
-    username:
-
-  databaseSecret:
-    name:
-    key:
-
   objectStore:
     s3:
       endpointUrl:

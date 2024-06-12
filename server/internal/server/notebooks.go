@@ -7,7 +7,7 @@ import (
 
 	"github.com/llm-operator/common/pkg/id"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/server/internal/store"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
