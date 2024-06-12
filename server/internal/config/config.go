@@ -14,8 +14,9 @@ type Config struct {
 	WorkerServiceGRPCPort int `yaml:"workerServiceGrpcPort"`
 	HTTPPort              int `yaml:"httpPort"`
 
-	FileManagerServerAddr  string `yaml:"fileManagerServerAddr"`
-	ModelManagerServerAddr string `yaml:"modelManagerServerAddr"`
+	FileManagerServerAddr        string `yaml:"fileManagerServerAddr"`
+	ModelManagerServerAddr       string `yaml:"modelManagerServerAddr"`
+	SessionManagerServerEndpoint string `yaml:"sessionManagerServerEndpoint"`
 
 	Database db.Config `yaml:"database"`
 
@@ -77,6 +78,9 @@ func (c *Config) Validate() error {
 	}
 	if c.ModelManagerServerAddr == "" {
 		return fmt.Errorf("model manager server address must be set")
+	}
+	if c.SessionManagerServerEndpoint == "" {
+		return fmt.Errorf("session manager server endpoint must be set")
 	}
 	if err := c.Database.Validate(); err != nil {
 		return fmt.Errorf("database: %s", err)

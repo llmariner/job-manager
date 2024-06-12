@@ -8,7 +8,9 @@ import (
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
+	"github.com/llm-operator/job-manager/server/internal/k8s"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -131,7 +133,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClient{}, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
 	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -174,7 +176,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClient{}, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
 	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateQueued, store.JobState(resp.Status))
@@ -216,7 +218,7 @@ func TestJobCancel(t *testing.T) {
 			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: defaultTenantID, ProjectID: defaultProjectID})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClient{}, nil)
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -435,6 +437,12 @@ func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest,
 	}
 
 	return &mv1.Model{}, nil
+}
+
+type noopK8sClientFactory struct{}
+
+func (f *noopK8sClientFactory) NewClient(env auth.AssignedKubernetesEnv, token string) (k8s.Client, error) {
+	return &noopK8sClient{}, nil
 }
 
 type noopK8sClient struct{}

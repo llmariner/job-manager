@@ -12,6 +12,7 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/common/pkg/store"
 	"github.com/llm-operator/job-manager/server/internal/config"
+	"github.com/llm-operator/job-manager/server/internal/k8s"
 	"github.com/llm-operator/job-manager/server/internal/server"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
@@ -19,7 +20,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -102,18 +102,10 @@ func run(ctx context.Context, c *config.Config) error {
 	}
 	mclient := mv1.NewModelsServiceClient(conn)
 
-	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
-	if err != nil {
-		return err
-	}
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return err
-	}
-	k8sJobClient := server.NewK8sClient(kubeClient)
+	k8sClientFactory := k8s.NewClientFactory(c.SessionManagerServerEndpoint)
 
 	go func() {
-		s := server.New(st, fclient, mclient, k8sJobClient, c.NotebookConfig.ImageTypes)
+		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes)
 		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
 	}()
 

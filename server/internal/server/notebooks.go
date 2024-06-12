@@ -79,7 +79,11 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
 	}
-	if err := s.k8sClient.CreateSecret(ctx, nbID, kenv.Namespace, map[string][]byte{
+	kclient, err := s.k8sClientFactory.NewClient(kenv, apikey)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "create k8s client: %s", err)
+	}
+	if err := kclient.CreateSecret(ctx, nbID, kenv.Namespace, map[string][]byte{
 		"OPENAI_API_KEY": []byte(apikey),
 		"NOTEBOOK_TOKEN": []byte(nbToken),
 	}); err != nil {

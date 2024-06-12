@@ -53,7 +53,7 @@ func TestCreateNotebook(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, &noopK8sClient{}, map[string]string{"t0": "img0"})
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"})
 			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
 			resp, err := srv.CreateNotebook(ctx, tc.req)
 			if tc.wantErr {
