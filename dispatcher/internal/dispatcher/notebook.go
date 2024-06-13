@@ -4,7 +4,6 @@ import (
 	"context"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -56,7 +55,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating a deployment for a notebook")
 
-	name := util.GetK8sNotebookName(nb.Notebook.Id)
+	name := nb.Notebook.Id
 	labels := map[string]string{
 		"app.kubernetes.io/name":       "llmo-notebook",
 		"app.kubernetes.io/instance":   name,
@@ -219,10 +218,8 @@ func (n *NotebookManager) stopNotebook(ctx context.Context, nb *v1.InternalNoteb
 	log.Info("Stopping a deployment for a notebook")
 
 	var deploy appsv1.Deployment
-	name := util.GetK8sNotebookName(nb.Notebook.Id)
-
 	if err := n.k8sClient.Get(ctx, types.NamespacedName{
-		Name:      name,
+		Name:      nb.Notebook.Id,
 		Namespace: nb.Notebook.KubernetesNamespace,
 	}, &deploy); err != nil {
 		return err
@@ -237,10 +234,8 @@ func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNot
 	log.Info("Deleting a deployment for a notebook")
 
 	var deploy appsv1.Deployment
-	name := util.GetK8sNotebookName(nb.Notebook.Id)
-
 	if err := n.k8sClient.Get(ctx, types.NamespacedName{
-		Name:      name,
+		Name:      nb.Notebook.Id,
 		Namespace: nb.Notebook.KubernetesNamespace,
 	}, &deploy); err != nil {
 		if apierrors.IsNotFound(err) {

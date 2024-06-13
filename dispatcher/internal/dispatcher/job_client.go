@@ -13,7 +13,6 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
-	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -68,7 +67,7 @@ func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult
 	}
 
 	obj := batchv1apply.
-		Job(util.GetK8sJobName(ijob.Job.Id), ijob.Job.KubernetesNamespace).
+		Job(ijob.Job.Id, ijob.Job.KubernetesNamespace).
 		WithAnnotations(map[string]string{
 			managedJobAnnotationKey: "true",
 			jobIDAnnotationKey:      ijob.Job.Id}).

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1apply "k8s.io/client-go/applyconfigurations/batch/v1"
@@ -55,8 +54,7 @@ type defaultClient struct {
 // CancelJob cancels a job.
 func (c *defaultClient) CancelJob(ctx context.Context, job *v1.Job, namespace string) error {
 	opts := metav1.ApplyOptions{FieldManager: fieldManager, Force: true}
-	name := util.GetK8sJobName(job.Id)
-	conf := batchv1apply.Job(name, namespace).
+	conf := batchv1apply.Job(job.Id, namespace).
 		WithSpec(batchv1apply.JobSpec().
 			WithSuspend(true))
 	_, err := c.client.BatchV1().Jobs(namespace).Apply(ctx, conf, opts)
