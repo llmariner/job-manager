@@ -30,11 +30,6 @@ spec:
           mountPath: /etc/config
           readOnly: true
         env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.global.databaseSecret.name }}
-              key: {{ .Values.global.databaseSecret.key }}
         {{- with .Values.global.awsSecret }}
         {{- if .name }}
         - name: AWS_ACCESS_KEY_ID

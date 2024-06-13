@@ -29,12 +29,6 @@ data:
         endpointUrl: {{ .Values.global.objectStore.s3.endpointUrl }}
         region: {{ .Values.global.objectStore.s3.region }}
         bucket: {{ .Values.global.objectStore.s3.bucket }}
-    database:
-      host: {{ .Values.global.database.host }}
-      port: {{ .Values.global.database.port }}
-      database: {{ .Values.database.database }}
-      username: {{ .Values.global.database.username }}
-      passwordEnvName: DB_PASSWORD
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-dispatcher.fullname" . }}
