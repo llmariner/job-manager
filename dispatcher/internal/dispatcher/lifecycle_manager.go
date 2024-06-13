@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/pkg/util"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -77,7 +76,7 @@ func (s *LifecycleManager) Reconcile(
 ) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	jobID := util.GetJobID(req.Name)
+	jobID := req.Name
 	log = log.WithValues("jobID", jobID)
 	ctx = ctrl.LoggerInto(ctx, log)
 	ctx = auth.AppendWorkerAuthorization(ctx)
