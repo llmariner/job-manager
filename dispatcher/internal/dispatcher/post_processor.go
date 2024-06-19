@@ -6,7 +6,6 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
-	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -38,7 +37,6 @@ func (p *PostProcessor) Process(ctx context.Context, job *v1.InternalJob) error 
 	}
 
 	log.Info("Publishing the model")
-	ctx = auth.AppendWorkerAuthorization(ctx)
 	if _, err := p.modelClient.PublishModel(ctx, &mv1.PublishModelRequest{
 		Id: job.OutputModelId,
 	}); err != nil {
