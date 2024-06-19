@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
@@ -98,8 +97,7 @@ func TestCreateJob(t *testing.T) {
 				},
 				nil,
 				nil)
-			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
-			resp, err := srv.CreateJob(ctx, tc.req)
+			resp, err := srv.CreateJob(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return

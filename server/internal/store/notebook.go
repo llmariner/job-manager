@@ -55,10 +55,13 @@ type Notebook struct {
 
 	TenantID            string
 	OrganizationID      string
-	ProjectID           string `gorm:"index"`
+	ProjectID           string `gorm:"index:idx_notebook_project_id_name"`
 	KubernetesNamespace string
 	// ClusterID is the ID of the cluster where the job runs.
 	ClusterID string
+
+	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
+	Name string `gorm:"index:idx_notebook_project_id_name"`
 
 	Version int
 }
@@ -151,6 +154,15 @@ func (s *S) GetNotebookByID(id string) (*Notebook, error) {
 func (s *S) GetNotebookByIDAndProjectID(id, projectID string) (*Notebook, error) {
 	var nb Notebook
 	if err := s.db.Where("notebook_id = ? AND project_id = ?", id, projectID).Take(&nb).Error; err != nil {
+		return nil, err
+	}
+	return &nb, nil
+}
+
+// GetActiveNotebookByNameAndProjectID gets an active notebook by its name and project ID.
+func (s *S) GetActiveNotebookByNameAndProjectID(name, projectID string) (*Notebook, error) {
+	var nb Notebook
+	if err := s.db.Where("name = ? AND project_id = ? AND state != ?", name, projectID, NotebookStateDeleted).Take(&nb).Error; err != nil {
 		return nil, err
 	}
 	return &nb, nil
