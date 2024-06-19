@@ -62,7 +62,7 @@ func (s *S) CreateJob(
 		if status.Code(err) == codes.NotFound {
 			return nil, status.Errorf(codes.InvalidArgument, "model not found")
 		}
-		return nil, status.Errorf(codes.InvalidArgument, "get base model path: %s", err)
+		return nil, status.Errorf(codes.InvalidArgument, "get model path: %s", err)
 	}
 
 	if err := s.validateFile(ctx, req.TrainingFile); err != nil {
