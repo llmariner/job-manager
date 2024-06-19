@@ -11,7 +11,6 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
-	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -68,7 +67,6 @@ type PreProcessResult struct {
 func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PreProcessResult, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	ctx = auth.AppendWorkerAuthorization(ctx)
 	mresp, err := p.modelClient.GetBaseModelPath(ctx, &mv1.GetBaseModelPathRequest{
 		Id: job.Job.Model,
 	})
