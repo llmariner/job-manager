@@ -128,7 +128,6 @@ func (d *D) processJob(ctx context.Context, job *v1.InternalJob) error {
 	log.Info("Processing job")
 
 	ctx = ctrl.LoggerInto(ctx, log)
-	ctx = auth.AppendWorkerAuthorization(ctx)
 
 	log.Info("Started pre-processing")
 	presult, err := d.preProcessor.Process(ctx, job)
