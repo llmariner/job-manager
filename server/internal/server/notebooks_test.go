@@ -8,7 +8,8 @@ import (
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -54,8 +55,7 @@ func TestCreateNotebook(t *testing.T) {
 			defer tearDown()
 
 			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"})
-			ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("Authorization", "dummy"))
-			resp, err := srv.CreateNotebook(ctx, tc.req)
+			resp, err := srv.CreateNotebook(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -66,6 +66,45 @@ func TestCreateNotebook(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestCreateNotebook_SameName(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"})
+	wsrv := NewWorkerServiceServer(st)
+
+	req := &v1.CreateNotebookRequest{
+		Name: "nb0",
+		Image: &v1.CreateNotebookRequest_Image{
+			Image: &v1.CreateNotebookRequest_Image_Uri{Uri: "img0"},
+		},
+	}
+	resp, err := srv.CreateNotebook(context.Background(), req)
+	assert.NoError(t, err)
+
+	_, err = st.GetNotebookByIDAndProjectID(resp.Id, defaultProjectID)
+	assert.NoError(t, err)
+
+	// Create another notebook with the same name.
+	_, err = srv.CreateNotebook(context.Background(), req)
+	assert.Error(t, err)
+	assert.Equal(t, codes.AlreadyExists, status.Code(err))
+
+	// Delete the notebook.
+	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: resp.Id})
+	assert.NoError(t, err)
+
+	_, err = wsrv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
+		Id:    resp.Id,
+		State: v1.NotebookState_DELETED,
+	})
+	assert.NoError(t, err)
+
+	// Can create a notebook with the same name.
+	_, err = srv.CreateNotebook(context.Background(), req)
+	assert.NoError(t, err)
 }
 
 func TestListNotebooks(t *testing.T) {

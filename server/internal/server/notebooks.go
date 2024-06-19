@@ -41,6 +41,14 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Error(codes.InvalidArgument, "image uri or type is required")
 	}
 
+	// Check if there is any active notebook of the same name.
+	// TODO(kenji): Prevent a case where notebooks of the same name are concurrenlty created.
+	if _, err := s.store.GetActiveNotebookByNameAndProjectID(req.Name, userInfo.ProjectID); err == nil {
+		return nil, status.Errorf(codes.AlreadyExists, "notebook %q already exists", req.Name)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Errorf(codes.Internal, "get notebook: %s", err)
+	}
+
 	// TODO(aya): validate resources
 
 	nbID, err := id.GenerateIDForK8SResource("nb-")
@@ -99,6 +107,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		TenantID:            userInfo.TenantID,
 		OrganizationID:      userInfo.OrganizationID,
 		ProjectID:           userInfo.ProjectID,
+		Name:                req.Name,
 		KubernetesNamespace: kenv.Namespace,
 	}
 	if err := s.store.CreateNotebook(nb); err != nil {
