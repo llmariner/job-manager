@@ -20,8 +20,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const flagConfig = "config"
@@ -115,14 +113,6 @@ func run(ctx context.Context, c *config.Config) error {
 	}()
 
 	return <-errCh
-}
-
-func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
-	if kubeconfigPath != "" {
-		log.Printf("Using kubeconfig at %s", kubeconfigPath)
-		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	}
-	return rest.InClusterConfig()
 }
 
 func init() {

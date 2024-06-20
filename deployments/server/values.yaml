@@ -42,9 +42,6 @@ sessionManagerServerEndpoint: http://session-manager-server-http:8080/v1
 database:
   database: job_manager
 
-debug:
-  kubeconfigPath:
-
 notebook:
   # TODO(aya): build own image and think the way to switch the driver version
   imageTypes:

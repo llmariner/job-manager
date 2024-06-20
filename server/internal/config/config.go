@@ -20,8 +20,6 @@ type Config struct {
 
 	Database db.Config `yaml:"database"`
 
-	Debug DebugConfig `yaml:"debug"`
-
 	AuthConfig AuthConfig `yaml:"auth"`
 
 	NotebookConfig NotebookConfig `yaml:"notebook"`
@@ -55,11 +53,6 @@ func (c *AuthConfig) Validate() error {
 		return fmt.Errorf("rbacInternalServerAddr must be set")
 	}
 	return nil
-}
-
-// DebugConfig is the debug configuration.
-type DebugConfig struct {
-	KubeconfigPath string `yaml:"kubeconfigPath"`
 }
 
 // Validate validates the configuration.
