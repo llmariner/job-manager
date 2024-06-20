@@ -17,7 +17,7 @@ data:
         key: {{ .Values.job.wandbApiKeySecret.key }}
     notebook:
       llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
-      ingressClassName: {{ .Values.global.ingress.ingressClassName }}
+      ingressClassName: {{ .Values.notebook.ingressClassName }}
     jobManagerServerWorkerServiceAddr: {{ .Values.jobManagerServerWorkerServiceAddr }}
     fileManagerServerWorkerServiceAddr: {{ .Values.fileManagerServerWorkerServiceAddr }}
     modelManagerServerWorkerServiceAddr: {{ .Values.modelManagerServerWorkerServiceAddr }}
