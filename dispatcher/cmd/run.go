@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"log"
 	"log/slog"
 
 	"github.com/go-logr/logr"
+	cv1 "github.com/llm-operator/cluster-manager/api/v1"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llm-operator/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -83,7 +86,12 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName)
+	clusterID, err := getClusterID(ctx, c)
+	if err != nil {
+		return err
+	}
+
+	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName, clusterID)
 
 	conn, err := grpc.Dial(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
 	if err != nil {
@@ -102,6 +110,22 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	return mgr.Start(ctx)
+}
+
+func getClusterID(ctx context.Context, c *config.Config) (string, error) {
+	conn, err := grpc.Dial(c.ClusterManagerServerWorkerServiceAddr, grpcOption(c))
+	if err != nil {
+		return "", err
+	}
+	clClient := cv1.NewClustersWorkerServiceClient(conn)
+
+	ctx = auth.AppendWorkerAuthorization(ctx)
+	cluster, err := clClient.GetSelfCluster(ctx, &cv1.GetSelfClusterRequest{})
+	if err != nil {
+		return "", nil
+	}
+	log.Printf("Obtained the cluster ID: %q\n", cluster.Id)
+	return cluster.Id, nil
 }
 
 func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostProcessorI, error) {

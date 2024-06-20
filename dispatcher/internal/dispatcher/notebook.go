@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"context"
+	"fmt"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -35,11 +36,13 @@ func NewNotebookManager(
 	k8sClient client.Client,
 	llmoBaseURL string,
 	ingressClassName string,
+	clusterID string,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
 		llmoBaseURL:      llmoBaseURL,
 		ingressClassName: ingressClassName,
+		clusterID:        clusterID,
 	}
 }
 
@@ -49,6 +52,8 @@ type NotebookManager struct {
 
 	llmoBaseURL      string
 	ingressClassName string
+
+	clusterID string
 }
 
 func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
@@ -104,7 +109,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		appPort  = 8888
 		portName = "jupyter-web-ui"
 	)
-	var baseURL = "/v1/services/notebooks/" + nb.Notebook.Id
+	var baseURL = fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s", n.clusterID, nb.Notebook.Id)
 
 	deployConf := appsv1apply.
 		Deployment(name, nb.Notebook.KubernetesNamespace).
