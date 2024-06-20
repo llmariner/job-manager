@@ -127,7 +127,11 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 						WithCommand("start-notebook.py").
 						WithArgs(
 							"--IdentityProvider.token=$(NOTEBOOK_TOKEN)",
-							"--ServerApp.base_url="+baseURL).
+							"--ServerApp.base_url="+baseURL,
+							// This is needed when a user accesses the notebook
+							// via Session Manager/Agent and internal ingress controller.
+							// TODO(kenji): Tighten this.
+							"--NotebookApp.allow_origin=*").
 						WithPorts(corev1apply.ContainerPort().
 							WithName(portName).
 							WithContainerPort(appPort).
