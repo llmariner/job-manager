@@ -122,7 +122,7 @@ func getClusterID(ctx context.Context, c *config.Config) (string, error) {
 	ctx = auth.AppendWorkerAuthorization(ctx)
 	cluster, err := clClient.GetSelfCluster(ctx, &cv1.GetSelfClusterRequest{})
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	log.Printf("Obtained the cluster ID: %q\n", cluster.Id)
 	return cluster.Id, nil
