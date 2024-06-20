@@ -93,7 +93,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName, clusterID)
 
-	conn, err := grpc.Dial(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
+	conn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func run(ctx context.Context, c *config.Config) error {
 }
 
 func getClusterID(ctx context.Context, c *config.Config) (string, error) {
-	conn, err := grpc.Dial(c.ClusterManagerServerWorkerServiceAddr, grpcOption(c))
+	conn, err := grpc.NewClient(c.ClusterManagerServerWorkerServiceAddr, grpcOption(c))
 	if err != nil {
 		return "", err
 	}
@@ -134,13 +134,13 @@ func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostP
 	}
 
 	option := grpcOption(c)
-	conn, err := grpc.Dial(c.FileManagerServerWorkerServiceAddr, option)
+	conn, err := grpc.NewClient(c.FileManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return nil, nil, err
 	}
 	fclient := fv1.NewFilesWorkerServiceClient(conn)
 
-	conn, err = grpc.Dial(c.ModelManagerServerWorkerServiceAddr, option)
+	conn, err = grpc.NewClient(c.ModelManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return nil, nil, err
 	}
