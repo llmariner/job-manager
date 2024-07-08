@@ -25,7 +25,7 @@ global:
 pollingInterval: 10s
 
 job:
-  image: public.ecr.aws/v8n3t7y5/llm-operator/fine-tuning
+  image: public.ecr.aws/cloudnatix/llm-operator/fine-tuning
   version: 0.130.0
   imagePullPolicy: IfNotPresent
   numGpus: 1
@@ -64,7 +64,7 @@ serviceAccount:
   create: true
 
 image:
-  repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-dispatcher
+  repository: public.ecr.aws/cloudnatix/llm-operator/job-manager-dispatcher
   pullPolicy: IfNotPresent
 
 version:
