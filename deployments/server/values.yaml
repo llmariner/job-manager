@@ -51,7 +51,7 @@ notebook:
 replicaCount: 1
 
 image:
-  repository: public.ecr.aws/v8n3t7y5/llm-operator/job-manager-server
+  repository: public.ecr.aws/cloudnatix/llm-operator/job-manager-server
   pullPolicy: IfNotPresent
 
 version:
