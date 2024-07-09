@@ -30,6 +30,8 @@ const (
 
 	kueueQueueNameLabelKey = "kueue.x-k8s.io/queue-name"
 
+	jobManagerName = "job-manager-dispatcher"
+
 	jobTTL = time.Hour * 24
 )
 
@@ -84,7 +86,7 @@ func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult
 		return err
 	}
 	patch := &unstructured.Unstructured{Object: uobj}
-	opts := &client.PatchOptions{FieldManager: "job-manager-dispatcher", Force: ptr.To(true)}
+	opts := &client.PatchOptions{FieldManager: jobManagerName, Force: ptr.To(true)}
 	return p.k8sClient.Patch(ctx, patch, client.Apply, opts)
 }
 
