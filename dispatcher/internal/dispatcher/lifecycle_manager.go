@@ -130,6 +130,9 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, nil
 	case v1.InternalJob_CANCELED:
 		if job.Spec.Suspend == nil || !*job.Spec.Suspend {
+			// hit this case when a race condition occurs between the dispatcher and the server;
+			// If a queued job is cancelled while the dispatcher is being processed,
+			// the internal job status transits to canceled but the suspend field is not updated.
 			job.Spec.Suspend = ptr.To(true)
 			if err := s.k8sClient.Update(ctx, &job, client.FieldOwner(jobManagerName)); err != nil {
 				log.Error(err, "Failed to suspend the job")
