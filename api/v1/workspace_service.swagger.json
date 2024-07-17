@@ -407,6 +407,7 @@
       "enum": [
         "STATE_UNSPECIFIED",
         "QUEUED",
+        "INITIALIZING",
         "RUNNING",
         "STOPPED",
         "FAILED",

@@ -15,6 +15,8 @@ type NotebookState string
 const (
 	// NotebookStateQueued is the state of a notebook that is waiting to be scheduled.
 	NotebookStateQueued NotebookState = "queued"
+	// NotebookStateInitializing is the state of a notebook that is initializing.
+	NotebookStateInitializing NotebookState = "initializing"
 	// NotebookStateRunning is the state of a notebook that is currently running.
 	NotebookStateRunning NotebookState = "running"
 	// NotebookStateStopped is the state of a notebook that has been stopped.
@@ -223,6 +225,24 @@ func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction Not
 		return nil, fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
 	}
 	return &nb, nil
+}
+
+// SetState sets a state.
+func (s *S) SetState(id string, currentVersion int, newState NotebookState) error {
+	result := s.db.Model(&Notebook{}).
+		Where("notebook_id = ?", id).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":   newState,
+			"version": currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
+	}
+	return nil
 }
 
 // SetNonQueuedStateAndMessage sets a non-queued state and message.

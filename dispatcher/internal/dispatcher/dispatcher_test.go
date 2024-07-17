@@ -88,7 +88,7 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 	assert.NoError(t, err)
 
 	wants := map[string]v1.NotebookState{
-		nbs[0].Notebook.Id: v1.NotebookState_RUNNING,
+		nbs[0].Notebook.Id: v1.NotebookState_INITIALIZING,
 		nbs[1].Notebook.Id: v1.NotebookState_STOPPED,
 		nbs[2].Notebook.Id: v1.NotebookState_DELETED,
 	}
