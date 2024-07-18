@@ -173,7 +173,7 @@ func (d *D) processNotebooks(ctx context.Context) error {
 		case v1.NotebookQueuedAction_STARTING:
 			log.Info("Creating a k8s notebook resources")
 			err = d.nbCreator.createNotebook(ctx, nb)
-			state = v1.NotebookState_RUNNING
+			state = v1.NotebookState_INITIALIZING
 		case v1.NotebookQueuedAction_STOPPING:
 			log.Info("Stopping a k8s notebook resources")
 			err = d.nbCreator.stopNotebook(ctx, nb)

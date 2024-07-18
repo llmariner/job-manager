@@ -132,10 +132,11 @@ service WorkspaceService {
 enum NotebookState {
   STATE_UNSPECIFIED = 0;
   QUEUED = 1;
-  RUNNING = 2;
-  STOPPED = 3;
-  FAILED = 4;
-  DELETED = 5;
+  INITIALIZING = 2;
+  RUNNING = 3;
+  STOPPED = 4;
+  FAILED = 5;
+  DELETED = 6;
 }
 
 enum NotebookQueuedAction {

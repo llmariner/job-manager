@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func TestReconcile(t *testing.T) {
+func TestReconcileJob(t *testing.T) {
 	var tests = []struct {
 		name string
 

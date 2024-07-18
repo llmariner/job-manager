@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/llm-operator/common/pkg/id"
@@ -222,7 +223,8 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 	case store.NotebookStateFailed,
 		store.NotebookStateStopped:
 		return nbProto, nil
-	case store.NotebookStateRunning:
+	case store.NotebookStateInitializing,
+		store.NotebookStateRunning:
 	case store.NotebookStateQueued:
 		if nb.QueuedAction == store.NotebookQueuedActionStop ||
 			nb.QueuedAction == store.NotebookQueuedActionDelete {
@@ -269,6 +271,7 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 
 	switch nb.State {
 	case store.NotebookStateFailed,
+		store.NotebookStateInitializing,
 		store.NotebookStateRunning:
 		return nbProto, nil
 	case store.NotebookStateStopped:
@@ -365,13 +368,18 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		return nil, status.Error(codes.NotFound, "notebook not found")
 	}
 
-	if nb.State != store.NotebookStateQueued {
-		return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued state: %s", nb.State)
+	if nb.State == convertNotebookState(req.State) {
+		// already in the state
+		return nil, nil
 	}
+
 	switch req.State {
 	case v1.NotebookState_STATE_UNSPECIFIED:
 		return nil, status.Error(codes.InvalidArgument, "state is required")
-	case v1.NotebookState_RUNNING:
+	case v1.NotebookState_INITIALIZING:
+		if nb.State != store.NotebookStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued state: %s", nb.State)
+		}
 		if nb.QueuedAction != store.NotebookQueuedActionStart {
 			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not starting: %s", nb.QueuedAction)
 		}
@@ -381,10 +389,20 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		}); err != nil {
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
-		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateRunning, nb.Message); err != nil {
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateInitializing, nb.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
+	case v1.NotebookState_RUNNING:
+		if nb.State != store.NotebookStateInitializing {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not initializing state: %s", nb.State)
+		}
+		if err := ws.store.SetState(nb.NotebookID, nb.Version, store.NotebookStateRunning); err != nil {
+			return nil, status.Errorf(codes.Internal, "set state: %s", err)
+		}
 	case v1.NotebookState_STOPPED:
+		if nb.State != store.NotebookStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued state: %s", nb.State)
+		}
 		if nb.QueuedAction != store.NotebookQueuedActionStop {
 			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not stopping: %s", nb.QueuedAction)
 		}
@@ -398,6 +416,9 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
 	case v1.NotebookState_DELETED:
+		if nb.State != store.NotebookStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued state: %s", nb.State)
+		}
 		if nb.QueuedAction != store.NotebookQueuedActionDelete {
 			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not deleting: %s", nb.QueuedAction)
 		}
@@ -419,4 +440,8 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		return nil, status.Errorf(codes.InvalidArgument, "unknown state: %s", req.State)
 	}
 	return &v1.UpdateNotebookStateResponse{}, nil
+}
+
+func convertNotebookState(s v1.NotebookState) store.NotebookState {
+	return store.NotebookState(strings.ToLower(v1.NotebookState_name[int32(s)]))
 }

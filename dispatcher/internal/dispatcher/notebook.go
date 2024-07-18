@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -21,7 +23,10 @@ import (
 	netv1apply "k8s.io/client-go/applyconfigurations/networking/v1"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -34,12 +39,14 @@ const (
 // NewNotebookManager creates a new NotebookManager
 func NewNotebookManager(
 	k8sClient client.Client,
+	wsClient v1.WorkspaceWorkerServiceClient,
 	llmoBaseURL string,
 	ingressClassName string,
 	clusterID string,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
+		wsClient:         wsClient,
 		llmoBaseURL:      llmoBaseURL,
 		ingressClassName: ingressClassName,
 		clusterID:        clusterID,
@@ -49,11 +56,64 @@ func NewNotebookManager(
 // NotebookManager is a struct that manages the notebook
 type NotebookManager struct {
 	k8sClient client.Client
+	wsClient  v1.WorkspaceWorkerServiceClient
 
 	llmoBaseURL      string
 	ingressClassName string
 
 	clusterID string
+}
+
+// SetupWithManager registers the LifecycleManager with the manager.
+func (n *NotebookManager) SetupWithManager(mgr ctrl.Manager) error {
+	filterByAnno := (predicate.NewPredicateFuncs(func(object client.Object) bool {
+		return isManagedNotebook(object.GetAnnotations())
+	}))
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&appsv1.Deployment{}, builder.WithPredicates(filterByAnno)).
+		WithLogConstructor(func(r *reconcile.Request) logr.Logger {
+			if r != nil {
+				return mgr.GetLogger().WithValues("notebook", r.NamespacedName)
+			}
+			return mgr.GetLogger()
+		}).
+		Complete(n)
+}
+
+// Reconcile reconciles the notebook deployment.
+func (n *NotebookManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	var nb appsv1.Deployment
+	if err := n.k8sClient.Get(ctx, req.NamespacedName, &nb); err != nil {
+		log.V(2).Info("Failed to get the notebook deployment", "error", err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	if !nb.DeletionTimestamp.IsZero() {
+		log.V(2).Info("Notebook deployment is being deleted")
+		return ctrl.Result{}, nil
+	}
+
+	replicas := ptr.Deref(nb.Spec.Replicas, 0)
+	if replicas == 0 {
+		log.V(4).Info("Notebook deployment is being stopped")
+		return ctrl.Result{}, nil
+	}
+
+	if nb.Status.ReadyReplicas < replicas {
+		log.V(4).Info("Notebook deployment is not ready yet")
+		return ctrl.Result{}, nil
+	}
+
+	ctx = auth.AppendWorkerAuthorization(ctx)
+	if _, err := n.wsClient.UpdateNotebookState(ctx, &v1.UpdateNotebookStateRequest{
+		Id:    req.Name,
+		State: v1.NotebookState_RUNNING,
+	}); err != nil {
+		log.Error(err, "Failed to update the notebook state")
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
 }
 
 func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
@@ -262,4 +322,8 @@ func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNot
 		return err
 	}
 	return nil
+}
+
+func isManagedNotebook(annotations map[string]string) bool {
+	return annotations[managedAnnotationKey] == "true"
 }

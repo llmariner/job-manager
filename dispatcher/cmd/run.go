@@ -91,14 +91,17 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	nb := dispatcher.NewNotebookManager(mgr.GetClient(), c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName, clusterID)
-
 	conn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
 	if err != nil {
 		return err
 	}
 	ftClient := v1.NewFineTuningWorkerServiceClient(conn)
 	wsClient := v1.NewWorkspaceWorkerServiceClient(conn)
+
+	nb := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName, clusterID)
+	if err := nb.SetupWithManager(mgr); err != nil {
+		return err
+	}
 
 	if err := dispatcher.New(ftClient, wsClient, jc, preProcessor, nb, c.PollingInterval).
 		SetupWithManager(mgr); err != nil {
