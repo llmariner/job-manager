@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/llm-operator/common/pkg/id"
@@ -367,6 +368,11 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		return nil, status.Error(codes.NotFound, "notebook not found")
 	}
 
+	if nb.State == convertNotebookState(req.State) {
+		// already in the state
+		return nil, nil
+	}
+
 	switch req.State {
 	case v1.NotebookState_STATE_UNSPECIFIED:
 		return nil, status.Error(codes.InvalidArgument, "state is required")
@@ -434,4 +440,8 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		return nil, status.Errorf(codes.InvalidArgument, "unknown state: %s", req.State)
 	}
 	return &v1.UpdateNotebookStateResponse{}, nil
+}
+
+func convertNotebookState(s v1.NotebookState) store.NotebookState {
+	return store.NotebookState(strings.ToLower(v1.NotebookState_name[int32(s)]))
 }

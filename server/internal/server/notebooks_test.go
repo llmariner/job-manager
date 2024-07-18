@@ -381,6 +381,12 @@ func TestUpdateNotebookState(t *testing.T) {
 			wantError:  true,
 		},
 		{
+			name:      "same state",
+			prevState: store.NotebookStateRunning,
+			state:     v1.NotebookState_RUNNING,
+			wantState: store.NotebookStateRunning,
+		},
+		{
 			name:       "set initializing state",
 			prevState:  store.NotebookStateQueued,
 			prevAction: store.NotebookQueuedActionStart,

@@ -79,7 +79,7 @@ func (n *NotebookManager) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(n)
 }
 
-// Reconcile reconciles the notebook deployment
+// Reconcile reconciles the notebook deployment.
 func (n *NotebookManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
