@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -103,6 +104,8 @@ func (n *NotebookManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		log.V(4).Info("Notebook deployment is not ready yet")
 		return ctrl.Result{}, nil
 	}
+
+	ctx = auth.AppendWorkerAuthorization(ctx)
 	if _, err := n.wsClient.UpdateNotebookState(ctx, &v1.UpdateNotebookStateRequest{
 		Id:    req.Name,
 		State: v1.NotebookState_RUNNING,
@@ -322,5 +325,5 @@ func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNot
 }
 
 func isManagedNotebook(annotations map[string]string) bool {
-	return annotations[managedJobAnnotationKey] == "true"
+	return annotations[managedAnnotationKey] == "true"
 }
