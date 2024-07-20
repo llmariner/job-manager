@@ -155,7 +155,7 @@ type Config struct {
 
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
 
-	Worker WorkerConfig `yaml:"workerConfig"`
+	Worker WorkerConfig `yaml:"worker"`
 }
 
 // Validate validates the configuration.
