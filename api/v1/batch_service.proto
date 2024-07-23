@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package llmoperator.batch.server.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/llm-operator/job-manager/api/v1";
+
+message BatchJob {
+  string id = 1;
+
+  int64 created_at = 2;
+  int64 finished_at = 3;
+
+  message Error {
+    string code = 1;
+    string message = 2;
+  }
+  Error error = 4;
+  string status = 5;
+
+  string image = 6;
+  string command = 7;
+  map<string, string> scripts = 8;
+  Resources resources = 9;
+  map<string, string> envs = 10;
+  repeated string data_files = 11;
+
+  string output_model_path = 12;
+  string model = 13;
+}
+
+message Resources {
+  int32 gpu_count = 1;
+}
+
+message CreateBatchJobRequest {
+  string image = 1;
+  string command = 2;
+  map<string, string> scripts = 3;
+
+  Resources resources = 4;
+  map<string, string> envs = 5;
+  repeated string data_files = 6;
+
+  string output_model_path = 7;
+}
+
+message ListBatchJobsRequest {
+  // after is the identifier for the last batch job from the previous pagination request.
+  string after = 1;
+  // limit is the number of batch jobs to retrieve. Defaults to 20.
+  int32 limit = 2;
+}
+
+message ListBatchJobsResponse {
+  repeated BatchJob jobs = 1;
+}
+
+message GetBatchJobRequest {
+  string id = 1;
+}
+
+message CancelBatchJobRequest {
+  string id = 1;
+}
+
+service BatchService {
+  rpc CreateBatchJob(CreateBatchJobRequest) returns (BatchJob) {
+    option (google.api.http) = {
+      post: "/v1/batch/jobs"
+      body: "*"
+    };
+  }
+  rpc ListBatchJobs(ListBatchJobsRequest) returns (ListBatchJobsResponse) {
+    option (google.api.http) = {
+      get: "/v1/batch/jobs"
+    };
+  }
+  rpc GetBatchJob(GetBatchJobRequest) returns (BatchJob) {
+    option (google.api.http) = {
+      get: "/v1/batch/jobs/{id}"
+    };
+  }
+  rpc CancelBatchJob(CancelBatchJobRequest) returns (BatchJob) {
+    option (google.api.http) = {
+      post: "/v1/batch/jobs/{id}/cancel"
+    };
+  }
+}

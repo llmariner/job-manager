@@ -234,6 +234,24 @@
         }
       }
     },
+    "llmoperatorworkspaceserverv1Resources": {
+      "type": "object",
+      "properties": {
+        "cpuMilicore": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "memoryMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "storageMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -272,7 +290,7 @@
           "$ref": "#/definitions/CreateNotebookRequestImage"
         },
         "resources": {
-          "$ref": "#/definitions/v1Resources"
+          "$ref": "#/definitions/llmoperatorworkspaceserverv1Resources"
         },
         "envs": {
           "type": "object",
@@ -351,7 +369,7 @@
           "type": "string"
         },
         "resources": {
-          "$ref": "#/definitions/v1Resources"
+          "$ref": "#/definitions/llmoperatorworkspaceserverv1Resources"
         },
         "envs": {
           "type": "object",
@@ -414,24 +432,6 @@
         "DELETED"
       ],
       "default": "STATE_UNSPECIFIED"
-    },
-    "v1Resources": {
-      "type": "object",
-      "properties": {
-        "cpuMilicore": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "memoryMegabytes": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "storageMegabytes": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "gpuCount": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
     },
     "v1UpdateNotebookStateResponse": {
       "type": "object"
