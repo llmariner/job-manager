@@ -67,4 +67,9 @@ image:
   repository: public.ecr.aws/cloudnatix/llm-operator/job-manager-dispatcher
   pullPolicy: IfNotPresent
 
+podAnnotations:
+nodeSelector:
+affinity:
+tolerations:
+
 version:

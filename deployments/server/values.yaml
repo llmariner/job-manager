@@ -54,4 +54,9 @@ image:
   repository: public.ecr.aws/cloudnatix/llm-operator/job-manager-server
   pullPolicy: IfNotPresent
 
+podAnnotations:
+nodeSelector:
+affinity:
+tolerations:
+
 version:
