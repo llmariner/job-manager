@@ -189,15 +189,6 @@ func (s *S) ListActiveNotebooksByProjectIDWithPagination(projectID string, after
 	return nbs, hasMore, nil
 }
 
-// ListQueuedNotebooks finds queued notebooks.
-func (s *S) ListQueuedNotebooks() ([]*Notebook, error) {
-	var nbs []*Notebook
-	if err := s.db.Where("state = ?", NotebookStateQueued).Find(&nbs).Error; err != nil {
-		return nil, err
-	}
-	return nbs, nil
-}
-
 // ListQueuedNotebooksByTenantID finds queued notebooks by tenant ID.
 func (s *S) ListQueuedNotebooksByTenantID(tenantID string) ([]*Notebook, error) {
 	var nbs []*Notebook

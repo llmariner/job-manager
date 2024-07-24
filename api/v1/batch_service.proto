@@ -21,14 +21,13 @@ message BatchJob {
 
   string image = 6;
   string command = 7;
-  map<string, string> scripts = 8;
 
   message Resources {
     int32 gpu_count = 1;
   }
-  Resources resources = 9;
-  map<string, string> envs = 10;
-  repeated string data_files = 11;
+  Resources resources = 8;
+  map<string, string> envs = 9;
+  repeated string data_files = 10;
 }
 
 message CreateBatchJobRequest {
@@ -36,7 +35,7 @@ message CreateBatchJobRequest {
   string command = 2;
   // scripts is a map of script names to script contents.
   // The total size of the scripts should not exceed 1MB.
-  map<string, string> scripts = 3;
+  map<string, bytes> scripts = 3;
 
   BatchJob.Resources resources = 4;
   map<string, string> envs = 5;
@@ -53,6 +52,7 @@ message ListBatchJobsRequest {
 
 message ListBatchJobsResponse {
   repeated BatchJob jobs = 1;
+  bool has_more = 2;
 }
 
 message GetBatchJobRequest {

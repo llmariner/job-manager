@@ -79,7 +79,10 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	if err := v1.RegisterWorkspaceServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
-		return nil
+		return err
+	}
+	if err := v1.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
+		return err
 	}
 
 	errCh := make(chan error)
@@ -103,7 +106,7 @@ func run(ctx context.Context, c *config.Config) error {
 	k8sClientFactory := k8s.NewClientFactory(c.SessionManagerServerEndpoint)
 
 	go func() {
-		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes)
+		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images)
 		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
 	}()
 
