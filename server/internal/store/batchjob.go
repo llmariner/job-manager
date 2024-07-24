@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"strings"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"google.golang.org/protobuf/proto"
@@ -71,6 +72,27 @@ func (j *BatchJob) V1BatchJob() (*v1.BatchJob, error) {
 	return &jobProto, nil
 }
 
+// V1InternalBatchJob converts a notebook to a v1.InternalBatchJob.
+func (j *BatchJob) V1InternalBatchJob() (*v1.InternalBatchJob, error) {
+	jobProto, err := j.V1BatchJob()
+	if err != nil {
+		return nil, err
+	}
+	state, err := convertToV1BatchJobState(j.State)
+	if err != nil {
+		return nil, err
+	}
+	action, err := convertToBatchJobQueuedAction(j.QueuedAction)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.InternalBatchJob{
+		Job:          jobProto,
+		State:        state,
+		QueuedAction: action,
+	}, nil
+}
+
 // MutateMessage mutates the message of the batch job.
 func (j *BatchJob) MutateMessage(mutateFn func(*v1.BatchJob)) error {
 	jobProto, err := j.V1BatchJob()
@@ -86,9 +108,38 @@ func (j *BatchJob) MutateMessage(mutateFn func(*v1.BatchJob)) error {
 	return nil
 }
 
+func convertToV1BatchJobState(state BatchJobState) (v1.InternalBatchJob_State, error) {
+	v, ok := v1.InternalBatchJob_State_value[strings.ToUpper(string(state))]
+	if !ok {
+		return 0, fmt.Errorf("unknown notebook state: %s", state)
+	}
+	return v1.InternalBatchJob_State(v), nil
+}
+
+func convertToBatchJobQueuedAction(action BatchJobQueuedAction) (v1.InternalBatchJob_Action, error) {
+	if action == "" {
+		// when the status is not queued, the queued action is not set.
+		return v1.InternalBatchJob_ACTION_UNSPECIFIED, nil
+	}
+	v, ok := v1.InternalBatchJob_Action_value[strings.ToUpper(string(action))]
+	if !ok {
+		return 0, fmt.Errorf("unknown notebook queued action: %s", action)
+	}
+	return v1.InternalBatchJob_Action(v), nil
+}
+
 // CreateBatchJob creates a batch job.
 func (s *S) CreateBatchJob(job *BatchJob) error {
 	return s.db.Create(job).Error
+}
+
+// GetBatchJobByID gets a batch job by its job ID.
+func (s *S) GetBatchJobByID(id string) (*BatchJob, error) {
+	var job BatchJob
+	if err := s.db.Where("job_id = ?", id).Take(&job).Error; err != nil {
+		return nil, err
+	}
+	return &job, nil
 }
 
 // GetBatchJobByIDAndProjectID gets a batch job by its job ID and project ID.
@@ -119,6 +170,15 @@ func (s *S) ListBatchJobsByProjectIDWithPagination(projectID string, afterID uin
 	return jobs, hasMore, nil
 }
 
+// ListQueuedBatchJobsByTenantID finds queued batch jobs by tenant ID.
+func (s *S) ListQueuedBatchJobsByTenantID(tenantID string) ([]BatchJob, error) {
+	var jobs []BatchJob
+	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, BatchJobStateQueued).Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+	return jobs, nil
+}
+
 // SetBatchJobQueuedAction sets the queued action of a batch job.
 func (s *S) SetBatchJobQueuedAction(id string, currentVersion int, newActionn BatchJobQueuedAction) (*BatchJob, error) {
 	var job BatchJob
@@ -137,4 +197,43 @@ func (s *S) SetBatchJobQueuedAction(id string, currentVersion int, newActionn Ba
 		return nil, fmt.Errorf("update batch job: %w", ErrConcurrentUpdate)
 	}
 	return &job, nil
+}
+
+// SetBatchJobState sets the state of a batch job.
+func (s *S) SetBatchJobState(id string, currentVersion int, newState BatchJobState) error {
+	result := s.db.Model(&BatchJob{}).
+		Where("job_id = ?", id).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":         newState,
+			"queued_action": "",
+			"version":       currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update batch job: %w", ErrConcurrentUpdate)
+	}
+	return nil
+}
+
+// SetNonQueuedBatchJobStateAndMessage sets the state and message of a batch job.
+func (s *S) SetNonQueuedBatchJobStateAndMessage(id string, currentVersion int, newState BatchJobState, message []byte) error {
+	result := s.db.Model(&BatchJob{}).
+		Where("job_id = ?", id).
+		Where("version = ?", currentVersion).
+		Updates(map[string]interface{}{
+			"state":         newState,
+			"queued_action": "",
+			"message":       message,
+			"version":       currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update batch job: %w", ErrConcurrentUpdate)
+	}
+	return nil
 }

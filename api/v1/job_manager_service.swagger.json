@@ -170,18 +170,6 @@
         }
       }
     },
-    "InternalJobState": {
-      "type": "string",
-      "enum": [
-        "UNSPECIFIED",
-        "QUEUED",
-        "RUNNING",
-        "FAILED",
-        "SUCCEEDED",
-        "CANCELED"
-      ],
-      "default": "UNSPECIFIED"
-    },
     "UpdateJobPhaseRequestPhase": {
       "type": "string",
       "enum": [
@@ -298,10 +286,22 @@
           "type": "string"
         },
         "state": {
-          "$ref": "#/definitions/InternalJobState",
+          "$ref": "#/definitions/v1InternalJobState",
           "description": "state is also stored in the job object, but this value takes precedence."
         }
       }
+    },
+    "v1InternalJobState": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "QUEUED",
+        "RUNNING",
+        "FAILED",
+        "SUCCEEDED",
+        "CANCELED"
+      ],
+      "default": "UNSPECIFIED"
     },
     "v1Job": {
       "type": "object",

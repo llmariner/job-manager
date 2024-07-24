@@ -28,6 +28,11 @@ message BatchJob {
   Resources resources = 8;
   map<string, string> envs = 9;
   repeated string data_files = 10;
+
+  string project_id = 11;
+  string kubernetes_namespace = 12;
+  // cluster_id is the ID of the cluster where he job runs.
+  string cluster_id = 13;
 }
 
 message CreateBatchJobRequest {
@@ -85,4 +90,54 @@ service BatchService {
       post: "/v1/batch/jobs/{id}/cancel"
     };
   }
+}
+
+message InternalBatchJob {
+  BatchJob job = 1;
+
+  enum State {
+    STATE_UNSPECIFIED = 0;
+    QUEUED = 1;
+    RUNNING = 2;
+    SUCCEEDED = 3;
+    FAILED = 4;
+    CANCELED = 5;
+  }
+  State state = 2;
+
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CREATING = 1;
+    CANCELING = 2;
+  }
+  Action queued_action = 3;
+}
+
+message ListQueuedInternalBatchJobsRequest {
+}
+
+message ListQueuedInternalBatchJobsResponse {
+  repeated InternalBatchJob jobs = 1;
+}
+
+message GetInternalBatchJobRequest {
+  string id = 1;
+}
+
+message UpdateBatchJobStateRequest {
+  string id = 1;
+  InternalBatchJob.State state = 2;
+
+  // currently only used for FAILED state.
+  string reason = 3;
+  string message = 4;
+}
+
+message UpdateBatchJobStateResponse {
+}
+
+service BatchWorkerService {
+  rpc ListQueuedInternalBatchJobs(ListQueuedInternalBatchJobsRequest) returns (ListQueuedInternalBatchJobsResponse);
+  rpc GetInternalBatchJob(GetInternalBatchJobRequest) returns (InternalBatchJob);
+  rpc UpdateBatchJobState(UpdateBatchJobStateRequest) returns (UpdateBatchJobStateResponse);
 }

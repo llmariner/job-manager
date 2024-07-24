@@ -206,3 +206,160 @@ func TestCancelBatchJob(t *testing.T) {
 		})
 	}
 }
+
+func TestListQueuedInternalBatchJobs(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	jobs := []*store.BatchJob{
+		{
+			State:    store.BatchJobStateQueued,
+			TenantID: defaultTenantID,
+		},
+		{
+			State:    store.BatchJobStateRunning,
+			TenantID: defaultTenantID,
+		},
+		{
+			State:    store.BatchJobStateQueued,
+			TenantID: "different-tenant",
+		},
+		{
+			State:    store.BatchJobStateQueued,
+			TenantID: defaultTenantID,
+		},
+	}
+	for i, job := range jobs {
+		jobProto := &v1.Job{
+			Id: fmt.Sprintf("job%d", i),
+		}
+		msg, err := proto.Marshal(jobProto)
+		assert.NoError(t, err)
+		assert.NoError(t, st.CreateBatchJob(&store.BatchJob{
+			JobID:    jobProto.Id,
+			State:    job.State,
+			Message:  msg,
+			TenantID: job.TenantID,
+		}))
+	}
+
+	srv := NewWorkerServiceServer(st)
+	req := &v1.ListQueuedInternalBatchJobsRequest{}
+	got, err := srv.ListQueuedInternalBatchJobs(context.Background(), req)
+	assert.NoError(t, err)
+
+	want := []string{"job0", "job3"}
+	assert.Len(t, got.Jobs, 2)
+	assert.Equal(t, want[0], got.Jobs[0].Job.Id)
+	assert.Equal(t, want[1], got.Jobs[1].Job.Id)
+}
+
+func TestGetInternalBatchJob(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	err := st.CreateBatchJob(&store.BatchJob{
+		JobID:     "job0",
+		TenantID:  defaultTenantID,
+		State:     store.BatchJobStateRunning,
+		ProjectID: defaultProjectID,
+	})
+	assert.NoError(t, err)
+
+	srv := NewWorkerServiceServer(st)
+	req := &v1.GetInternalBatchJobRequest{Id: "job0"}
+	resp, err := srv.GetInternalBatchJob(context.Background(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
+}
+
+func TestUpdateBatchJobState(t *testing.T) {
+	var tests = []struct {
+		name       string
+		prevState  store.BatchJobState
+		prevAction store.BatchJobQueuedAction
+		state      v1.InternalBatchJob_State
+		wantError  bool
+		wantState  store.BatchJobState
+	}{
+		{
+			name:      "no state",
+			wantError: true,
+		},
+		{
+			name:       "unknown state",
+			prevState:  store.BatchJobStateQueued,
+			prevAction: store.BatchJobQueuedActionCreate,
+			state:      9999,
+			wantError:  true,
+		},
+		{
+			name:      "same state",
+			prevState: store.BatchJobStateRunning,
+			state:     v1.InternalBatchJob_RUNNING,
+			wantState: store.BatchJobStateRunning,
+		},
+		{
+			name:       "set running state",
+			prevState:  store.BatchJobStateQueued,
+			prevAction: store.BatchJobQueuedActionCreate,
+			state:      v1.InternalBatchJob_RUNNING,
+			wantState:  store.BatchJobStateRunning,
+		},
+		{
+			name:      "set running state, previous state is not queued",
+			prevState: store.BatchJobStateSucceeded,
+			state:     v1.InternalBatchJob_RUNNING,
+			wantError: true,
+		},
+		{
+			name:       "set cancel state",
+			prevState:  store.BatchJobStateQueued,
+			prevAction: store.BatchJobQueuedActionCancel,
+			state:      v1.InternalBatchJob_CANCELED,
+			wantState:  store.BatchJobStateCanceled,
+		},
+		{
+			name:      "set cancel state, previous state is not queued",
+			prevState: store.BatchJobStateSucceeded,
+			state:     v1.InternalBatchJob_CANCELED,
+			wantError: true,
+		},
+		{
+			name:      "set failed state",
+			prevState: store.BatchJobStateRunning,
+			state:     v1.InternalBatchJob_FAILED,
+			wantState: store.BatchJobStateFailed,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			st, tearDown := store.NewTest(t)
+			defer tearDown()
+
+			const batchJobID = "batchJob0"
+			err := st.CreateBatchJob(&store.BatchJob{
+				JobID:        batchJobID,
+				TenantID:     defaultTenantID,
+				State:        test.prevState,
+				QueuedAction: test.prevAction,
+			})
+			assert.NoError(t, err)
+
+			srv := NewWorkerServiceServer(st)
+			_, err = srv.UpdateBatchJobState(context.Background(), &v1.UpdateBatchJobStateRequest{
+				Id:    batchJobID,
+				State: test.state,
+			})
+			if test.wantError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			batchJob, err := st.GetBatchJobByID(batchJobID)
+			assert.NoError(t, err)
+			assert.Equal(t, test.wantState, batchJob.State)
+		})
+	}
+}

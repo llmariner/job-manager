@@ -370,7 +370,7 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 
 	if nb.State == convertNotebookState(req.State) {
 		// already in the state
-		return nil, nil
+		return &v1.UpdateNotebookStateResponse{}, nil
 	}
 
 	switch req.State {
@@ -443,5 +443,5 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 }
 
 func convertNotebookState(s v1.NotebookState) store.NotebookState {
-	return store.NotebookState(strings.ToLower(v1.NotebookState_name[int32(s)]))
+	return store.NotebookState(strings.ToLower(s.String()))
 }
