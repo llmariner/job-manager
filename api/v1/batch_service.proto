@@ -22,28 +22,26 @@ message BatchJob {
   string image = 6;
   string command = 7;
   map<string, string> scripts = 8;
+
+  message Resources {
+    int32 gpu_count = 1;
+  }
   Resources resources = 9;
   map<string, string> envs = 10;
   repeated string data_files = 11;
-
-  string output_model_path = 12;
-  string model = 13;
-}
-
-message Resources {
-  int32 gpu_count = 1;
 }
 
 message CreateBatchJobRequest {
   string image = 1;
   string command = 2;
+  // scripts is a map of script names to script contents.
+  // The total size of the scripts should not exceed 1MB.
   map<string, string> scripts = 3;
 
-  Resources resources = 4;
+  BatchJob.Resources resources = 4;
   map<string, string> envs = 5;
+  // data_files is a list of file IDs that will be downloaded to the container.
   repeated string data_files = 6;
-
-  string output_model_path = 7;
 }
 
 message ListBatchJobsRequest {

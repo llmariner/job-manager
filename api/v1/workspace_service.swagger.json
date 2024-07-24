@@ -234,24 +234,6 @@
         }
       }
     },
-    "llmoperatorworkspaceserverv1Resources": {
-      "type": "object",
-      "properties": {
-        "cpuMilicore": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "memoryMegabytes": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "storageMegabytes": {
-          "$ref": "#/definitions/ResourcesQuantity"
-        },
-        "gpuCount": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -280,6 +262,24 @@
         }
       }
     },
+    "serverv1Resources": {
+      "type": "object",
+      "properties": {
+        "cpuMilicore": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "memoryMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "storageMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "v1CreateNotebookRequest": {
       "type": "object",
       "properties": {
@@ -290,7 +290,7 @@
           "$ref": "#/definitions/CreateNotebookRequestImage"
         },
         "resources": {
-          "$ref": "#/definitions/llmoperatorworkspaceserverv1Resources"
+          "$ref": "#/definitions/serverv1Resources"
         },
         "envs": {
           "type": "object",
@@ -369,7 +369,7 @@
           "type": "string"
         },
         "resources": {
-          "$ref": "#/definitions/llmoperatorworkspaceserverv1Resources"
+          "$ref": "#/definitions/serverv1Resources"
         },
         "envs": {
           "type": "object",
