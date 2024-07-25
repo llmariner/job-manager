@@ -45,7 +45,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 
 	jobID, err := id.GenerateIDForK8SResource("bj-")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "generate notebook id: %s", err)
+		return nil, status.Errorf(codes.Internal, "generate batch job id: %s", err)
 	}
 
 	if len(userInfo.AssignedKubernetesEnvs) == 0 {
