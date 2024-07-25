@@ -314,7 +314,8 @@ func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobSta
 		return nil, status.Error(codes.InvalidArgument, "state is required")
 	case v1.InternalBatchJob_RUNNING:
 		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionCreate {
-			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s (%s)", job.State, job.QueuedAction)
+			// Queued state is only available in the store object and does not exist in the proto object.
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not creating: %s (%s)", job.State, job.QueuedAction)
 		}
 		if err := ws.store.SetBatchJobState(job.JobID, job.Version, storeState); err != nil {
 			return nil, status.Errorf(codes.Internal, "set batch job state: %s", err)
@@ -331,7 +332,8 @@ func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobSta
 		}
 	case v1.InternalBatchJob_CANCELED:
 		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionCancel {
-			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s (%s)", job.State, job.QueuedAction)
+			// Queued state is only available in the store object and does not exist in the proto object.
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not canceling: %s (%s)", job.State, job.QueuedAction)
 		}
 		if err := job.MutateMessage(func(job *v1.BatchJob) {
 			job.FinishedAt = time.Now().UTC().Unix()
