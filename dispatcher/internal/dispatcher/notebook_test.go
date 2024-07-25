@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -80,7 +81,7 @@ func TestReconcileNotebook(t *testing.T) {
 				updatedState: map[string]v1.NotebookState{},
 			}
 
-			mgr := NewNotebookManager(k8sClient, wsClient, "", "", "")
+			mgr := NewNotebookManager(k8sClient, wsClient, config.NotebooksConfig{}, "")
 			_, err := mgr.Reconcile(context.Background(), req)
 			assert.NoError(t, err)
 

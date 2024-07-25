@@ -98,7 +98,7 @@ func run(ctx context.Context, c *config.Config) error {
 	ftClient := v1.NewFineTuningWorkerServiceClient(conn)
 	wsClient := v1.NewWorkspaceWorkerServiceClient(conn)
 
-	nb := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook.LLMOperatorBaseURL, c.Notebook.IngressClassName, clusterID)
+	nb := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook, clusterID)
 	if err := nb.SetupWithManager(mgr); err != nil {
 		return err
 	}
