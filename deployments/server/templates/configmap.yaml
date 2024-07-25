@@ -24,3 +24,6 @@ data:
     notebook:
       imageTypes:
         {{- toYaml .Values.notebook.imageTypes | nindent 8 }}
+    batchJob:
+      images:
+        {{- toYaml .Values.batchJob.images | nindent 8 }}

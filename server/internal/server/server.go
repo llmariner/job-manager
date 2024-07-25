@@ -43,6 +43,7 @@ func New(
 	modelClient modelClient,
 	k8sClientFactory k8s.ClientFactory,
 	nbImageTypes map[string]string,
+	batchJobImages map[string]string,
 ) *S {
 	nbtypes := make([]string, 0, len(nbImageTypes))
 	for t := range nbImageTypes {
@@ -55,6 +56,7 @@ func New(
 		k8sClientFactory: k8sClientFactory,
 		nbImageTypes:     nbImageTypes,
 		nbImageTypeStr:   strings.Join(nbtypes, ", "),
+		batchJobImages:   batchJobImages,
 	}
 }
 
@@ -62,6 +64,7 @@ func New(
 type S struct {
 	v1.UnimplementedFineTuningServiceServer
 	v1.UnimplementedWorkspaceServiceServer
+	v1.UnimplementedBatchServiceServer
 
 	srv *grpc.Server
 
@@ -74,6 +77,8 @@ type S struct {
 
 	nbImageTypes   map[string]string
 	nbImageTypeStr string
+
+	batchJobImages map[string]string
 }
 
 // Run starts the gRPC server.
@@ -102,6 +107,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 	grpcServer := grpc.NewServer(opts...)
 	v1.RegisterFineTuningServiceServer(grpcServer, s)
 	v1.RegisterWorkspaceServiceServer(grpcServer, s)
+	v1.RegisterBatchServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 
 	s.srv = grpcServer

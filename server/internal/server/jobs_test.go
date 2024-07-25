@@ -96,6 +96,7 @@ func TestCreateJob(t *testing.T) {
 					id: modelID,
 				},
 				nil,
+				nil,
 				nil)
 			resp, err := srv.CreateJob(context.Background(), tc.req)
 			if tc.wantErr {
@@ -131,7 +132,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
 	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -174,7 +175,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
 	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateQueued, store.JobState(resp.Status))
@@ -216,7 +217,7 @@ func TestJobCancel(t *testing.T) {
 			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: defaultTenantID, ProjectID: defaultProjectID})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil)
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -450,5 +451,9 @@ func (c *noopK8sClient) CancelJob(ctx context.Context, job *v1.Job, namespace st
 }
 
 func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error {
+	return nil
+}
+
+func (c *noopK8sClient) CreateConfigMap(ctx context.Context, name, namespace string, data map[string][]byte) error {
 	return nil
 }

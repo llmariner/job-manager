@@ -201,12 +201,6 @@
         "command": {
           "type": "string"
         },
-        "scripts": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
         "resources": {
           "$ref": "#/definitions/v1BatchJobResources"
         },
@@ -256,7 +250,8 @@
         "scripts": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "byte"
           },
           "description": "scripts is a map of script names to script contents.\nThe total size of the scripts should not exceed 1MB."
         },
@@ -287,6 +282,9 @@
             "type": "object",
             "$ref": "#/definitions/v1BatchJob"
           }
+        },
+        "hasMore": {
+          "type": "boolean"
         }
       }
     }

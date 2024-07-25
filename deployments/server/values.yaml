@@ -48,6 +48,10 @@ notebook:
     jupyter-lab-base: mirror.gcr.io/cschranz/gpu-jupyter:v1.7_cuda-12.3_ubuntu-22.04_python-only
     jupyter-lab-full: mirror.gcr.io/cschranz/gpu-jupyter:v1.7_cuda-12.3_ubuntu-22.04
 
+batchJob:
+  images:
+    pytorch-2.1: pytorch/pytorch:2.1.1-cuda12.1-cudnn8-runtime
+
 replicaCount: 1
 
 image:

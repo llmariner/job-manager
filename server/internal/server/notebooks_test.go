@@ -54,7 +54,7 @@ func TestCreateNotebook(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"})
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil)
 			resp, err := srv.CreateNotebook(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -72,7 +72,7 @@ func TestCreateNotebook_SameName(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"})
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil)
 	wsrv := NewWorkerServiceServer(st)
 
 	req := &v1.CreateNotebookRequest{
@@ -127,7 +127,7 @@ func TestListNotebooks(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil)
 	resp, err := srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -171,7 +171,7 @@ func TestGetNotebook(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil)
 	resp, err := srv.GetNotebook(context.Background(), &v1.GetNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.NotebookQueuedActionStart, store.NotebookState(resp.Status))
@@ -227,7 +227,7 @@ func TestStopNotebook(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil)
+			srv := New(st, nil, nil, nil, nil, nil)
 			resp, err := srv.StopNotebook(context.Background(), &v1.StopNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -285,7 +285,7 @@ func TestStartNotebook(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil)
+			srv := New(st, nil, nil, nil, nil, nil)
 			resp, err := srv.StartNotebook(context.Background(), &v1.StartNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -308,7 +308,7 @@ func TestDeleteNotebook(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil)
 	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 }

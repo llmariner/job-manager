@@ -23,6 +23,7 @@ type Config struct {
 	AuthConfig AuthConfig `yaml:"auth"`
 
 	NotebookConfig NotebookConfig `yaml:"notebook"`
+	BatchJobConfig BatchJobConfig `yaml:"batchJob"`
 }
 
 // NotebookConfig is the notebook configuration.
@@ -34,6 +35,19 @@ type NotebookConfig struct {
 func (c *NotebookConfig) Validate() error {
 	if len(c.ImageTypes) == 0 {
 		return fmt.Errorf("imageTypes must be set")
+	}
+	return nil
+}
+
+// BatchJobConfig is the batch job configuration.
+type BatchJobConfig struct {
+	Images map[string]string `yaml:"images"`
+}
+
+// Validate validates the configuration.
+func (c *BatchJobConfig) Validate() error {
+	if len(c.Images) == 0 {
+		return fmt.Errorf("images must be set")
 	}
 	return nil
 }
@@ -83,6 +97,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.NotebookConfig.Validate(); err != nil {
 		return fmt.Errorf("notebook: %s", err)
+	}
+	if err := c.BatchJobConfig.Validate(); err != nil {
+		return fmt.Errorf("batch job: %s", err)
 	}
 	return nil
 }

@@ -45,6 +45,7 @@ func (f *defaultClientFactory) NewClient(env auth.AssignedKubernetesEnv, token s
 type Client interface {
 	CancelJob(ctx context.Context, job *v1.Job, namespace string) error
 	CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error
+	CreateConfigMap(ctx context.Context, name, namespace string, data map[string][]byte) error
 }
 
 type defaultClient struct {
@@ -66,5 +67,13 @@ func (c *defaultClient) CreateSecret(ctx context.Context, name, namespace string
 	opts := metav1.ApplyOptions{FieldManager: fieldManager, Force: true}
 	conf := corev1apply.Secret(name, namespace).WithData(data)
 	_, err := c.client.CoreV1().Secrets(namespace).Apply(ctx, conf, opts)
+	return err
+}
+
+// CreateConfigMap creates a configmap.
+func (c *defaultClient) CreateConfigMap(ctx context.Context, name, namespace string, data map[string][]byte) error {
+	opts := metav1.ApplyOptions{FieldManager: fieldManager, Force: true}
+	conf := corev1apply.ConfigMap(name, namespace).WithBinaryData(data)
+	_, err := c.client.CoreV1().ConfigMaps(namespace).Apply(ctx, conf, opts)
 	return err
 }
