@@ -33,7 +33,7 @@ spec:
             name: {{ include "job-manager-server.fullname" . }}-http
             port:
               number: {{ .Values.httpPort }}
-     - path: /v1/batch
+      - path: /v1/batch
         pathType: Prefix
         backend:
           service:
