@@ -12,9 +12,6 @@ global:
 
   llmOperatorBaseUrl:
 
-  ingress:
-    ingressClassName:
-
   worker:
     registrationKeySecret:
       name:
