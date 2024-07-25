@@ -218,3 +218,167 @@ var BatchService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/v1/batch_service.proto",
 }
+
+const (
+	BatchWorkerService_ListQueuedInternalBatchJobs_FullMethodName = "/llmoperator.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs"
+	BatchWorkerService_GetInternalBatchJob_FullMethodName         = "/llmoperator.batch.server.v1.BatchWorkerService/GetInternalBatchJob"
+	BatchWorkerService_UpdateBatchJobState_FullMethodName         = "/llmoperator.batch.server.v1.BatchWorkerService/UpdateBatchJobState"
+)
+
+// BatchWorkerServiceClient is the client API for BatchWorkerService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BatchWorkerServiceClient interface {
+	ListQueuedInternalBatchJobs(ctx context.Context, in *ListQueuedInternalBatchJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalBatchJobsResponse, error)
+	GetInternalBatchJob(ctx context.Context, in *GetInternalBatchJobRequest, opts ...grpc.CallOption) (*InternalBatchJob, error)
+	UpdateBatchJobState(ctx context.Context, in *UpdateBatchJobStateRequest, opts ...grpc.CallOption) (*UpdateBatchJobStateResponse, error)
+}
+
+type batchWorkerServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBatchWorkerServiceClient(cc grpc.ClientConnInterface) BatchWorkerServiceClient {
+	return &batchWorkerServiceClient{cc}
+}
+
+func (c *batchWorkerServiceClient) ListQueuedInternalBatchJobs(ctx context.Context, in *ListQueuedInternalBatchJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalBatchJobsResponse, error) {
+	out := new(ListQueuedInternalBatchJobsResponse)
+	err := c.cc.Invoke(ctx, BatchWorkerService_ListQueuedInternalBatchJobs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *batchWorkerServiceClient) GetInternalBatchJob(ctx context.Context, in *GetInternalBatchJobRequest, opts ...grpc.CallOption) (*InternalBatchJob, error) {
+	out := new(InternalBatchJob)
+	err := c.cc.Invoke(ctx, BatchWorkerService_GetInternalBatchJob_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *batchWorkerServiceClient) UpdateBatchJobState(ctx context.Context, in *UpdateBatchJobStateRequest, opts ...grpc.CallOption) (*UpdateBatchJobStateResponse, error) {
+	out := new(UpdateBatchJobStateResponse)
+	err := c.cc.Invoke(ctx, BatchWorkerService_UpdateBatchJobState_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BatchWorkerServiceServer is the server API for BatchWorkerService service.
+// All implementations must embed UnimplementedBatchWorkerServiceServer
+// for forward compatibility
+type BatchWorkerServiceServer interface {
+	ListQueuedInternalBatchJobs(context.Context, *ListQueuedInternalBatchJobsRequest) (*ListQueuedInternalBatchJobsResponse, error)
+	GetInternalBatchJob(context.Context, *GetInternalBatchJobRequest) (*InternalBatchJob, error)
+	UpdateBatchJobState(context.Context, *UpdateBatchJobStateRequest) (*UpdateBatchJobStateResponse, error)
+	mustEmbedUnimplementedBatchWorkerServiceServer()
+}
+
+// UnimplementedBatchWorkerServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedBatchWorkerServiceServer struct {
+}
+
+func (UnimplementedBatchWorkerServiceServer) ListQueuedInternalBatchJobs(context.Context, *ListQueuedInternalBatchJobsRequest) (*ListQueuedInternalBatchJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListQueuedInternalBatchJobs not implemented")
+}
+func (UnimplementedBatchWorkerServiceServer) GetInternalBatchJob(context.Context, *GetInternalBatchJobRequest) (*InternalBatchJob, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInternalBatchJob not implemented")
+}
+func (UnimplementedBatchWorkerServiceServer) UpdateBatchJobState(context.Context, *UpdateBatchJobStateRequest) (*UpdateBatchJobStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBatchJobState not implemented")
+}
+func (UnimplementedBatchWorkerServiceServer) mustEmbedUnimplementedBatchWorkerServiceServer() {}
+
+// UnsafeBatchWorkerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BatchWorkerServiceServer will
+// result in compilation errors.
+type UnsafeBatchWorkerServiceServer interface {
+	mustEmbedUnimplementedBatchWorkerServiceServer()
+}
+
+func RegisterBatchWorkerServiceServer(s grpc.ServiceRegistrar, srv BatchWorkerServiceServer) {
+	s.RegisterService(&BatchWorkerService_ServiceDesc, srv)
+}
+
+func _BatchWorkerService_ListQueuedInternalBatchJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListQueuedInternalBatchJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BatchWorkerServiceServer).ListQueuedInternalBatchJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BatchWorkerService_ListQueuedInternalBatchJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BatchWorkerServiceServer).ListQueuedInternalBatchJobs(ctx, req.(*ListQueuedInternalBatchJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BatchWorkerService_GetInternalBatchJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInternalBatchJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BatchWorkerServiceServer).GetInternalBatchJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BatchWorkerService_GetInternalBatchJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BatchWorkerServiceServer).GetInternalBatchJob(ctx, req.(*GetInternalBatchJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BatchWorkerService_UpdateBatchJobState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBatchJobStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BatchWorkerServiceServer).UpdateBatchJobState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BatchWorkerService_UpdateBatchJobState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BatchWorkerServiceServer).UpdateBatchJobState(ctx, req.(*UpdateBatchJobStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BatchWorkerService_ServiceDesc is the grpc.ServiceDesc for BatchWorkerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BatchWorkerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "llmoperator.batch.server.v1.BatchWorkerService",
+	HandlerType: (*BatchWorkerServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListQueuedInternalBatchJobs",
+			Handler:    _BatchWorkerService_ListQueuedInternalBatchJobs_Handler,
+		},
+		{
+			MethodName: "GetInternalBatchJob",
+			Handler:    _BatchWorkerService_GetInternalBatchJob_Handler,
+		},
+		{
+			MethodName: "UpdateBatchJobState",
+			Handler:    _BatchWorkerService_UpdateBatchJobState_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/batch_service.proto",
+}

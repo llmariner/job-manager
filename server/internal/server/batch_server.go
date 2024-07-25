@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/llm-operator/common/pkg/id"
@@ -225,4 +226,142 @@ func (s *S) CancelBatchJob(ctx context.Context, req *v1.CancelBatchJobRequest) (
 		return nil, status.Errorf(codes.Internal, "convert batch job to proto: %s", err)
 	}
 	return jobProto, nil
+}
+
+// ListQueuedInternalBatchJobs lists queued internal batch jobs.
+func (ws *WS) ListQueuedInternalBatchJobs(ctx context.Context, req *v1.ListQueuedInternalBatchJobsRequest) (*v1.ListQueuedInternalBatchJobsResponse, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	nbs, err := ws.store.ListQueuedBatchJobsByTenantID(clusterInfo.TenantID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "list queued jobs: %s", err)
+	}
+
+	var ijobs []*v1.InternalBatchJob
+	for _, nb := range nbs {
+		inb, err := nb.V1InternalBatchJob()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
+		}
+		ijobs = append(ijobs, inb)
+	}
+
+	return &v1.ListQueuedInternalBatchJobsResponse{Jobs: ijobs}, nil
+}
+
+// GetInternalBatchJob gets an internal batch job.
+func (ws *WS) GetInternalBatchJob(ctx context.Context, req *v1.GetInternalBatchJobRequest) (*v1.InternalBatchJob, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	job, err := ws.store.GetBatchJobByID(req.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "batch job not found: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get batch job: %s", err)
+	}
+	if job.TenantID != clusterInfo.TenantID {
+		return nil, status.Error(codes.NotFound, "batch job not found")
+	}
+
+	jobProto, err := job.V1InternalBatchJob()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
+	}
+	return jobProto, nil
+}
+
+// UpdateBatchJobState updates the state of a batch job.
+func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobStateRequest) (*v1.UpdateBatchJobStateResponse, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	job, err := ws.store.GetBatchJobByID(req.Id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "batch job not found: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get batch job: %s", err)
+	}
+	if job.TenantID != clusterInfo.TenantID {
+		return nil, status.Error(codes.NotFound, "batch job not found")
+	}
+
+	storeState := convertBatchJobState(req.State)
+	if job.State == storeState {
+		// Already in the desired state.
+		return &v1.UpdateBatchJobStateResponse{}, nil
+	}
+
+	switch req.State {
+	case v1.InternalBatchJob_STATE_UNSPECIFIED:
+		return nil, status.Error(codes.InvalidArgument, "state is required")
+	case v1.InternalBatchJob_RUNNING:
+		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionCreate {
+			// Queued state is only available in the store object and does not exist in the proto object.
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not creating: %s (%s)", job.State, job.QueuedAction)
+		}
+		if err := ws.store.SetBatchJobState(job.JobID, job.Version, storeState); err != nil {
+			return nil, status.Errorf(codes.Internal, "set batch job state: %s", err)
+		}
+		return &v1.UpdateBatchJobStateResponse{}, nil
+	case v1.InternalBatchJob_SUCCEEDED:
+		if job.State != store.BatchJobStateRunning {
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
+		}
+		if err := job.MutateMessage(func(job *v1.BatchJob) {
+			job.FinishedAt = time.Now().UTC().Unix()
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate batch job: %s", err)
+		}
+	case v1.InternalBatchJob_CANCELED:
+		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionCancel {
+			// Queued state is only available in the store object and does not exist in the proto object.
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not canceling: %s (%s)", job.State, job.QueuedAction)
+		}
+		if err := job.MutateMessage(func(job *v1.BatchJob) {
+			job.FinishedAt = time.Now().UTC().Unix()
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate batch job: %s", err)
+		}
+	case v1.InternalBatchJob_FAILED:
+		if err := job.MutateMessage(func(job *v1.BatchJob) {
+			job.FinishedAt = time.Now().UTC().Unix()
+			job.Error = &v1.BatchJob_Error{
+				Code:    req.Reason,
+				Message: req.Message,
+			}
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate batch job: %s", err)
+		}
+	case v1.InternalBatchJob_QUEUED:
+		return nil, status.Errorf(codes.FailedPrecondition, "unexpected state: %s", req.State)
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "unknown state: %s", req.State)
+	}
+
+	if err := ws.store.SetNonQueuedBatchJobStateAndMessage(job.JobID, job.Version, storeState, job.Message); err != nil {
+		return nil, status.Errorf(codes.Internal, "set batch job state and message: %s", err)
+	}
+	return &v1.UpdateBatchJobStateResponse{}, nil
+}
+
+func convertBatchJobState(s v1.InternalBatchJob_State) store.BatchJobState {
+	return store.BatchJobState(strings.ToLower(s.String()))
 }

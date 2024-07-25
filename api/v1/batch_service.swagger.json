@@ -7,6 +7,9 @@
   "tags": [
     {
       "name": "BatchService"
+    },
+    {
+      "name": "BatchWorkerService"
     }
   ],
   "consumes": [
@@ -147,6 +150,15 @@
     }
   },
   "definitions": {
+    "InternalBatchJobAction": {
+      "type": "string",
+      "enum": [
+        "ACTION_UNSPECIFIED",
+        "CREATING",
+        "CANCELING"
+      ],
+      "default": "ACTION_UNSPECIFIED"
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -215,6 +227,16 @@
           "items": {
             "type": "string"
           }
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "kubernetesNamespace": {
+          "type": "string"
+        },
+        "clusterId": {
+          "type": "string",
+          "description": "cluster_id is the ID of the cluster where he job runs."
         }
       }
     },
@@ -273,6 +295,32 @@
         }
       }
     },
+    "v1InternalBatchJob": {
+      "type": "object",
+      "properties": {
+        "job": {
+          "$ref": "#/definitions/v1BatchJob"
+        },
+        "state": {
+          "$ref": "#/definitions/v1InternalBatchJobState"
+        },
+        "queuedAction": {
+          "$ref": "#/definitions/InternalBatchJobAction"
+        }
+      }
+    },
+    "v1InternalBatchJobState": {
+      "type": "string",
+      "enum": [
+        "STATE_UNSPECIFIED",
+        "QUEUED",
+        "RUNNING",
+        "SUCCEEDED",
+        "FAILED",
+        "CANCELED"
+      ],
+      "default": "STATE_UNSPECIFIED"
+    },
     "v1ListBatchJobsResponse": {
       "type": "object",
       "properties": {
@@ -287,6 +335,21 @@
           "type": "boolean"
         }
       }
+    },
+    "v1ListQueuedInternalBatchJobsResponse": {
+      "type": "object",
+      "properties": {
+        "jobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1InternalBatchJob"
+          }
+        }
+      }
+    },
+    "v1UpdateBatchJobStateResponse": {
+      "type": "object"
     }
   }
 }

@@ -31,6 +31,7 @@ func NewWorkerServiceServer(s *store.S) *WS {
 type WS struct {
 	v1.UnimplementedFineTuningWorkerServiceServer
 	v1.UnimplementedWorkspaceWorkerServiceServer
+	v1.UnimplementedBatchWorkerServiceServer
 
 	srv   *grpc.Server
 	store *store.S
@@ -58,6 +59,7 @@ func (ws *WS) Run(ctx context.Context, port int, authConfig config.AuthConfig) e
 
 	v1.RegisterFineTuningWorkerServiceServer(srv, ws)
 	v1.RegisterWorkspaceWorkerServiceServer(srv, ws)
+	v1.RegisterBatchWorkerServiceServer(srv, ws)
 	reflection.Register(srv)
 
 	ws.srv = srv
