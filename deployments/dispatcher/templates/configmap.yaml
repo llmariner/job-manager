@@ -18,6 +18,8 @@ data:
     notebook:
       llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
       ingressClassName: {{ .Values.notebook.ingressClassName }}
+      gatewayName: {{ .Values.notebook.gatewayName }}
+      gatewayNamespace: {{ .Values.notebook.gatewayNamespace }}
     clusterManagerServerWorkerServiceAddr: {{ .Values.clusterManagerServerWorkerServiceAddr }}
     jobManagerServerWorkerServiceAddr: {{ .Values.jobManagerServerWorkerServiceAddr }}
     fileManagerServerWorkerServiceAddr: {{ .Values.fileManagerServerWorkerServiceAddr }}

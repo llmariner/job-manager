@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	"github.com/llm-operator/job-manager/dispatcher/internal/config"
 	"github.com/llm-operator/rbac-manager/pkg/auth"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -27,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	gatewayv1apply "sigs.k8s.io/gateway-api/apis/applyconfiguration/apis/v1"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 const (
@@ -40,15 +43,16 @@ const (
 func NewNotebookManager(
 	k8sClient client.Client,
 	wsClient v1.WorkspaceWorkerServiceClient,
-	llmoBaseURL string,
-	ingressClassName string,
+	config config.NotebooksConfig,
 	clusterID string,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
 		wsClient:         wsClient,
-		llmoBaseURL:      llmoBaseURL,
-		ingressClassName: ingressClassName,
+		llmoBaseURL:      config.LLMOperatorBaseURL,
+		ingressClassName: config.IngressClassName,
+		gatewayName:      config.GatewayName,
+		gatewayNamespace: config.GatewayNamespace,
 		clusterID:        clusterID,
 	}
 }
@@ -60,6 +64,8 @@ type NotebookManager struct {
 
 	llmoBaseURL      string
 	ingressClassName string
+	gatewayName      string
+	gatewayNamespace string
 
 	clusterID string
 }
@@ -221,23 +227,46 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 				WithTargetPort(intstr.FromString(portName)).
 				WithProtocol(corev1.ProtocolTCP)))
 
-	ingConf := netv1apply.Ingress(name, nb.Notebook.KubernetesNamespace).
-		WithLabels(labels).
-		WithAnnotations(map[string]string{
-			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.Notebook.Id}).
-		WithSpec(netv1apply.IngressSpec().
-			WithIngressClassName(n.ingressClassName).
-			WithRules(netv1apply.IngressRule().
-				WithHTTP(netv1apply.HTTPIngressRuleValue().
-					WithPaths(netv1apply.HTTPIngressPath().
-						WithPath(baseURL).
-						WithPathType(netv1.PathTypePrefix).
-						WithBackend(netv1apply.IngressBackend().
-							WithService(netv1apply.IngressServiceBackend().
-								WithName(name).
-								WithPort(netv1apply.ServiceBackendPort().
-									WithName(portName))))))))
+	var ingConf *netv1apply.IngressApplyConfiguration
+	var hrConf *gatewayv1apply.HTTPRouteApplyConfiguration
+	if n.ingressClassName != "" {
+		ingConf = netv1apply.Ingress(name, nb.Notebook.KubernetesNamespace).
+			WithLabels(labels).
+			WithAnnotations(map[string]string{
+				managedAnnotationKey:    "true",
+				notebookIDAnnotationKey: nb.Notebook.Id}).
+			WithSpec(netv1apply.IngressSpec().
+				WithIngressClassName(n.ingressClassName).
+				WithRules(netv1apply.IngressRule().
+					WithHTTP(netv1apply.HTTPIngressRuleValue().
+						WithPaths(netv1apply.HTTPIngressPath().
+							WithPath(baseURL).
+							WithPathType(netv1.PathTypePrefix).
+							WithBackend(netv1apply.IngressBackend().
+								WithService(netv1apply.IngressServiceBackend().
+									WithName(name).
+									WithPort(netv1apply.ServiceBackendPort().
+										WithName(portName))))))))
+	} else {
+		hrConf = gatewayv1apply.HTTPRoute(name, nb.Notebook.KubernetesNamespace).
+			WithAnnotations(map[string]string{
+				managedAnnotationKey:    "true",
+				notebookIDAnnotationKey: nb.Notebook.Id}).
+			WithSpec(gatewayv1apply.HTTPRouteSpec().
+				WithParentRefs(gatewayv1apply.ParentReference().
+					WithName(gatewayv1.ObjectName(n.gatewayName)).
+					WithNamespace(gatewayv1.Namespace(n.gatewayNamespace))).
+				WithRules(gatewayv1apply.HTTPRouteRule().
+					WithMatches(gatewayv1apply.HTTPRouteMatch().
+						WithPath(gatewayv1apply.HTTPPathMatch().
+							WithType(gatewayv1.PathMatchPathPrefix).
+							WithValue(baseURL))).
+					WithBackendRefs(gatewayv1apply.HTTPBackendRef().
+						WithKind("Service").
+						WithName(gatewayv1.ObjectName(name)).
+						WithNamespace(gatewayv1.Namespace(nb.Notebook.KubernetesNamespace)).
+						WithPort(appPort))))
+	}
 
 	patchOpts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
 	deploy, err := n.applyObject(ctx, deployConf, patchOpts)
@@ -255,14 +284,27 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		WithController(true)
 
 	svcConf.WithOwnerReferences(ownerRef)
-	ingConf.WithOwnerReferences(ownerRef)
+	if ingConf != nil {
+		ingConf.WithOwnerReferences(ownerRef)
+	}
+	if hrConf != nil {
+		hrConf.WithOwnerReferences(ownerRef)
+	}
 
 	// Secret is pre-created by server, and dispatcher only set the owner reference here.
 	// TODO(aya): garbage collect orphaned secrets
 	secConf := corev1apply.Secret(nb.Notebook.Id, nb.Notebook.KubernetesNamespace).
 		WithOwnerReferences(ownerRef)
 
-	for _, obj := range []any{svcConf, ingConf, secConf} {
+	objs := []any{svcConf, secConf}
+	if ingConf != nil {
+		objs = append(objs, ingConf)
+	}
+	if hrConf != nil {
+		objs = append(objs, hrConf)
+	}
+
+	for _, obj := range objs {
 		if _, err := n.applyObject(ctx, obj, patchOpts); err != nil {
 			return err
 		}

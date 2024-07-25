@@ -91,6 +91,8 @@ func (c *JobConfig) validate() error {
 type NotebooksConfig struct {
 	LLMOperatorBaseURL string `yaml:"llmOperatorBaseUrl"`
 	IngressClassName   string `yaml:"ingressClassName"`
+	GatewayName        string `yaml:"gatewayName"`
+	GatewayNamespace   string `yaml:"gatewayNamespace"`
 }
 
 // validate validates the notebooks configuration.
@@ -98,8 +100,14 @@ func (c *NotebooksConfig) validate() error {
 	if c.LLMOperatorBaseURL == "" {
 		return fmt.Errorf("llm operator base url must be set")
 	}
-	if c.IngressClassName == "" {
-		return fmt.Errorf("ingress class name must be set")
+	if c.IngressClassName == "" && c.GatewayName == "" {
+		return fmt.Errorf("ingress class name or gateway class name must be set")
+	}
+	if c.IngressClassName != "" && c.GatewayName != "" {
+		return fmt.Errorf("only one of ingress class name or gateway class name must be set")
+	}
+	if c.GatewayName != "" && c.GatewayNamespace == "" {
+		return fmt.Errorf("gateway namespace must be set")
 	}
 	return nil
 }
