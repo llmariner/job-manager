@@ -16,8 +16,11 @@ github.com/evanphx/json-patch/v5 v5.9.0 h1:kcBlZQbplgElYIlo/n1hJbls2z/1awpXxpRi0
 github.com/evanphx/json-patch/v5 v5.9.0/go.mod h1:VNkHZ/282BpEyt/tObQO8s5CMPmYYq14uClGH4abBuQ=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
+github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.4.1 h1:pKouT5E8xu9zeFC39JXRDukb6JFQPXM5p5I91188VAQ=
 github.com/go-logr/logr v1.4.1/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
+github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
 github.com/go-logr/zapr v1.3.0 h1:XGdV8XW8zdwFiwOA2Dryh1gj2KRQyOOoNmBy4EplIcQ=
 github.com/go-logr/zapr v1.3.0/go.mod h1:YKepepNBd1u/oyhd/yQmtjVXmm9uML4IXUgMOwR8/Gg=
 github.com/go-openapi/jsonpointer v0.21.0 h1:YgdVicSA9vH5RiHs9TZW5oyafXZFc6+2Vc1rr/O9oNQ=
@@ -82,8 +85,8 @@ github.com/llm-operator/cluster-manager v0.9.0 h1:0+eciUUcAbkROSpazbWmPo77HKRE6d
 github.com/llm-operator/cluster-manager v0.9.0/go.mod h1:h+LdgMT3V8KlVUME/GlAQdmo4v5R990X9+kzBHqdTIo=
 github.com/llm-operator/common v0.3.0 h1:xkZfXIzfXYKxK6pqInWnrDPrZ9fb54i5OPs1y6V6WfM=
 github.com/llm-operator/common v0.3.0/go.mod h1:NQpm0/EQnyXz/a67TftLWF3Ju0hgaalViND67s2sRVs=
-github.com/llm-operator/file-manager v0.42.0 h1:goio9P/xWcvbSNZJuyzUqLwnyx4+4LdVmhMPPT0aHck=
-github.com/llm-operator/file-manager v0.42.0/go.mod h1:eV8QWrx9/Hj4psgj20uENm8WWg+l5zt+nVZ7zM+QgJk=
+github.com/llm-operator/file-manager v0.55.0 h1:iD43MRzZWhM9gtHWsfoLkO6zgHqxvbulUc2Jyx93En4=
+github.com/llm-operator/file-manager v0.55.0/go.mod h1:uMpiPdmLfgn6Ecb03Z1KME4ZX6z8ZQcVwDVeYBmn8Bo=
 github.com/llm-operator/model-manager v0.76.0 h1:UCKFT8gUpOD2R2+cBqXKkmDEJiqhFZ5RhRd3gIdTe+g=
 github.com/llm-operator/model-manager v0.76.0/go.mod h1:VB2M+eUtRsUtpzY2eWayswXtrgfdTMK8C98t5bRcUfM=
 github.com/llm-operator/rbac-manager v0.73.0 h1:4KeK85l7dr2JHwEzaszsEw+fnSSuIA3oC91MKUONO9k=

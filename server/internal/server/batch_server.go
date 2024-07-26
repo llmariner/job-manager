@@ -9,6 +9,7 @@ import (
 	"github.com/llm-operator/common/pkg/id"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
+	"github.com/llm-operator/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -38,6 +39,8 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		return nil, status.Error(codes.InvalidArgument, "scripts are required")
 	}
 
+	// Pass the Authorization to the context for downstream gRPC calls.
+	ctx = auth.CarryMetadata(ctx)
 	for _, fileID := range req.DataFiles {
 		if err := s.validateFile(ctx, fileID); err != nil {
 			return nil, err
@@ -56,14 +59,17 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 	kenv := userInfo.AssignedKubernetesEnvs[0]
 
 	jobProto := &v1.BatchJob{
-		Id:        jobID,
-		CreatedAt: time.Now().UTC().Unix(),
-		Status:    string(store.BatchJobStateQueued),
-		Image:     image,
-		Command:   req.Command,
-		Resources: req.Resources,
-		Envs:      req.Envs,
-		DataFiles: req.DataFiles,
+		Id:                  jobID,
+		CreatedAt:           time.Now().UTC().Unix(),
+		Status:              string(store.BatchJobStateQueued),
+		Image:               image,
+		Command:             req.Command,
+		Resources:           req.Resources,
+		Envs:                req.Envs,
+		DataFiles:           req.DataFiles,
+		ProjectId:           userInfo.ProjectID,
+		KubernetesNamespace: kenv.Namespace,
+		ClusterId:           kenv.ClusterID,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
