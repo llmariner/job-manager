@@ -64,7 +64,7 @@ rules:
   - update
   - watch
 {{- end}}
-{{- if .Values.notebook.gatewayClassName }}
+{{- if .Values.notebook.gatewayName }}
 - apiGroups:
   - gateway.networking.k8s.io
   resources:
