@@ -152,6 +152,7 @@ func (m *BatchJobManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			if cond.Type == batchv1.JobSuspended {
 				expirationTime = cond.LastTransitionTime.Add(jobTTL)
 				expired = time.Now().After(expirationTime)
+				break
 			}
 		}
 		if !expired {
@@ -190,6 +191,9 @@ func (m *BatchJobManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, nil
 }
 
+// createBatchJob creates a k8s job for the internal batch job. The created k8s job has init and main containers.
+// init container downloads data files from object storage, and stores them in an shared volume. main container
+// precedes the user command with installing requirements packages.
 func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.InternalBatchJob) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating k8s resources for a batch job")
@@ -219,10 +223,8 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 	}
 
 	limit := corev1.ResourceList{}
-	if r := ibjob.Job.Resources; r != nil {
-		if r.GpuCount > 0 {
-			limit["nvidia.com/gpu"] = *resource.NewQuantity(int64(r.GpuCount), resource.DecimalSI)
-		}
+	if r := ibjob.Job.Resources; r != nil && r.GpuCount > 0 {
+		limit["nvidia.com/gpu"] = *resource.NewQuantity(int64(r.GpuCount), resource.DecimalSI)
 	}
 	resources := corev1apply.ResourceRequirements()
 	if len(limit) > 0 {
