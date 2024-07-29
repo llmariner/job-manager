@@ -75,35 +75,68 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
+	clusterID, err := getClusterID(ctx, c)
+	if err != nil {
+		return err
+	}
+
 	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
 		c.Job,
 		c.KueueIntegration,
 	)
 
-	preProcessor, postProcessor, err := newProcessors(c)
+	option := grpcOption(c)
+	fconn, err := grpc.NewClient(c.FileManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return err
 	}
+	fclient := fv1.NewFilesWorkerServiceClient(fconn)
 
-	clusterID, err := getClusterID(ctx, c)
+	mconn, err := grpc.NewClient(c.ModelManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return err
 	}
+	mclient := mv1.NewModelsWorkerServiceClient(mconn)
+	s3Client := s3.NewClient(c.ObjectStore.S3)
 
-	conn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, grpcOption(c))
+	jconn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return err
 	}
-	ftClient := v1.NewFineTuningWorkerServiceClient(conn)
-	wsClient := v1.NewWorkspaceWorkerServiceClient(conn)
+	ftClient := v1.NewFineTuningWorkerServiceClient(jconn)
+	wsClient := v1.NewWorkspaceWorkerServiceClient(jconn)
+	bwClient := v1.NewBatchWorkerServiceClient(jconn)
 
-	nb := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook, clusterID)
-	if err := nb.SetupWithManager(mgr); err != nil {
+	nbm := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook, clusterID)
+	if err := nbm.SetupWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := dispatcher.New(ftClient, wsClient, jc, preProcessor, nb, c.PollingInterval).
+	bjm := dispatcher.NewBatchJobManager(dispatcher.BatchJobManagerOptions{
+		K8sClient:   mgr.GetClient(),
+		S3Client:    s3Client,
+		FileClient:  fclient,
+		BwClient:    bwClient,
+		LlmoBaseURL: c.Notebook.LLMOperatorBaseURL,
+		ClusterID:   clusterID,
+		WandbConfig: c.Job.WandbAPIKeySecret,
+		KueueConfig: c.KueueIntegration,
+	})
+	if err := bjm.SetupWithManager(mgr); err != nil {
+		return err
+	}
+
+	var preProcessor dispatcher.PreProcessorI
+	var postProcessor dispatcher.PostProcessorI
+	if c.Debug.Standalone {
+		preProcessor = &dispatcher.NoopPreProcessor{}
+		postProcessor = &dispatcher.NoopPostProcessor{}
+	} else {
+		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client)
+		postProcessor = dispatcher.NewPostProcessor(mclient)
+	}
+	if err := dispatcher.New(ftClient, wsClient, bwClient, jc, preProcessor, nbm, bjm, c.PollingInterval).
 		SetupWithManager(mgr); err != nil {
 		return err
 	}
@@ -129,30 +162,6 @@ func getClusterID(ctx context.Context, c *config.Config) (string, error) {
 	}
 	log.Printf("Obtained the cluster ID: %q\n", cluster.Id)
 	return cluster.Id, nil
-}
-
-func newProcessors(c *config.Config) (dispatcher.PreProcessorI, dispatcher.PostProcessorI, error) {
-	if c.Debug.Standalone {
-		return &dispatcher.NoopPreProcessor{}, &dispatcher.NoopPostProcessor{}, nil
-	}
-
-	option := grpcOption(c)
-	conn, err := grpc.NewClient(c.FileManagerServerWorkerServiceAddr, option)
-	if err != nil {
-		return nil, nil, err
-	}
-	fclient := fv1.NewFilesWorkerServiceClient(conn)
-
-	conn, err = grpc.NewClient(c.ModelManagerServerWorkerServiceAddr, option)
-	if err != nil {
-		return nil, nil, err
-	}
-	mclient := mv1.NewModelsWorkerServiceClient(conn)
-	s3Client := s3.NewClient(c.ObjectStore.S3)
-
-	preProcessor := dispatcher.NewPreProcessor(fclient, mclient, s3Client)
-	postProcessor := dispatcher.NewPostProcessor(mclient)
-	return preProcessor, postProcessor, nil
 }
 
 func newRestConfig(kubeconfigPath string) (*rest.Config, error) {

@@ -22,6 +22,11 @@ type notebookManagerI interface {
 	deleteNotebook(ctx context.Context, nb *v1.InternalNotebook) error
 }
 
+type batchJobManagerI interface {
+	createBatchJob(ctx context.Context, job *v1.InternalBatchJob) error
+	cancelBatchJob(ctx context.Context, job *v1.InternalBatchJob) error
+}
+
 // PreProcessorI is an interface for pre-processing jobs.
 type PreProcessorI interface {
 	Process(ctx context.Context, job *v1.InternalJob) (*PreProcessResult, error)
@@ -40,17 +45,21 @@ func (p *NoopPreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*P
 func New(
 	ftClient v1.FineTuningWorkerServiceClient,
 	wsClient v1.WorkspaceWorkerServiceClient,
+	bwClient v1.BatchWorkerServiceClient,
 	jobCreator jobCreatorI,
 	preProcessor PreProcessorI,
 	nbCreator notebookManagerI,
+	bjManager batchJobManagerI,
 	pollingInterval time.Duration,
 ) *D {
 	return &D{
 		ftClient:        ftClient,
 		wsClient:        wsClient,
+		bwClient:        bwClient,
 		jobCreator:      jobCreator,
 		preProcessor:    preProcessor,
 		nbCreator:       nbCreator,
+		bjManager:       bjManager,
 		pollingInterval: pollingInterval,
 	}
 }
@@ -59,10 +68,12 @@ func New(
 type D struct {
 	ftClient v1.FineTuningWorkerServiceClient
 	wsClient v1.WorkspaceWorkerServiceClient
+	bwClient v1.BatchWorkerServiceClient
 
 	jobCreator   jobCreatorI
 	preProcessor PreProcessorI
 	nbCreator    notebookManagerI
+	bjManager    batchJobManagerI
 
 	pollingInterval time.Duration
 }
@@ -98,6 +109,7 @@ func (d *D) Start(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processQueuedJobs))
 	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processNotebooks))
+	g.Go(worker(time.Duration(rand.Intn(int(maxDelay))), d.processBatchJobs))
 
 	log := ctrl.LoggerFrom(ctx)
 	if err := g.Wait(); err != nil {
@@ -194,6 +206,49 @@ func (d *D) processNotebooks(ctx context.Context) error {
 
 		if _, err := d.wsClient.UpdateNotebookState(ctx, &v1.UpdateNotebookStateRequest{
 			Id:    nb.Notebook.Id,
+			State: state,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *D) processBatchJobs(ctx context.Context) error {
+	ctx = auth.AppendWorkerAuthorization(ctx)
+	resp, err := d.bwClient.ListQueuedInternalBatchJobs(ctx, &v1.ListQueuedInternalBatchJobsRequest{})
+	if err != nil {
+		return err
+	}
+	for _, job := range resp.Jobs {
+		log := ctrl.LoggerFrom(ctx).WithValues("batchJobID", job.Job.Id)
+		ctx = ctrl.LoggerInto(ctx, log)
+
+		var (
+			state v1.InternalBatchJob_State
+			err   error
+		)
+		switch job.QueuedAction {
+		case v1.InternalBatchJob_CREATING:
+			log.Info("Creating a new batch job")
+			err = d.bjManager.createBatchJob(ctx, job)
+			state = v1.InternalBatchJob_RUNNING
+		case v1.InternalBatchJob_CANCELING:
+			log.Info("Canceling a batch job")
+			err = d.bjManager.cancelBatchJob(ctx, job)
+			state = v1.InternalBatchJob_CANCELED
+		case v1.InternalBatchJob_ACTION_UNSPECIFIED:
+			return fmt.Errorf("batch job queued action is not specified")
+		default:
+			return fmt.Errorf("unknown batch job queued action: %s", job.QueuedAction)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to %s the batch job: %s", job.QueuedAction, err)
+		}
+		log.Info("Successfully completed the action", "action", job.QueuedAction.String())
+
+		if _, err := d.bwClient.UpdateBatchJobState(ctx, &v1.UpdateBatchJobStateRequest{
+			Id:    job.Job.Id,
 			State: state,
 		}); err != nil {
 			return err

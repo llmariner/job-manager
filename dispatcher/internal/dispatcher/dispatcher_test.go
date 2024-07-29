@@ -28,15 +28,14 @@ func TestProcessQueuedJobs(t *testing.T) {
 		},
 	}
 
+	jc := &noopJobCreator{}
 	ft := &fakeFineTuningWorkerServiceClient{
 		jobs:          jobs,
 		updatedPhases: map[string]v1.UpdateJobPhaseRequest_Phase{},
 	}
-	ws := &fakeWorkspaceWorkerServiceClient{}
-	jc := &noopJobCreator{}
-	pp := &NoopPreProcessor{}
-	nc := &noopNotebookManager{}
-	d := New(ft, ws, jc, pp, nc, time.Second)
+	d := newTestDispatcher()
+	d.ftClient = ft
+	d.jobCreator = jc
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
@@ -78,12 +77,9 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 		},
 	}
 
-	ft := &fakeFineTuningWorkerServiceClient{}
 	ws := &fakeWorkspaceWorkerServiceClient{notebooks: nbs, updatedState: map[string]v1.NotebookState{}}
-	jc := &noopJobCreator{}
-	pp := &NoopPreProcessor{}
-	nc := &noopNotebookManager{}
-	d := New(ft, ws, jc, pp, nc, time.Second)
+	d := newTestDispatcher()
+	d.wsClient = ws
 	err := d.processNotebooks(context.Background())
 	assert.NoError(t, err)
 
@@ -97,6 +93,56 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, want, got)
 	}
+}
+
+func TestProcessQueuedBatchJobs(t *testing.T) {
+	nbs := []*v1.InternalBatchJob{
+		{
+			Job: &v1.BatchJob{
+				Id: "nb0",
+			},
+			State:        v1.InternalBatchJob_QUEUED,
+			QueuedAction: v1.InternalBatchJob_CREATING,
+		},
+		{
+			Job: &v1.BatchJob{
+				Id: "nb1",
+			},
+			State:        v1.InternalBatchJob_QUEUED,
+			QueuedAction: v1.InternalBatchJob_CANCELING,
+		},
+	}
+
+	ws := &fakeBatchWorkerServiceClient{
+		jobs:         nbs,
+		updatedState: map[string]v1.InternalBatchJob_State{},
+	}
+	d := newTestDispatcher()
+	d.bwClient = ws
+	err := d.processBatchJobs(context.Background())
+	assert.NoError(t, err)
+
+	wants := map[string]v1.InternalBatchJob_State{
+		nbs[0].Job.Id: v1.InternalBatchJob_RUNNING,
+		nbs[1].Job.Id: v1.InternalBatchJob_CANCELED,
+	}
+	for nbID, want := range wants {
+		got, ok := ws.updatedState[nbID]
+		assert.True(t, ok)
+		assert.Equal(t, want, got)
+	}
+}
+
+func newTestDispatcher() *D {
+	return New(
+		&fakeFineTuningWorkerServiceClient{},
+		&fakeWorkspaceWorkerServiceClient{},
+		&fakeBatchWorkerServiceClient{},
+		&noopJobCreator{},
+		&NoopPreProcessor{},
+		&noopNotebookManager{},
+		&noopBatchJobManager{},
+		time.Second)
 }
 
 type noopJobCreator struct {
@@ -126,6 +172,16 @@ func (n *noopNotebookManager) stopNotebook(ctx context.Context, nb *v1.InternalN
 
 func (n *noopNotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNotebook) error {
 	n.deleteCounter++
+	return nil
+}
+
+type noopBatchJobManager struct {
+}
+
+func (n *noopBatchJobManager) createBatchJob(ctx context.Context, job *v1.InternalBatchJob) error {
+	return nil
+}
+func (n *noopBatchJobManager) cancelBatchJob(ctx context.Context, job *v1.InternalBatchJob) error {
 	return nil
 }
 
@@ -166,4 +222,29 @@ func (c *fakeWorkspaceWorkerServiceClient) ListQueuedInternalNotebooks(ctx conte
 func (c *fakeWorkspaceWorkerServiceClient) UpdateNotebookState(ctx context.Context, in *v1.UpdateNotebookStateRequest, opts ...grpc.CallOption) (*v1.UpdateNotebookStateResponse, error) {
 	c.updatedState[in.Id] = in.State
 	return &v1.UpdateNotebookStateResponse{}, nil
+}
+
+type fakeBatchWorkerServiceClient struct {
+	jobs         []*v1.InternalBatchJob
+	updatedState map[string]v1.InternalBatchJob_State
+}
+
+func (c *fakeBatchWorkerServiceClient) ListQueuedInternalBatchJobs(ctx context.Context, in *v1.ListQueuedInternalBatchJobsRequest, opts ...grpc.CallOption) (*v1.ListQueuedInternalBatchJobsResponse, error) {
+	return &v1.ListQueuedInternalBatchJobsResponse{
+		Jobs: c.jobs,
+	}, nil
+}
+
+func (c *fakeBatchWorkerServiceClient) GetInternalBatchJob(ctx context.Context, in *v1.GetInternalBatchJobRequest, opts ...grpc.CallOption) (*v1.InternalBatchJob, error) {
+	for _, job := range c.jobs {
+		if job.Job.Id == in.Id {
+			return job, nil
+		}
+	}
+	return nil, status.Error(codes.NotFound, "batch job not found")
+}
+
+func (c *fakeBatchWorkerServiceClient) UpdateBatchJobState(ctx context.Context, in *v1.UpdateBatchJobStateRequest, opts ...grpc.CallOption) (*v1.UpdateBatchJobStateResponse, error) {
+	c.updatedState[in.Id] = in.State
+	return &v1.UpdateBatchJobStateResponse{}, nil
 }

@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	managedAnnotationKey    = "llm-operator/managed"
-	notebookIDAnnotationKey = "llm-operator/notebook-id"
+	notebookManagedAnnotationKey = "llm-operator/managed-notebook"
+	notebookIDAnnotationKey      = "llm-operator/notebook-id"
 
 	nbManagerName = "notebook-manager"
 )
@@ -181,8 +181,8 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		Deployment(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
-			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.Notebook.Id}).
+			notebookManagedAnnotationKey: "true",
+			notebookIDAnnotationKey:      nb.Notebook.Id}).
 		WithSpec(appsv1apply.DeploymentSpec().
 			WithReplicas(1).
 			WithSelector(metav1apply.LabelSelector().
@@ -216,8 +216,8 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	svcConf := corev1apply.Service(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
-			managedAnnotationKey:    "true",
-			notebookIDAnnotationKey: nb.Notebook.Id}).
+			notebookManagedAnnotationKey: "true",
+			notebookIDAnnotationKey:      nb.Notebook.Id}).
 		WithSpec(corev1apply.ServiceSpec().
 			WithType(corev1.ServiceTypeClusterIP).
 			WithSelector(labels).
@@ -233,8 +233,8 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		ingConf = netv1apply.Ingress(name, nb.Notebook.KubernetesNamespace).
 			WithLabels(labels).
 			WithAnnotations(map[string]string{
-				managedAnnotationKey:    "true",
-				notebookIDAnnotationKey: nb.Notebook.Id}).
+				notebookManagedAnnotationKey: "true",
+				notebookIDAnnotationKey:      nb.Notebook.Id}).
 			WithSpec(netv1apply.IngressSpec().
 				WithIngressClassName(n.ingressClassName).
 				WithRules(netv1apply.IngressRule().
@@ -250,8 +250,8 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	} else {
 		hrConf = gatewayv1apply.HTTPRoute(name, nb.Notebook.KubernetesNamespace).
 			WithAnnotations(map[string]string{
-				managedAnnotationKey:    "true",
-				notebookIDAnnotationKey: nb.Notebook.Id}).
+				notebookManagedAnnotationKey: "true",
+				notebookIDAnnotationKey:      nb.Notebook.Id}).
 			WithSpec(gatewayv1apply.HTTPRouteSpec().
 				WithParentRefs(gatewayv1apply.ParentReference().
 					WithName(gatewayv1.ObjectName(n.gatewayName)).
@@ -367,5 +367,5 @@ func (n *NotebookManager) deleteNotebook(ctx context.Context, nb *v1.InternalNot
 }
 
 func isManagedNotebook(annotations map[string]string) bool {
-	return annotations[managedAnnotationKey] == "true"
+	return annotations[notebookManagedAnnotationKey] == "true"
 }
