@@ -68,7 +68,7 @@ func TestCreateBatchJob(t *testing.T) {
 			}
 			assert.NoError(t, err)
 
-			_, err = st.GetBatchJobByIDAndProjectID(resp.Id, defaultProjectID)
+			_, err = st.GetActiveBatchJobByIDAndProjectID(resp.Id, defaultProjectID)
 			assert.NoError(t, err)
 		})
 	}
@@ -78,7 +78,7 @@ func TestListBatchJobs(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 11; i++ {
 		nbProto := &v1.BatchJob{
 			Id: fmt.Sprintf("nb%d", i),
 		}
@@ -93,6 +93,8 @@ func TestListBatchJobs(t *testing.T) {
 		err = st.CreateBatchJob(nb)
 		assert.NoError(t, err)
 	}
+	err := st.SetBatchJobState("nb10", 0, store.BatchJobStateDeleted)
+	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil)
 	resp, err := srv.ListBatchJobs(context.Background(), &v1.ListBatchJobsRequest{Limit: 5})
@@ -228,6 +230,10 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 			State:    store.BatchJobStateQueued,
 			TenantID: defaultTenantID,
 		},
+		{
+			State:    store.BatchJobStateDeleted,
+			TenantID: defaultTenantID,
+		},
 	}
 	for i, job := range jobs {
 		jobProto := &v1.Job{
@@ -271,6 +277,26 @@ func TestGetInternalBatchJob(t *testing.T) {
 	resp, err := srv.GetInternalBatchJob(context.Background(), req)
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
+}
+
+func TestDeleteBatchJob(t *testing.T) {
+	const nbID = "nb0"
+
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	err := st.CreateBatchJob(&store.BatchJob{
+		JobID:        nbID,
+		State:        store.BatchJobStateQueued,
+		QueuedAction: store.BatchJobQueuedActionCreate,
+		TenantID:     defaultTenantID,
+		ProjectID:    defaultProjectID,
+	})
+	assert.NoError(t, err)
+
+	srv := New(st, nil, nil, nil, nil, nil)
+	_, err = srv.DeleteBatchJob(context.Background(), &v1.DeleteBatchJobRequest{Id: nbID})
+	assert.NoError(t, err)
 }
 
 func TestUpdateBatchJobState(t *testing.T) {
@@ -323,6 +349,19 @@ func TestUpdateBatchJobState(t *testing.T) {
 			name:      "set cancel state, previous state is not queued",
 			prevState: store.BatchJobStateSucceeded,
 			state:     v1.InternalBatchJob_CANCELED,
+			wantError: true,
+		},
+		{
+			name:       "set delete state",
+			prevState:  store.BatchJobStateQueued,
+			prevAction: store.BatchJobQueuedActionDelete,
+			state:      v1.InternalBatchJob_DELETED,
+			wantState:  store.BatchJobStateDeleted,
+		},
+		{
+			name:      "set delete state, previous state is not queued",
+			prevState: store.BatchJobStateSucceeded,
+			state:     v1.InternalBatchJob_DELETED,
 			wantError: true,
 		},
 		{

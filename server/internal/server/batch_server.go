@@ -130,7 +130,7 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 
 	var after uint
 	if req.After != "" {
-		job, err := s.store.GetBatchJobByIDAndProjectID(req.After, userInfo.ProjectID)
+		job, err := s.store.GetActiveBatchJobByIDAndProjectID(req.After, userInfo.ProjectID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, status.Errorf(codes.InvalidArgument, "invalid after: %s", err)
@@ -140,7 +140,7 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 		after = job.ID
 	}
 
-	jobs, hasMore, err := s.store.ListBatchJobsByProjectIDWithPagination(userInfo.ProjectID, after, int(limit))
+	jobs, hasMore, err := s.store.ListActiveBatchJobsByProjectIDWithPagination(userInfo.ProjectID, after, int(limit))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list batch jobs: %s", err)
 	}
@@ -170,7 +170,7 @@ func (s *S) GetBatchJob(ctx context.Context, req *v1.GetBatchJobRequest) (*v1.Ba
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	job, err := s.store.GetBatchJobByIDAndProjectID(req.Id, userInfo.ProjectID)
+	job, err := s.store.GetActiveBatchJobByIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get batch job: %s", err)
@@ -179,6 +179,45 @@ func (s *S) GetBatchJob(ctx context.Context, req *v1.GetBatchJobRequest) (*v1.Ba
 	}
 
 	jobProto, err := job.V1BatchJob()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert batch job to proto: %s", err)
+	}
+	return jobProto, nil
+}
+
+// DeleteBatchJob deletes a batch job.
+func (s *S) DeleteBatchJob(ctx context.Context, req *v1.DeleteBatchJobRequest) (*v1.BatchJob, error) {
+	userInfo, err := s.extractUserInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	job, err := s.store.GetActiveBatchJobByIDAndProjectID(req.Id, userInfo.ProjectID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "get batch job: %s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "get batch job: %s", err)
+	}
+	jobProto, err := job.V1BatchJob()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "convert batch job to proto: %s", err)
+	}
+
+	if job.State == store.BatchJobStateDeleted ||
+		(job.State == store.BatchJobStateQueued && job.QueuedAction == store.BatchJobQueuedActionDelete) {
+		return jobProto, nil
+	}
+
+	job, err = s.store.SetBatchJobQueuedAction(job.JobID, job.Version, store.BatchJobQueuedActionDelete)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "set batch job queued action: %s", err)
+	}
+	jobProto, err = job.V1BatchJob()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert batch job to proto: %s", err)
 	}
@@ -196,7 +235,7 @@ func (s *S) CancelBatchJob(ctx context.Context, req *v1.CancelBatchJobRequest) (
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	job, err := s.store.GetBatchJobByIDAndProjectID(req.Id, userInfo.ProjectID)
+	job, err := s.store.GetActiveBatchJobByIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.NotFound, "get batch job: %s", err)
@@ -212,7 +251,8 @@ func (s *S) CancelBatchJob(ctx context.Context, req *v1.CancelBatchJobRequest) (
 	switch job.State {
 	case store.BatchJobStateFailed,
 		store.BatchJobStateCanceled,
-		store.BatchJobStateSucceeded:
+		store.BatchJobStateSucceeded,
+		store.BatchJobStateDeleted:
 		return jobProto, nil
 	case store.BatchJobStateRunning:
 	case store.BatchJobStateQueued:
@@ -329,6 +369,7 @@ func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobSta
 		return &v1.UpdateBatchJobStateResponse{}, nil
 	case v1.InternalBatchJob_SUCCEEDED:
 		if job.State != store.BatchJobStateRunning {
+			// Queued state is only available in the store object and does not exist in the proto object.
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
 		}
 		if err := job.MutateMessage(func(job *v1.BatchJob) {
@@ -340,6 +381,16 @@ func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobSta
 		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionCancel {
 			// Queued state is only available in the store object and does not exist in the proto object.
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not canceling: %s (%s)", job.State, job.QueuedAction)
+		}
+		if err := job.MutateMessage(func(job *v1.BatchJob) {
+			job.FinishedAt = time.Now().UTC().Unix()
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate batch job: %s", err)
+		}
+	case v1.InternalBatchJob_DELETED:
+		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionDelete {
+			// Queued state is only available in the store object and does not exist in the proto object.
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s (%s)", job.State, job.QueuedAction)
 		}
 		if err := job.MutateMessage(func(job *v1.BatchJob) {
 			job.FinishedAt = time.Now().UTC().Unix()

@@ -96,25 +96,32 @@ func TestProcessQueuedNotebooks(t *testing.T) {
 }
 
 func TestProcessQueuedBatchJobs(t *testing.T) {
-	nbs := []*v1.InternalBatchJob{
+	jobs := []*v1.InternalBatchJob{
 		{
 			Job: &v1.BatchJob{
-				Id: "nb0",
+				Id: "job0",
 			},
 			State:        v1.InternalBatchJob_QUEUED,
 			QueuedAction: v1.InternalBatchJob_CREATING,
 		},
 		{
 			Job: &v1.BatchJob{
-				Id: "nb1",
+				Id: "job1",
 			},
 			State:        v1.InternalBatchJob_QUEUED,
 			QueuedAction: v1.InternalBatchJob_CANCELING,
 		},
+		{
+			Job: &v1.BatchJob{
+				Id: "job2",
+			},
+			State:        v1.InternalBatchJob_QUEUED,
+			QueuedAction: v1.InternalBatchJob_DELETING,
+		},
 	}
 
 	ws := &fakeBatchWorkerServiceClient{
-		jobs:         nbs,
+		jobs:         jobs,
 		updatedState: map[string]v1.InternalBatchJob_State{},
 	}
 	d := newTestDispatcher()
@@ -123,8 +130,9 @@ func TestProcessQueuedBatchJobs(t *testing.T) {
 	assert.NoError(t, err)
 
 	wants := map[string]v1.InternalBatchJob_State{
-		nbs[0].Job.Id: v1.InternalBatchJob_RUNNING,
-		nbs[1].Job.Id: v1.InternalBatchJob_CANCELED,
+		jobs[0].Job.Id: v1.InternalBatchJob_RUNNING,
+		jobs[1].Job.Id: v1.InternalBatchJob_CANCELED,
+		jobs[2].Job.Id: v1.InternalBatchJob_DELETED,
 	}
 	for nbID, want := range wants {
 		got, ok := ws.updatedState[nbID]
@@ -181,7 +189,12 @@ type noopBatchJobManager struct {
 func (n *noopBatchJobManager) createBatchJob(ctx context.Context, job *v1.InternalBatchJob) error {
 	return nil
 }
+
 func (n *noopBatchJobManager) cancelBatchJob(ctx context.Context, job *v1.InternalBatchJob) error {
+	return nil
+}
+
+func (n *noopBatchJobManager) deleteBatchJob(ctx context.Context, job *v1.InternalBatchJob) error {
 	return nil
 }
 

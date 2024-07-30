@@ -23,6 +23,7 @@ const (
 	BatchService_ListBatchJobs_FullMethodName  = "/llmoperator.batch.server.v1.BatchService/ListBatchJobs"
 	BatchService_GetBatchJob_FullMethodName    = "/llmoperator.batch.server.v1.BatchService/GetBatchJob"
 	BatchService_CancelBatchJob_FullMethodName = "/llmoperator.batch.server.v1.BatchService/CancelBatchJob"
+	BatchService_DeleteBatchJob_FullMethodName = "/llmoperator.batch.server.v1.BatchService/DeleteBatchJob"
 )
 
 // BatchServiceClient is the client API for BatchService service.
@@ -33,6 +34,7 @@ type BatchServiceClient interface {
 	ListBatchJobs(ctx context.Context, in *ListBatchJobsRequest, opts ...grpc.CallOption) (*ListBatchJobsResponse, error)
 	GetBatchJob(ctx context.Context, in *GetBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error)
 	CancelBatchJob(ctx context.Context, in *CancelBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error)
+	DeleteBatchJob(ctx context.Context, in *DeleteBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error)
 }
 
 type batchServiceClient struct {
@@ -79,6 +81,15 @@ func (c *batchServiceClient) CancelBatchJob(ctx context.Context, in *CancelBatch
 	return out, nil
 }
 
+func (c *batchServiceClient) DeleteBatchJob(ctx context.Context, in *DeleteBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error) {
+	out := new(BatchJob)
+	err := c.cc.Invoke(ctx, BatchService_DeleteBatchJob_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BatchServiceServer is the server API for BatchService service.
 // All implementations must embed UnimplementedBatchServiceServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type BatchServiceServer interface {
 	ListBatchJobs(context.Context, *ListBatchJobsRequest) (*ListBatchJobsResponse, error)
 	GetBatchJob(context.Context, *GetBatchJobRequest) (*BatchJob, error)
 	CancelBatchJob(context.Context, *CancelBatchJobRequest) (*BatchJob, error)
+	DeleteBatchJob(context.Context, *DeleteBatchJobRequest) (*BatchJob, error)
 	mustEmbedUnimplementedBatchServiceServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedBatchServiceServer) GetBatchJob(context.Context, *GetBatchJob
 }
 func (UnimplementedBatchServiceServer) CancelBatchJob(context.Context, *CancelBatchJobRequest) (*BatchJob, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelBatchJob not implemented")
+}
+func (UnimplementedBatchServiceServer) DeleteBatchJob(context.Context, *DeleteBatchJobRequest) (*BatchJob, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBatchJob not implemented")
 }
 func (UnimplementedBatchServiceServer) mustEmbedUnimplementedBatchServiceServer() {}
 
@@ -191,6 +206,24 @@ func _BatchService_CancelBatchJob_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BatchService_DeleteBatchJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteBatchJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BatchServiceServer).DeleteBatchJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BatchService_DeleteBatchJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BatchServiceServer).DeleteBatchJob(ctx, req.(*DeleteBatchJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BatchService_ServiceDesc is the grpc.ServiceDesc for BatchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var BatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelBatchJob",
 			Handler:    _BatchService_CancelBatchJob_Handler,
+		},
+		{
+			MethodName: "DeleteBatchJob",
+			Handler:    _BatchService_DeleteBatchJob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

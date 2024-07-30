@@ -68,6 +68,10 @@ message CancelBatchJobRequest {
   string id = 1;
 }
 
+message DeleteBatchJobRequest {
+  string id = 1;
+}
+
 service BatchService {
   rpc CreateBatchJob(CreateBatchJobRequest) returns (BatchJob) {
     option (google.api.http) = {
@@ -90,6 +94,11 @@ service BatchService {
       post: "/v1/batch/jobs/{id}/cancel"
     };
   }
+  rpc DeleteBatchJob(DeleteBatchJobRequest) returns (BatchJob) {
+    option (google.api.http) = {
+      delete: "/v1/batch/jobs/{id}"
+    };
+  }
 }
 
 message InternalBatchJob {
@@ -102,6 +111,7 @@ message InternalBatchJob {
     SUCCEEDED = 3;
     FAILED = 4;
     CANCELED = 5;
+    DELETED = 6;
   }
   State state = 2;
 
@@ -109,6 +119,7 @@ message InternalBatchJob {
     ACTION_UNSPECIFIED = 0;
     CREATING = 1;
     CANCELING = 2;
+    DELETING = 3;
   }
   Action queued_action = 3;
 }

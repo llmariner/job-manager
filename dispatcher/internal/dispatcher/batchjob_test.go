@@ -128,19 +128,16 @@ func TestReconcileBatchJob(t *testing.T) {
 				BwClient:  bwClient,
 			})
 
-			logger := log.New(&testLogWriter{t}, "TEST: ", 0)
-			ctx := ctrl.LoggerInto(context.Background(), stdr.New(logger))
-			stdr.SetVerbosity(4)
-
+			ctx := ctxWithTestLogger(t)
 			result, err := mgr.Reconcile(ctx, req)
 			assert.Equal(t, test.wantRequeue, result.Requeue, "requeue event")
 			assert.NoError(t, err)
 
 			gotState := bwClient.updatedState[job.Name]
-			assert.Equal(t, test.wantState, gotState)
+			assert.Equalf(t, test.wantState, gotState, "state: got=%s, want=%s", gotState, test.wantState)
 
 			var gotJob batchv1.Job
-			err = k8sClient.Get(context.Background(), req.NamespacedName, &gotJob)
+			err = k8sClient.Get(ctx, req.NamespacedName, &gotJob)
 			if test.wantAssertJobFn != nil {
 				test.wantAssertJobFn(t, &gotJob, err)
 			}
@@ -161,10 +158,7 @@ func TestCancelBatchJob(t *testing.T) {
 			},
 		})})
 
-	logger := log.New(&testLogWriter{t}, "TEST: ", 0)
-	ctx := ctrl.LoggerInto(context.Background(), stdr.New(logger))
-	stdr.SetVerbosity(4)
-
+	ctx := ctxWithTestLogger(t)
 	err := mgr.cancelBatchJob(ctx, &v1.InternalBatchJob{
 		Job: &v1.BatchJob{
 			Id:                  name,
@@ -177,6 +171,39 @@ func TestCancelBatchJob(t *testing.T) {
 	err = mgr.k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &updatedJob)
 	assert.NoError(t, err)
 	assert.True(t, updatedJob.Spec.Suspend != nil && *updatedJob.Spec.Suspend, "suspended: %+v", updatedJob.Spec.Suspend)
+}
+
+func TestDeleteBatchJob(t *testing.T) {
+	const (
+		name      = "test-job"
+		namespace = "default"
+	)
+	mgr := NewBatchJobManager(BatchJobManagerOptions{
+		K8sClient: fake.NewFakeClient(&batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		})})
+
+	ctx := ctxWithTestLogger(t)
+	ibjob := &v1.InternalBatchJob{Job: &v1.BatchJob{Id: name, KubernetesNamespace: namespace}}
+	err := mgr.deleteBatchJob(ctx, ibjob)
+	assert.NoError(t, err)
+
+	err = mgr.k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &batchv1.Job{})
+	assert.True(t, apierrors.IsNotFound(err), "not found")
+
+	// delete again should not return error
+	err = mgr.deleteBatchJob(ctx, ibjob)
+	assert.NoError(t, err)
+}
+
+func ctxWithTestLogger(t *testing.T) context.Context {
+	logger := log.New(&testLogWriter{t}, "TEST: ", 0)
+	ctx := ctrl.LoggerInto(context.Background(), stdr.New(logger))
+	stdr.SetVerbosity(4)
+	return ctx
 }
 
 type testLogWriter struct {
