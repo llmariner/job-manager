@@ -130,16 +130,17 @@ func (m *BatchJobManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return reconcile.Result{}, err
 	}
 	switch ibjob.State {
-	case v1.InternalBatchJob_QUEUED, v1.InternalBatchJob_RUNNING:
+	case v1.InternalBatchJob_QUEUED:
 		// internal job state is updated after k8s job creation,
 		// so the reconciler may also receive an internal job in the queued state.
-		if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
-			// TODO(aya): check pod status, image pull error is not propagated to the job
-			log.V(2).Info("K8s job is still running")
+		if ibjob.QueuedAction != v1.InternalBatchJob_CREATING {
+			// do nothing while dispatcher processes the job
 			return ctrl.Result{}, nil
 		}
+	case v1.InternalBatchJob_RUNNING:
 	case v1.InternalBatchJob_SUCCEEDED,
-		v1.InternalBatchJob_FAILED:
+		v1.InternalBatchJob_FAILED,
+		v1.InternalBatchJob_DELETED:
 		// do nothing, already complete
 		log.V(2).Info("Batch job is already completed", "state", ibjob.State)
 		return ctrl.Result{}, nil
@@ -166,6 +167,12 @@ func (m *BatchJobManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		// unspecified or unknown are not valid states
 		// this error could not be recovered by k8s reconciliation, so just log and return
 		log.Error(fmt.Errorf("unexpected batch job state: %v", ibjob.State), "Job state is invalid")
+		return ctrl.Result{}, nil
+	}
+
+	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
+		// TODO(aya): check pod status, image pull error is not propagated to the job
+		log.V(2).Info("K8s job is still running")
 		return ctrl.Result{}, nil
 	}
 
@@ -349,6 +356,19 @@ func (m *BatchJobManager) cancelBatchJob(ctx context.Context, ibjob *v1.Internal
 	}
 	kjob.Spec.Suspend = ptr.To(true)
 	return m.k8sClient.Update(ctx, &kjob, client.FieldOwner(bjManagerName))
+}
+
+func (m *BatchJobManager) deleteBatchJob(ctx context.Context, ibjob *v1.InternalBatchJob) error {
+	var kjob batchv1.Job
+	if err := m.k8sClient.Get(ctx, types.NamespacedName{
+		Name:      ibjob.Job.Id,
+		Namespace: ibjob.Job.KubernetesNamespace,
+	}, &kjob); err != nil {
+		log := ctrl.LoggerFrom(ctx)
+		log.V(2).Info("Failed to get the k8s job", "error", err)
+		return client.IgnoreNotFound(err)
+	}
+	return m.k8sClient.Delete(ctx, &kjob)
 }
 
 func (m *BatchJobManager) applyObject(ctx context.Context, applyConfig any) (client.Object, error) {

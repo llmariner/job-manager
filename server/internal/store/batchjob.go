@@ -23,6 +23,8 @@ const (
 	BatchJobStateFailed BatchJobState = "failed"
 	// BatchJobStateCanceled is the state of a batch job that has been canceled.
 	BatchJobStateCanceled BatchJobState = "canceled"
+	// BatchJobStateDeleted is the state of a batch job that has been deleted.
+	BatchJobStateDeleted BatchJobState = "deleted"
 )
 
 // BatchJobQueuedAction is the action of a queue batch job.
@@ -33,6 +35,8 @@ const (
 	BatchJobQueuedActionCreate BatchJobQueuedAction = "creating"
 	// BatchJobQueuedActionCancel is the action to cancel a batch job.
 	BatchJobQueuedActionCancel BatchJobQueuedAction = "canceling"
+	// BatchJobQueuedActionDelete is the action to delete a batch job.
+	BatchJobQueuedActionDelete BatchJobQueuedAction = "deleting"
 )
 
 // BatchJob is a model of a batch job.
@@ -142,19 +146,19 @@ func (s *S) GetBatchJobByID(id string) (*BatchJob, error) {
 	return &job, nil
 }
 
-// GetBatchJobByIDAndProjectID gets a batch job by its job ID and project ID.
-func (s *S) GetBatchJobByIDAndProjectID(id, projectID string) (*BatchJob, error) {
+// GetActiveBatchJobByIDAndProjectID gets a batch job by its job ID and project ID.
+func (s *S) GetActiveBatchJobByIDAndProjectID(id, projectID string) (*BatchJob, error) {
 	var job BatchJob
-	if err := s.db.Where("job_id = ? AND project_id = ?", id, projectID).Take(&job).Error; err != nil {
+	if err := s.db.Where("job_id = ? AND project_id = ? AND state != ?", id, projectID, BatchJobStateDeleted).Take(&job).Error; err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-// ListBatchJobsByProjectIDWithPagination lists batch jobs by project ID with pagination.
-func (s *S) ListBatchJobsByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]BatchJob, bool, error) {
+// ListActiveBatchJobsByProjectIDWithPagination lists batch jobs by project ID with pagination.
+func (s *S) ListActiveBatchJobsByProjectIDWithPagination(projectID string, afterID uint, limit int) ([]BatchJob, bool, error) {
 	var jobs []BatchJob
-	q := s.db.Where("project_id = ?", projectID)
+	q := s.db.Where("project_id = ? AND state != ?", projectID, BatchJobStateDeleted)
 	if afterID > 0 {
 		q = q.Where("id < ?", afterID)
 	}

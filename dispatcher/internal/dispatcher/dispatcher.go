@@ -25,6 +25,7 @@ type notebookManagerI interface {
 type batchJobManagerI interface {
 	createBatchJob(ctx context.Context, job *v1.InternalBatchJob) error
 	cancelBatchJob(ctx context.Context, job *v1.InternalBatchJob) error
+	deleteBatchJob(ctx context.Context, job *v1.InternalBatchJob) error
 }
 
 // PreProcessorI is an interface for pre-processing jobs.
@@ -237,6 +238,10 @@ func (d *D) processBatchJobs(ctx context.Context) error {
 			log.Info("Canceling a batch job")
 			err = d.bjManager.cancelBatchJob(ctx, job)
 			state = v1.InternalBatchJob_CANCELED
+		case v1.InternalBatchJob_DELETING:
+			log.Info("Deleting a batch job")
+			err = d.bjManager.deleteBatchJob(ctx, job)
+			state = v1.InternalBatchJob_DELETED
 		case v1.InternalBatchJob_ACTION_UNSPECIFIED:
 			return fmt.Errorf("batch job queued action is not specified")
 		default:
