@@ -209,7 +209,7 @@ func (s *S) DeleteBatchJob(ctx context.Context, req *v1.DeleteBatchJobRequest) (
 	}
 
 	if job.State == store.BatchJobStateDeleted ||
-		job.State == store.BatchJobStateQueued && job.QueuedAction == store.BatchJobQueuedActionDelete {
+		(job.State == store.BatchJobStateQueued && job.QueuedAction == store.BatchJobQueuedActionDelete) {
 		return jobProto, nil
 	}
 
@@ -390,7 +390,7 @@ func (ws *WS) UpdateBatchJobState(ctx context.Context, req *v1.UpdateBatchJobSta
 	case v1.InternalBatchJob_DELETED:
 		if job.State != store.BatchJobStateQueued && job.QueuedAction != store.BatchJobQueuedActionDelete {
 			// Queued state is only available in the store object and does not exist in the proto object.
-			return nil, status.Errorf(codes.FailedPrecondition, "job state is not canceling: %s (%s)", job.State, job.QueuedAction)
+			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s (%s)", job.State, job.QueuedAction)
 		}
 		if err := job.MutateMessage(func(job *v1.BatchJob) {
 			job.FinishedAt = time.Now().UTC().Unix()
