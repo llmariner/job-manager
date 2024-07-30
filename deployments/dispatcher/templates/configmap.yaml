@@ -20,10 +20,10 @@ data:
       ingressClassName: {{ .Values.notebook.ingressClassName }}
       gatewayName: {{ .Values.notebook.gatewayName }}
       gatewayNamespace: {{ .Values.notebook.gatewayNamespace }}
-    clusterManagerServerWorkerServiceAddr: {{ .Values.clusterManagerServerWorkerServiceAddr }}
-    jobManagerServerWorkerServiceAddr: {{ .Values.jobManagerServerWorkerServiceAddr }}
-    fileManagerServerWorkerServiceAddr: {{ .Values.fileManagerServerWorkerServiceAddr }}
-    modelManagerServerWorkerServiceAddr: {{ .Values.modelManagerServerWorkerServiceAddr }}
+    clusterManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.clusterManagerServerWorkerServiceAddr }}
+    jobManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.jobManagerServerWorkerServiceAddr }}
+    fileManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.fileManagerServerWorkerServiceAddr }}
+    modelManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.modelManagerServerWorkerServiceAddr }}
     worker:
       tls:
         enable: {{ .Values.global.worker.tls.enable }}
