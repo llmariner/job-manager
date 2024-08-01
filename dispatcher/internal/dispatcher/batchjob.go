@@ -39,7 +39,7 @@ const (
 )
 
 // TODO(aya): make configurable
-const initImage = "alpine:3.10"
+const initImage = "mirror.gcr.io/alpine:3.10"
 
 const (
 	batchJobInitCmdTemplate = `set -xeuo pipefail
@@ -248,15 +248,18 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 			replicas = t.Pytorch.WorkerCount
 			completionMode = batchv1.IndexedCompletion
 			subdomain = name
+			// Pod with index 0 (RANK=0) works as the master and the pod can be accessed by the headless service.
+			// https://kubernetes.io/docs/tasks/job/job-with-pod-to-pod-communication/
 			masterAddr = fmt.Sprintf("%[1]s-0.%[1]s", name)
+			const portNum = 23456
 			ports = append(ports,
 				corev1apply.ContainerPort().
 					WithName("master").
-					WithContainerPort(23456).
+					WithContainerPort(portNum).
 					WithProtocol(corev1.ProtocolTCP))
 			envs = append(envs,
 				corev1apply.EnvVar().WithName("MASTER_ADDR").WithValue(masterAddr),
-				corev1apply.EnvVar().WithName("MASTER_PORT").WithValue("23456"),
+				corev1apply.EnvVar().WithName("MASTER_PORT").WithValue(fmt.Sprintf("%d", portNum)),
 				corev1apply.EnvVar().WithName("WORLD_SIZE").WithValue(fmt.Sprintf("%d", replicas)),
 				corev1apply.EnvVar().WithName("RANK").
 					WithValueFrom(corev1apply.EnvVarSource().
