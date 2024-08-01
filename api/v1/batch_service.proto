@@ -33,6 +33,17 @@ message BatchJob {
   string kubernetes_namespace = 12;
   // cluster_id is the ID of the cluster where he job runs.
   string cluster_id = 13;
+
+  message Kind {
+    oneof Kind {
+      PyTorchJob pytorch = 14;
+    }
+  }
+  Kind kind = 15;
+}
+
+message PyTorchJob {
+  int32 worker_count = 1;
 }
 
 message CreateBatchJobRequest {
@@ -46,6 +57,8 @@ message CreateBatchJobRequest {
   map<string, string> envs = 5;
   // data_files is a list of file IDs that will be downloaded to the container.
   repeated string data_files = 6;
+
+  BatchJob.Kind kind = 7;
 }
 
 message ListBatchJobsRequest {
