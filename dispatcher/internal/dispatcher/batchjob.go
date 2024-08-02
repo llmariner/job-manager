@@ -16,6 +16,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,13 +39,20 @@ const (
 )
 
 // TODO(aya): make configurable
-const initImage = "ghcr.io/curl/curl-container/curl-dev-debian:master"
+const initImage = "mirror.gcr.io/alpine:3.10"
 
 const (
 	batchJobInitCmdTemplate = `set -xeuo pipefail
 {{range $name, $url := .DataFileURLs}}
-curl --fail --silent --output {{$.DataPath}}/{{$name}} "{{$url}}"
-{{end}}`
+wget -q --output-document={{$.DataPath}}/{{$name}} "{{$url}}"
+{{end}}
+{{- if .MasterAddr }}
+[ ${JOB_COMPLETION_INDEX} -eq 0 ] && exit 0
+for i in $(seq 100); do
+  nslookup {{.MasterAddr}}>/dev/null && exit 0
+  sleep 2
+done
+{{- end }}`
 	batchJobMainCmdTemplate = `set -xeuo pipefail
 [ -f {{.ScriptsPath}}/requirements.txt ] && pip install -r {{.ScriptsPath}}/requirements.txt
 {{.Command}}`
@@ -215,7 +223,7 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 		labels[kueueQueueNameLabelKey] = m.kueueConfig.DefaultQueueName
 	}
 
-	var envs []*corev1apply.EnvVarApplyConfiguration
+	var initEnvs, envs []*corev1apply.EnvVarApplyConfiguration
 	for k, v := range ibjob.Job.Envs {
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
@@ -227,6 +235,39 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 				WithSecretKeyRef(corev1apply.SecretKeySelector().
 					WithName(c.Name).
 					WithKey(c.Key))))
+	}
+
+	replicas := int32(1)
+	completionMode := batchv1.NonIndexedCompletion
+	var subdomain, masterAddr string
+	var ports []*corev1apply.ContainerPortApplyConfiguration
+
+	if k := ibjob.Job.Kind; k != nil {
+		switch t := k.Kind.(type) {
+		case *v1.BatchJob_Kind_Pytorch:
+			replicas = t.Pytorch.WorkerCount
+			completionMode = batchv1.IndexedCompletion
+			subdomain = name
+			// Pod with index 0 (RANK=0) works as the master and the pod can be accessed by the headless service.
+			// https://kubernetes.io/docs/tasks/job/job-with-pod-to-pod-communication/
+			masterAddr = fmt.Sprintf("%[1]s-0.%[1]s", name)
+			const portNum = 23456
+			ports = append(ports,
+				corev1apply.ContainerPort().
+					WithName("master").
+					WithContainerPort(portNum).
+					WithProtocol(corev1.ProtocolTCP))
+			envs = append(envs,
+				corev1apply.EnvVar().WithName("MASTER_ADDR").WithValue(masterAddr),
+				corev1apply.EnvVar().WithName("MASTER_PORT").WithValue(fmt.Sprintf("%d", portNum)),
+				corev1apply.EnvVar().WithName("WORLD_SIZE").WithValue(fmt.Sprintf("%d", replicas)),
+				corev1apply.EnvVar().WithName("RANK").
+					WithValueFrom(corev1apply.EnvVarSource().
+						WithFieldRef(corev1apply.ObjectFieldSelector().
+							WithFieldPath("metadata.labels['batch.kubernetes.io/job-completion-index']"))))
+		default:
+			return fmt.Errorf("unsupported kind: %T", k)
+		}
 	}
 
 	limit := corev1.ResourceList{}
@@ -255,9 +296,11 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 		Execute(&initScript, struct {
 			DataPath     string
 			DataFileURLs map[string]string
+			MasterAddr   string
 		}{
 			DataPath:     dataPath,
 			DataFileURLs: dataFileURLs,
+			MasterAddr:   masterAddr,
 		}); err != nil {
 		return err
 	}
@@ -287,20 +330,26 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 			batchJobIDAnnotationKey:      ibjob.Job.Id}).
 		WithSpec(batchv1apply.JobSpec().
 			WithTTLSecondsAfterFinished(int32(jobTTL.Seconds())).
+			WithCompletionMode(completionMode).
+			WithCompletions(replicas).
+			WithParallelism(replicas).
 			WithBackoffLimit(0).
 			WithTemplate(corev1apply.PodTemplateSpec().
 				WithSpec(corev1apply.PodSpec().
+					WithSubdomain(subdomain).
 					WithRestartPolicy(corev1.RestartPolicyNever).
 					WithInitContainers(corev1apply.Container().
 						WithName("init").
 						WithImage(initImage).
-						WithCommand("/bin/bash", "-c", initScript.String()).
+						WithCommand("/bin/sh", "-c", initScript.String()).
+						WithEnv(initEnvs...).
 						WithVolumeMounts(volumeMounts...)).
 					WithContainers(corev1apply.Container().
 						WithName("main").
 						WithImage(ibjob.Job.Image).
 						WithCommand("/bin/bash", "-c", boostrapScript.String()).
 						WithResources(resources).
+						WithPorts(ports...).
 						WithEnv(envs...).
 						WithEnvFrom(corev1apply.EnvFromSource().
 							WithSecretRef(corev1apply.SecretEnvSource().
@@ -331,12 +380,26 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 
 	// Secret and ConfigMap are pre-created by server, and dispatcher only set the owner reference here.
 	// TODO(aya): garbage collect orphaned secrets
-	secConf := corev1apply.Secret(name, ibjob.Job.KubernetesNamespace).
-		WithOwnerReferences(ownerRef)
-	cmConf := corev1apply.ConfigMap(name, ibjob.Job.KubernetesNamespace).
-		WithOwnerReferences(ownerRef)
+	objs := []any{
+		corev1apply.Secret(name, ibjob.Job.KubernetesNamespace).
+			WithLabels(labels).
+			WithOwnerReferences(ownerRef),
+		corev1apply.ConfigMap(name, ibjob.Job.KubernetesNamespace).
+			WithLabels(labels).
+			WithOwnerReferences(ownerRef),
+	}
 
-	for _, obj := range []any{secConf, cmConf} {
+	if masterAddr != "" {
+		objs = append(objs,
+			corev1apply.Service(name, ibjob.Job.KubernetesNamespace).
+				WithLabels(labels).
+				WithOwnerReferences(ownerRef).
+				WithSpec(corev1apply.ServiceSpec().
+					WithClusterIP(corev1.ClusterIPNone).
+					WithSelector(map[string]string{"job-name": name})))
+	}
+
+	for _, obj := range objs {
 		if _, err := m.applyObject(ctx, obj); err != nil {
 			return err
 		}
@@ -368,7 +431,7 @@ func (m *BatchJobManager) deleteBatchJob(ctx context.Context, ibjob *v1.Internal
 		log.V(2).Info("Failed to get the k8s job", "error", err)
 		return client.IgnoreNotFound(err)
 	}
-	return m.k8sClient.Delete(ctx, &kjob)
+	return m.k8sClient.Delete(ctx, &kjob, client.PropagationPolicy(metav1.DeletePropagationBackground))
 }
 
 func (m *BatchJobManager) applyObject(ctx context.Context, applyConfig any) (client.Object, error) {

@@ -39,6 +39,17 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		return nil, status.Error(codes.InvalidArgument, "scripts are required")
 	}
 
+	if k := req.Kind; k != nil {
+		switch t := k.Kind.(type) {
+		case *v1.BatchJob_Kind_Pytorch:
+			if t.Pytorch.WorkerCount == 0 {
+				return nil, status.Error(codes.InvalidArgument, "worker count must be set")
+			}
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "invalid kind: %T", t)
+		}
+	}
+
 	// Pass the Authorization to the context for downstream gRPC calls.
 	ctx = auth.CarryMetadata(ctx)
 	for _, fileID := range req.DataFiles {
@@ -70,6 +81,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		ProjectId:           userInfo.ProjectID,
 		KubernetesNamespace: kenv.Namespace,
 		ClusterId:           kenv.ClusterID,
+		Kind:                req.Kind,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {

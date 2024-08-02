@@ -178,6 +178,14 @@
     }
   },
   "definitions": {
+    "BatchJobKind": {
+      "type": "object",
+      "properties": {
+        "pytorch": {
+          "$ref": "#/definitions/v1PyTorchJob"
+        }
+      }
+    },
     "InternalBatchJobAction": {
       "type": "string",
       "enum": [
@@ -266,6 +274,9 @@
         "clusterId": {
           "type": "string",
           "description": "cluster_id is the ID of the cluster where he job runs."
+        },
+        "kind": {
+          "$ref": "#/definitions/BatchJobKind"
         }
       }
     },
@@ -321,6 +332,9 @@
             "type": "string"
           },
           "description": "data_files is a list of file IDs that will be downloaded to the container."
+        },
+        "kind": {
+          "$ref": "#/definitions/BatchJobKind"
         }
       }
     },
@@ -375,6 +389,15 @@
             "type": "object",
             "$ref": "#/definitions/v1InternalBatchJob"
           }
+        }
+      }
+    },
+    "v1PyTorchJob": {
+      "type": "object",
+      "properties": {
+        "workerCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
