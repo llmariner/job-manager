@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -57,8 +58,16 @@ func TestReconcileJob(t *testing.T) {
 			state: v1.InternalJob_FAILED,
 		},
 		{
-			name:        "canceled job (not expired)",
-			state:       v1.InternalJob_CANCELED,
+			name:  "canceled job (not expired)",
+			state: v1.InternalJob_CANCELED,
+			mutateJobFn: func(job *batchv1.Job) {
+				job.Spec.Suspend = ptr.To(true)
+				job.Status.Conditions = append(job.Status.Conditions, batchv1.JobCondition{
+					Type:               batchv1.JobSuspended,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.Now(),
+				})
+			},
 			wantRequeue: true,
 			wantAssertJobFn: func(t *testing.T, gotJob *batchv1.Job, err error) {
 				assert.NoError(t, err)
@@ -69,6 +78,7 @@ func TestReconcileJob(t *testing.T) {
 			name:  "canceled job (expired)",
 			state: v1.InternalJob_CANCELED,
 			mutateJobFn: func(job *batchv1.Job) {
+				job.Spec.Suspend = ptr.To(true)
 				expr := time.Now().Add(-jobTTL)
 				job.Status.Conditions = append(job.Status.Conditions, batchv1.JobCondition{
 					Type:               batchv1.JobSuspended,
@@ -82,7 +92,7 @@ func TestReconcileJob(t *testing.T) {
 		},
 		{
 			name:  "unknown state",
-			state: v1.InternalJob_UNSPECIFIED,
+			state: v1.InternalJob_STATE_UNSPECIFIED,
 			// just logged and return no error
 		},
 	}

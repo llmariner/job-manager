@@ -115,7 +115,7 @@ message InternalJob {
   string suffix = 3;
 
   enum State {
-    UNSPECIFIED = 0;
+    STATE_UNSPECIFIED = 0;
     QUEUED = 1;
     RUNNING = 2;
     FAILED = 3;
@@ -124,6 +124,13 @@ message InternalJob {
   }
   // state is also stored in the job object, but this value takes precedence.
   State state = 4;
+
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    CREATING = 1;
+    CANCELING = 2;
+  }
+  Action queued_action = 5;
 }
 
 message ListQueuedInternalJobsRequest {
@@ -141,12 +148,13 @@ message UpdateJobPhaseRequest {
   string id = 1;
 
   enum Phase {
-    UNSPECIFIED = 0;
+    PHASE_UNSPECIFIED = 0;
     PREPROCESSED = 1;
     JOB_CREATED = 2;
     FINETUNED = 3;
     FAILED = 4;
-    REQUEUE = 5;
+    RECREATE = 5;
+    CANCELED = 6;
   }
   Phase phase = 2;
   // message describing the details of the job phase. currently only used for failed jobs.

@@ -155,13 +155,13 @@ func TestCancelBatchJob(t *testing.T) {
 		want   *v1.BatchJob
 	}{
 		{
-			name:   "transit queued to cancelping",
+			name:   "transit queued to canceling",
 			state:  store.BatchJobStateQueued,
 			action: store.BatchJobQueuedActionCreate,
 			want:   &v1.BatchJob{Status: string(store.BatchJobQueuedActionCancel)},
 		},
 		{
-			name:  "transit running to cancelping",
+			name:  "transit running to canceling",
 			state: store.BatchJobStateRunning,
 			want:  &v1.BatchJob{Status: string(store.BatchJobQueuedActionCancel)},
 		},

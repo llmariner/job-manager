@@ -173,14 +173,15 @@
     "UpdateJobPhaseRequestPhase": {
       "type": "string",
       "enum": [
-        "UNSPECIFIED",
+        "PHASE_UNSPECIFIED",
         "PREPROCESSED",
         "JOB_CREATED",
         "FINETUNED",
         "FAILED",
-        "REQUEUE"
+        "RECREATE",
+        "CANCELED"
       ],
-      "default": "UNSPECIFIED"
+      "default": "PHASE_UNSPECIFIED"
     },
     "protobufAny": {
       "type": "object",
@@ -288,20 +289,32 @@
         "state": {
           "$ref": "#/definitions/v1InternalJobState",
           "description": "state is also stored in the job object, but this value takes precedence."
+        },
+        "queuedAction": {
+          "$ref": "#/definitions/v1InternalJobAction"
         }
       }
+    },
+    "v1InternalJobAction": {
+      "type": "string",
+      "enum": [
+        "ACTION_UNSPECIFIED",
+        "CREATING",
+        "CANCELING"
+      ],
+      "default": "ACTION_UNSPECIFIED"
     },
     "v1InternalJobState": {
       "type": "string",
       "enum": [
-        "UNSPECIFIED",
+        "STATE_UNSPECIFIED",
         "QUEUED",
         "RUNNING",
         "FAILED",
         "SUCCEEDED",
         "CANCELED"
       ],
-      "default": "UNSPECIFIED"
+      "default": "STATE_UNSPECIFIED"
     },
     "v1Job": {
       "type": "object",

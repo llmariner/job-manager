@@ -132,6 +132,7 @@ func (s *S) CreateJob(
 	job := &store.Job{
 		JobID:               jobID,
 		State:               store.JobStateQueued,
+		QueuedAction:        store.JobQueuedActionCreate,
 		Message:             msg,
 		Suffix:              req.Suffix,
 		TenantID:            userInfo.TenantID,
@@ -196,7 +197,6 @@ func (s *S) ListJobs(
 		return nil, status.Errorf(codes.Internal, "find jobs: %s", err)
 	}
 
-	// TODO: Implement pagination.
 	var jobProtos []*v1.Job
 	for _, job := range jobs {
 		jobProto, err := job.V1Job()
@@ -257,17 +257,6 @@ func (s *S) CancelJob(
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	token, err := s.extractTokenFromContext(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "extract token: %s", err)
-	}
-	// TODO(aya): Revisit. We might want dispatcher to pick up a cluster/namespace.
-	kenv := userInfo.AssignedKubernetesEnvs[0]
-	kclient, err := s.k8sClientFactory.NewClient(kenv, token)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "create k8s client: %s", err)
-	}
-
 	job, err := s.store.GetJobByJobIDAndProjectID(req.Id, userInfo.ProjectID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -284,32 +273,26 @@ func (s *S) CancelJob(
 	case
 		store.JobStateSucceeded,
 		store.JobStateFailed,
-		store.JobStateCancelled:
+		store.JobStateCanceled:
 		return jobProto, nil
-	case store.JobStateQueued:
 	case store.JobStateRunning:
-		if err := kclient.CancelJob(ctx, jobProto, job.KubernetesNamespace); err != nil {
-			return nil, status.Errorf(codes.Internal, "cancel job: %s", err)
+	case store.JobStateQueued:
+		if job.QueuedAction == store.JobQueuedActionCancel {
+			return jobProto, nil
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unexpected job state: %s", job.State)
 	}
 
-	if err := job.MutateMessage(func(j *v1.Job) {
-		j.FinishedAt = time.Now().UTC().Unix()
-	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
-	}
-	if err := s.store.UpdateJobStateAndMessage(
+	job, err = s.store.UpdateJobState(
 		req.Id,
 		job.Version,
-		store.JobStateCancelled,
-		job.Message,
-	); err != nil {
+		store.JobStateQueued,
+		store.JobQueuedActionCancel,
+	)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 	}
-	job.State = store.JobStateCancelled
-
 	jobProto, err = job.V1Job()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
@@ -392,7 +375,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 	}
 
 	switch req.Phase {
-	case v1.UpdateJobPhaseRequest_UNSPECIFIED:
+	case v1.UpdateJobPhaseRequest_PHASE_UNSPECIFIED:
 		return nil, status.Error(codes.InvalidArgument, "phase is required")
 	case v1.UpdateJobPhaseRequest_PREPROCESSED:
 		if job.State != store.JobStateQueued {
@@ -408,7 +391,7 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if job.State != store.JobStateQueued {
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not queued: %s", job.State)
 		}
-		if err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateRunning); err != nil {
+		if _, err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateRunning, ""); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
 	case v1.UpdateJobPhaseRequest_FINETUNED:
@@ -427,6 +410,15 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateSucceeded, job.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
+	case v1.UpdateJobPhaseRequest_CANCELED:
+		if err := job.MutateMessage(func(j *v1.Job) {
+			j.FinishedAt = time.Now().UTC().Unix()
+		}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateCanceled, job.Message); err != nil {
+			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
+		}
 	case v1.UpdateJobPhaseRequest_FAILED:
 		if err := job.MutateMessage(func(j *v1.Job) {
 			j.FinishedAt = time.Now().UTC().Unix()
@@ -437,11 +429,11 @@ func (ws *WS) UpdateJobPhase(ctx context.Context, req *v1.UpdateJobPhaseRequest)
 		if err := ws.store.UpdateJobStateAndMessage(req.Id, job.Version, store.JobStateFailed, job.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
-	case v1.UpdateJobPhaseRequest_REQUEUE:
+	case v1.UpdateJobPhaseRequest_RECREATE:
 		if job.State != store.JobStateRunning {
 			return nil, status.Errorf(codes.FailedPrecondition, "job state is not running: %s", job.State)
 		}
-		if err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateQueued); err != nil {
+		if _, err := ws.store.UpdateJobState(req.Id, job.Version, store.JobStateQueued, store.JobQueuedActionCreate); err != nil {
 			return nil, status.Errorf(codes.Internal, "update job state: %s", err)
 		}
 	default:

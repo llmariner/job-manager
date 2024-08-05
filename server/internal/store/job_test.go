@@ -142,10 +142,10 @@ func TestUpdateJobState(t *testing.T) {
 	err := st.CreateJob(job)
 	assert.NoError(t, err)
 
-	err = st.UpdateJobState(job.JobID, job.Version, JobStateRunning)
+	_, err = st.UpdateJobState(job.JobID, job.Version, JobStateRunning, "")
 	assert.NoError(t, err)
 
-	err = st.UpdateJobState(job.JobID, 12345, JobStateRunning)
+	_, err = st.UpdateJobState(job.JobID, 12345, JobStateRunning, "")
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrConcurrentUpdate))
 }

@@ -168,35 +168,38 @@ func TestGetJob(t *testing.T) {
 	defer tearDown()
 
 	err := st.CreateJob(&store.Job{
-		JobID:     jobID,
-		TenantID:  defaultTenantID,
-		ProjectID: defaultProjectID,
-		State:     store.JobStateQueued,
+		JobID:        jobID,
+		TenantID:     defaultTenantID,
+		ProjectID:    defaultProjectID,
+		State:        store.JobStateQueued,
+		QueuedAction: store.JobQueuedActionCreate,
 	})
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
 	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
-	assert.Equal(t, store.JobStateQueued, store.JobState(resp.Status))
+	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
 }
 
 func TestJobCancel(t *testing.T) {
 	const jobID = "job-1"
 	var tcs = []struct {
-		name  string
-		state store.JobState
-		want  *v1.Job
+		name   string
+		state  store.JobState
+		action store.JobQueuedAction
+		want   *v1.Job
 	}{
 		{
-			name:  "transit pending to cancelled",
-			state: store.JobStateQueued,
-			want:  &v1.Job{Status: string(store.JobStateCancelled)},
+			name:   "transit pending to cancelling",
+			state:  store.JobStateQueued,
+			action: store.JobQueuedActionCreate,
+			want:   &v1.Job{Status: string(store.JobQueuedActionCancel)},
 		},
 		{
-			name:  "transit running to cancelled",
+			name:  "transit running to canceled",
 			state: store.JobStateRunning,
-			want:  &v1.Job{Status: string(store.JobStateCancelled)},
+			want:  &v1.Job{Status: string(store.JobQueuedActionCancel)},
 		},
 		{
 			name:  "keep completed state",
@@ -204,9 +207,9 @@ func TestJobCancel(t *testing.T) {
 			want:  &v1.Job{Status: string(store.JobStateSucceeded)},
 		},
 		{
-			name:  "keep cancelled state",
-			state: store.JobStateCancelled,
-			want:  &v1.Job{Status: string(store.JobStateCancelled)},
+			name:  "keep canceled state",
+			state: store.JobStateCanceled,
+			want:  &v1.Job{Status: string(store.JobStateCanceled)},
 		},
 	}
 	for _, tc := range tcs {
@@ -214,7 +217,13 @@ func TestJobCancel(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			err := st.CreateJob(&store.Job{JobID: jobID, State: tc.state, TenantID: defaultTenantID, ProjectID: defaultProjectID})
+			err := st.CreateJob(&store.Job{
+				JobID:        jobID,
+				State:        tc.state,
+				QueuedAction: tc.action,
+				TenantID:     defaultTenantID,
+				ProjectID:    defaultProjectID,
+			})
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
@@ -293,11 +302,12 @@ func TestGetInternalJob(t *testing.T) {
 
 func TestUpdateJobPhase(t *testing.T) {
 	var tests = []struct {
-		name      string
-		prevState store.JobState
-		req       *v1.UpdateJobPhaseRequest
-		wantError bool
-		wantState store.JobState
+		name       string
+		prevState  store.JobState
+		prevAction store.JobQueuedAction
+		req        *v1.UpdateJobPhaseRequest
+		wantError  bool
+		wantState  store.JobState
 	}{
 		{
 			name:      "no phase",
@@ -305,8 +315,9 @@ func TestUpdateJobPhase(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:      "phase pre-processed",
-			prevState: store.JobStateQueued,
+			name:       "phase pre-processed",
+			prevState:  store.JobStateQueued,
+			prevAction: store.JobQueuedActionCreate,
 			req: &v1.UpdateJobPhaseRequest{
 				Phase:   v1.UpdateJobPhaseRequest_PREPROCESSED,
 				ModelId: "model0",
@@ -323,8 +334,9 @@ func TestUpdateJobPhase(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:      "phase job created",
-			prevState: store.JobStateQueued,
+			name:       "phase job created",
+			prevState:  store.JobStateQueued,
+			prevAction: store.JobQueuedActionCreate,
 			req: &v1.UpdateJobPhaseRequest{
 				Phase: v1.UpdateJobPhaseRequest_JOB_CREATED,
 			},
@@ -349,7 +361,7 @@ func TestUpdateJobPhase(t *testing.T) {
 		},
 		{
 			name:      "phase fine-tuned, previous state is not running",
-			prevState: store.JobStateCancelled,
+			prevState: store.JobStateCanceled,
 			req: &v1.UpdateJobPhaseRequest{
 				Phase:   v1.UpdateJobPhaseRequest_FINETUNED,
 				ModelId: "model0",
@@ -366,19 +378,19 @@ func TestUpdateJobPhase(t *testing.T) {
 			wantState: store.JobStateFailed,
 		},
 		{
-			name:      "phase requeue",
+			name:      "phase recreate",
 			prevState: store.JobStateRunning,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.UpdateJobPhaseRequest_REQUEUE,
+				Phase:   v1.UpdateJobPhaseRequest_RECREATE,
 				ModelId: "model0",
 			},
 			wantState: store.JobStateQueued,
 		},
 		{
-			name:      "phase requeue, previous state is not running",
-			prevState: store.JobStateCancelled,
+			name:      "phase recreate, previous state is not running",
+			prevState: store.JobStateQueued,
 			req: &v1.UpdateJobPhaseRequest{
-				Phase:   v1.UpdateJobPhaseRequest_REQUEUE,
+				Phase:   v1.UpdateJobPhaseRequest_RECREATE,
 				ModelId: "model0",
 			},
 			wantError: true,
@@ -445,10 +457,6 @@ func (f *noopK8sClientFactory) NewClient(env auth.AssignedKubernetesEnv, token s
 }
 
 type noopK8sClient struct{}
-
-func (c *noopK8sClient) CancelJob(ctx context.Context, job *v1.Job, namespace string) error {
-	return nil
-}
 
 func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error {
 	return nil
