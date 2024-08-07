@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -60,6 +61,12 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
+	addr := fmt.Sprintf("localhost:%d", c.GRPCPort)
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	conn, err := grpc.Dial(addr, opts...)
+	if err != nil {
+		return err
+	}
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			// Do not use the camel case for JSON fields to follow OpenAI API.
@@ -72,9 +79,8 @@ func run(ctx context.Context, c *config.Config) error {
 			},
 		}),
 		runtime.WithIncomingHeaderMatcher(auth.HeaderMatcher),
+		runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(conn)),
 	)
-	addr := fmt.Sprintf("localhost:%d", c.GRPCPort)
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	if err := v1.RegisterFineTuningServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
 		return err
 	}
@@ -91,7 +97,7 @@ func run(ctx context.Context, c *config.Config) error {
 		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", c.HTTPPort), mux)
 	}()
 
-	conn, err := grpc.Dial(c.FileManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.Dial(c.FileManagerServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
