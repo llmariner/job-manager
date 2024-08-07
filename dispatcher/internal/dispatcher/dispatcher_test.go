@@ -18,13 +18,15 @@ func TestProcessQueuedJobs(t *testing.T) {
 			Job: &v1.Job{
 				Id: "job0",
 			},
-			State: v1.InternalJob_QUEUED,
+			State:        v1.InternalJob_QUEUED,
+			QueuedAction: v1.InternalJob_CREATING,
 		},
 		{
 			Job: &v1.Job{
 				Id: "job1",
 			},
-			State: v1.InternalJob_QUEUED,
+			State:        v1.InternalJob_QUEUED,
+			QueuedAction: v1.InternalJob_CANCELING,
 		},
 	}
 
@@ -35,21 +37,21 @@ func TestProcessQueuedJobs(t *testing.T) {
 	}
 	d := newTestDispatcher()
 	d.ftClient = ft
-	d.jobCreator = jc
+	d.jobManager = jc
 	err := d.processQueuedJobs(context.Background())
 	assert.NoError(t, err)
 
 	wants := map[string]v1.UpdateJobPhaseRequest_Phase{
 		jobs[0].Job.Id: v1.UpdateJobPhaseRequest_JOB_CREATED,
-		jobs[1].Job.Id: v1.UpdateJobPhaseRequest_JOB_CREATED,
+		jobs[1].Job.Id: v1.UpdateJobPhaseRequest_CANCELED,
 	}
 	for jobID, want := range wants {
 		got, ok := ft.updatedPhases[jobID]
 		assert.True(t, ok)
 		assert.Equal(t, want, got)
 	}
-	const wantCounter = 2
-	assert.Equal(t, wantCounter, jc.counter)
+	assert.Equal(t, 1, jc.createCounter)
+	assert.Equal(t, 1, jc.cancelCounter)
 }
 
 func TestProcessQueuedNotebooks(t *testing.T) {
@@ -154,11 +156,17 @@ func newTestDispatcher() *D {
 }
 
 type noopJobCreator struct {
-	counter int
+	createCounter int
+	cancelCounter int
 }
 
 func (n *noopJobCreator) createJob(ctx context.Context, job *v1.InternalJob, presult *PreProcessResult) error {
-	n.counter++
+	n.createCounter++
+	return nil
+}
+
+func (n *noopJobCreator) cancelJob(ctx context.Context, job *v1.InternalJob) error {
+	n.cancelCounter++
 	return nil
 }
 

@@ -13,10 +13,12 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	batchv1apply "k8s.io/client-go/applyconfigurations/batch/v1"
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/utils/ptr"
@@ -182,6 +184,20 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 func (p *JobClient) getQueueName(namespace string) string {
 	// TODO(aya): rethink how to get queue name
 	return p.kueueConfig.DefaultQueueName
+}
+
+func (p *JobClient) cancelJob(ctx context.Context, ijob *v1.InternalJob) error {
+	var kjob batchv1.Job
+	if err := p.k8sClient.Get(ctx, types.NamespacedName{
+		Name:      ijob.Job.Id,
+		Namespace: ijob.Job.KubernetesNamespace,
+	}, &kjob); err != nil {
+		log := ctrl.LoggerFrom(ctx)
+		log.V(2).Info("Failed to get the k8s job", "error", err)
+		return client.IgnoreNotFound(err)
+	}
+	kjob.Spec.Suspend = ptr.To(true)
+	return p.k8sClient.Update(ctx, &kjob, client.FieldOwner(jobManagerName))
 }
 
 func toAddtionalSFTArgs(job *v1.Job) (string, error) {

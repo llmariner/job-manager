@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -102,7 +101,7 @@ func (s *LifecycleManager) Reconcile(
 			// set back to the pending status if job is accidentally deleted.
 			if _, err = s.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
 				Id:    jobID,
-				Phase: v1.UpdateJobPhaseRequest_REQUEUE,
+				Phase: v1.UpdateJobPhaseRequest_RECREATE,
 			}); err != nil {
 				log.Error(err, "Failed to update job phase")
 				return ctrl.Result{}, err
@@ -117,28 +116,19 @@ func (s *LifecycleManager) Reconcile(
 		return ctrl.Result{}, err
 	}
 	switch ijob.State {
-	case v1.InternalJob_QUEUED, v1.InternalJob_RUNNING:
+	case v1.InternalJob_QUEUED:
 		// internal job state is updated after k8s job creation,
 		// so the reconciler may also receive an internal job in the queued state.
-		if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
-			log.V(2).Info("Job is still running")
+		if ijob.QueuedAction != v1.InternalJob_CREATING {
+			// do nothing while dispatcher processes the job
 			return ctrl.Result{}, nil
 		}
+	case v1.InternalJob_RUNNING:
 	case v1.InternalJob_SUCCEEDED, v1.InternalJob_FAILED:
 		// do nothing, already complete
 		log.V(2).Info("Job is already completed", "state", ijob.State)
 		return ctrl.Result{}, nil
 	case v1.InternalJob_CANCELED:
-		if job.Spec.Suspend == nil || !*job.Spec.Suspend {
-			// hit this case when a race condition occurs between the dispatcher and the server;
-			// If a queued job is cancelled while the dispatcher is being processed,
-			// the internal job status transits to canceled but the suspend field is not updated.
-			job.Spec.Suspend = ptr.To(true)
-			if err := s.k8sClient.Update(ctx, &job, client.FieldOwner(jobManagerName)); err != nil {
-				log.Error(err, "Failed to suspend the job")
-				return ctrl.Result{}, err
-			}
-		}
 		var (
 			expired        bool
 			expirationTime time.Time
@@ -151,15 +141,21 @@ func (s *LifecycleManager) Reconcile(
 		}
 		if !expired {
 			requeueAfter := time.Until(expirationTime)
-			log.V(2).Info("Job is cancelled but not expired yet", "requeue-after", requeueAfter)
+			log.V(2).Info("Job is canceled but not expired yet", "requeue-after", requeueAfter)
 			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 		}
-		log.Info("Deleting the cancelled and expired job")
+		log.Info("Deleting the canceled and expired job")
 		return ctrl.Result{}, s.k8sClient.Delete(ctx, &job)
 	default:
 		// queued, unspecifed, or unknown are not valid states
 		// this error could not be recovered by k8s reconciliation, so just log and return
 		log.Error(fmt.Errorf("unexpected job state: %v", ijob.State), "Job state is invalid")
+		return ctrl.Result{}, nil
+	}
+
+	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
+		// TODO(aya): check pod status, image pull error is not propagated to the job
+		log.V(2).Info("K8s job is still running")
 		return ctrl.Result{}, nil
 	}
 

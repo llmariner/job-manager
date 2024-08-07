@@ -166,10 +166,10 @@ func (m *BatchJobManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 		if !expired {
 			requeueAfter := time.Until(expirationTime)
-			log.V(2).Info("Batch job is cancelled but not expired yet", "requeue-after", requeueAfter)
+			log.V(2).Info("Batch job is canceled but not expired yet", "requeue-after", requeueAfter)
 			return ctrl.Result{Requeue: true, RequeueAfter: requeueAfter}, nil
 		}
-		log.Info("Deleting the cancelled and expired k8s job")
+		log.Info("Deleting the canceled and expired k8s job")
 		return ctrl.Result{}, m.k8sClient.Delete(ctx, &job)
 	default:
 		// unspecified or unknown are not valid states

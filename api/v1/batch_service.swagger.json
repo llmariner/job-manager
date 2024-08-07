@@ -186,16 +186,6 @@
         }
       }
     },
-    "InternalBatchJobAction": {
-      "type": "string",
-      "enum": [
-        "ACTION_UNSPECIFIED",
-        "CREATING",
-        "CANCELING",
-        "DELETING"
-      ],
-      "default": "ACTION_UNSPECIFIED"
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -348,9 +338,19 @@
           "$ref": "#/definitions/v1InternalBatchJobState"
         },
         "queuedAction": {
-          "$ref": "#/definitions/InternalBatchJobAction"
+          "$ref": "#/definitions/v1InternalBatchJobAction"
         }
       }
+    },
+    "v1InternalBatchJobAction": {
+      "type": "string",
+      "enum": [
+        "ACTION_UNSPECIFIED",
+        "CREATING",
+        "CANCELING",
+        "DELETING"
+      ],
+      "default": "ACTION_UNSPECIFIED"
     },
     "v1InternalBatchJobState": {
       "type": "string",

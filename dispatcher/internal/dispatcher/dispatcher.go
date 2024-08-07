@@ -12,8 +12,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type jobCreatorI interface {
+type jobManagerI interface {
 	createJob(ctx context.Context, job *v1.InternalJob, presult *PreProcessResult) error
+	cancelJob(ctx context.Context, job *v1.InternalJob) error
 }
 
 type notebookManagerI interface {
@@ -47,7 +48,7 @@ func New(
 	ftClient v1.FineTuningWorkerServiceClient,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	bwClient v1.BatchWorkerServiceClient,
-	jobCreator jobCreatorI,
+	jobCreator jobManagerI,
 	preProcessor PreProcessorI,
 	nbCreator notebookManagerI,
 	bjManager batchJobManagerI,
@@ -57,9 +58,9 @@ func New(
 		ftClient:        ftClient,
 		wsClient:        wsClient,
 		bwClient:        bwClient,
-		jobCreator:      jobCreator,
+		jobManager:      jobCreator,
 		preProcessor:    preProcessor,
-		nbCreator:       nbCreator,
+		nbManager:       nbCreator,
 		bjManager:       bjManager,
 		pollingInterval: pollingInterval,
 	}
@@ -71,9 +72,9 @@ type D struct {
 	wsClient v1.WorkspaceWorkerServiceClient
 	bwClient v1.BatchWorkerServiceClient
 
-	jobCreator   jobCreatorI
+	jobManager   jobManagerI
 	preProcessor PreProcessorI
-	nbCreator    notebookManagerI
+	nbManager    notebookManagerI
 	bjManager    batchJobManagerI
 
 	pollingInterval time.Duration
@@ -129,19 +130,35 @@ func (d *D) processQueuedJobs(ctx context.Context) error {
 	}
 
 	for _, job := range resp.Jobs {
-		if err := d.processJob(ctx, job); err != nil {
-			return err
+		log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.Job.Id)
+		ctx = ctrl.LoggerInto(ctx, log)
+
+		switch job.QueuedAction {
+		case v1.InternalJob_CREATING:
+			if err := d.createJob(ctx, job); err != nil {
+				return err
+			}
+		case v1.InternalJob_CANCELING:
+			log.Info("Canceling the job")
+			if err := d.jobManager.cancelJob(ctx, job); err != nil {
+				return fmt.Errorf("failed to cancel the job: %s", err)
+			}
+			if _, err := d.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+				Id:    job.Job.Id,
+				Phase: v1.UpdateJobPhaseRequest_CANCELED,
+			}); err != nil {
+				return fmt.Errorf("failed to update the job phase: %s", err)
+			}
+		default:
+			return fmt.Errorf("unknown queued action: %s", job.QueuedAction)
 		}
+		log.Info("Successfully completed the action", "action", job.QueuedAction.String())
 	}
 	return nil
 }
 
-func (d *D) processJob(ctx context.Context, job *v1.InternalJob) error {
-	log := ctrl.LoggerFrom(ctx).WithValues("jobID", job.Job.Id)
-	log.Info("Processing job")
-
-	ctx = ctrl.LoggerInto(ctx, log)
-
+func (d *D) createJob(ctx context.Context, job *v1.InternalJob) error {
+	log := ctrl.LoggerFrom(ctx)
 	log.Info("Started pre-processing")
 	presult, err := d.preProcessor.Process(ctx, job)
 	if err != nil {
@@ -157,7 +174,7 @@ func (d *D) processJob(ctx context.Context, job *v1.InternalJob) error {
 	log.Info("Successfuly completed pre-processing")
 
 	log.Info("Creating a k8s job")
-	if err := d.jobCreator.createJob(ctx, job, presult); err != nil {
+	if err := d.jobManager.createJob(ctx, job, presult); err != nil {
 		return err
 	}
 	log.Info("Successfully created the k8s job")
@@ -185,15 +202,15 @@ func (d *D) processNotebooks(ctx context.Context) error {
 		switch nb.QueuedAction {
 		case v1.NotebookQueuedAction_STARTING:
 			log.Info("Creating a k8s notebook resources")
-			err = d.nbCreator.createNotebook(ctx, nb)
+			err = d.nbManager.createNotebook(ctx, nb)
 			state = v1.NotebookState_INITIALIZING
 		case v1.NotebookQueuedAction_STOPPING:
 			log.Info("Stopping a k8s notebook resources")
-			err = d.nbCreator.stopNotebook(ctx, nb)
+			err = d.nbManager.stopNotebook(ctx, nb)
 			state = v1.NotebookState_STOPPED
 		case v1.NotebookQueuedAction_DELETING:
 			log.Info("Deleting a k8s notebook resources")
-			err = d.nbCreator.deleteNotebook(ctx, nb)
+			err = d.nbManager.deleteNotebook(ctx, nb)
 			state = v1.NotebookState_DELETED
 		case v1.NotebookQueuedAction_ACTION_UNSPECIFIED:
 			return fmt.Errorf("notebook queued action is not specified")

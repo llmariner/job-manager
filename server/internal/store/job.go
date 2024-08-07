@@ -21,8 +21,18 @@ const (
 	JobStateFailed JobState = "failed"
 	// JobStateSucceeded represents the succeeded state.
 	JobStateSucceeded JobState = "succeeded"
-	// JobStateCancelled represents the cancelled state.
-	JobStateCancelled JobState = "cancelled"
+	// JobStateCanceled represents the canceled state.
+	JobStateCanceled JobState = "canceled"
+)
+
+// JobQueuedAction is the action of a queue job.
+type JobQueuedAction string
+
+const (
+	// JobQueuedActionCreate represents the creating action.
+	JobQueuedActionCreate JobQueuedAction = "creating"
+	// JobQueuedActionCancel represents the canceling action.
+	JobQueuedActionCancel JobQueuedAction = "canceling"
 )
 
 // Job represents a job.
@@ -36,6 +46,10 @@ type Job struct {
 
 	// Suffix is a string that will be added to a fine-tuned model name.
 	Suffix string
+
+	// QueuedAction is the action of a queue job.
+	// This field is only used when the state is JobStateQueued.
+	QueuedAction JobQueuedAction
 
 	State    JobState `gorm:"index:idx_job_state_tenant_id"`
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
@@ -57,7 +71,11 @@ func (j *Job) V1Job() (*v1.Job, error) {
 	if err != nil {
 		return nil, err
 	}
-	jobProto.Status = string(j.State)
+	if j.State == JobStateQueued {
+		jobProto.Status = string(j.QueuedAction)
+	} else {
+		jobProto.Status = string(j.State)
+	}
 	return &jobProto, nil
 }
 
@@ -71,20 +89,37 @@ func (j *Job) V1InternalJob() (*v1.InternalJob, error) {
 	if err != nil {
 		return nil, err
 	}
+	action, err := convertToV1JobQueuedAction(j.QueuedAction)
+	if err != nil {
+		return nil, err
+	}
 	return &v1.InternalJob{
 		Job:           job,
 		OutputModelId: j.OutputModelID,
 		Suffix:        j.Suffix,
 		State:         state,
+		QueuedAction:  action,
 	}, nil
 }
 
 func convertToV1JobState(state JobState) (v1.InternalJob_State, error) {
 	v, ok := v1.InternalJob_State_value[strings.ToUpper(string(state))]
 	if !ok {
-		return v1.InternalJob_UNSPECIFIED, fmt.Errorf("unknown job state: %s", state)
+		return v1.InternalJob_STATE_UNSPECIFIED, fmt.Errorf("unknown job state: %s", state)
 	}
 	return v1.InternalJob_State(v), nil
+}
+
+func convertToV1JobQueuedAction(action JobQueuedAction) (v1.InternalJob_Action, error) {
+	if action == "" {
+		// when the action is not specified, it is considered as unspecified.
+		return v1.InternalJob_ACTION_UNSPECIFIED, nil
+	}
+	v, ok := v1.InternalJob_Action_value[strings.ToUpper(string(action))]
+	if !ok {
+		return 0, fmt.Errorf("unknown job queued action: %s", action)
+	}
+	return v1.InternalJob_Action(v), nil
 }
 
 // MutateMessage mutates the message field of a job.
@@ -174,23 +209,25 @@ func (s *S) ListJobsByProjectIDWithPagination(projectID string, afterID uint, li
 	return jobs, hasMore, nil
 }
 
-// UpdateJobState updates a job.
-func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState) error {
-	result := s.db.Model(&Job{}).
+// UpdateJobState updates a job state and queued action.
+func (s *S) UpdateJobState(jobID string, currentVersion int, newState JobState, newAction JobQueuedAction) (*Job, error) {
+	var job Job
+	result := s.db.Model(&job).
 		Where("job_id = ?", jobID).
 		Where("version = ?", currentVersion).
 		Updates(map[string]interface{}{
-			"state":   newState,
-			"version": currentVersion + 1,
+			"state":         newState,
+			"queued_action": newAction,
+			"version":       currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
-		return err
+		return nil, err
 	}
 
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("update job: %w", ErrConcurrentUpdate)
+		return nil, fmt.Errorf("update job: %w", ErrConcurrentUpdate)
 	}
-	return nil
+	return &job, nil
 }
 
 // UpdateJobStateAndMessage updates a job state and message.
@@ -199,9 +236,10 @@ func (s *S) UpdateJobStateAndMessage(jobID string, currentVersion int, newState 
 		Where("job_id = ?", jobID).
 		Where("version = ?", currentVersion).
 		Updates(map[string]interface{}{
-			"state":   newState,
-			"message": message,
-			"version": currentVersion + 1,
+			"state":         newState,
+			"queued_action": "",
+			"message":       message,
+			"version":       currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
 		return err
