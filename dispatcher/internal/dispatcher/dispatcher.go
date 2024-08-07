@@ -48,9 +48,9 @@ func New(
 	ftClient v1.FineTuningWorkerServiceClient,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	bwClient v1.BatchWorkerServiceClient,
-	jobCreator jobManagerI,
+	jobManager jobManagerI,
 	preProcessor PreProcessorI,
-	nbCreator notebookManagerI,
+	nbManager notebookManagerI,
 	bjManager batchJobManagerI,
 	pollingInterval time.Duration,
 ) *D {
@@ -58,9 +58,9 @@ func New(
 		ftClient:        ftClient,
 		wsClient:        wsClient,
 		bwClient:        bwClient,
-		jobManager:      jobCreator,
+		jobManager:      jobManager,
 		preProcessor:    preProcessor,
-		nbManager:       nbCreator,
+		nbManager:       nbManager,
 		bjManager:       bjManager,
 		pollingInterval: pollingInterval,
 	}
