@@ -205,7 +205,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -233,7 +232,6 @@
         "integrations": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Integration"
           }
         },
@@ -373,7 +371,6 @@
         "integrations": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Integration"
           }
         },
@@ -425,8 +422,7 @@
           "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
         }
-      },
-      "description": "batch_size and learning_rate_multiplier are not part of\n the OpenAI API spec, but we include here as these parameters are in CreateJobRequest."
+      }
     },
     "v1ListJobsResponse": {
       "type": "object",
@@ -437,7 +433,6 @@
         "data": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1Job"
           }
         },
@@ -452,7 +447,6 @@
         "jobs": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1InternalJob"
           }
         }
