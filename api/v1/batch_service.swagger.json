@@ -208,7 +208,6 @@
         "details": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/protobufAny"
           }
         }
@@ -371,7 +370,6 @@
         "jobs": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1BatchJob"
           }
         },
@@ -386,7 +384,6 @@
         "jobs": {
           "type": "array",
           "items": {
-            "type": "object",
             "$ref": "#/definitions/v1InternalBatchJob"
           }
         }
