@@ -93,6 +93,10 @@ type NotebooksConfig struct {
 	IngressClassName   string `yaml:"ingressClassName"`
 	GatewayName        string `yaml:"gatewayName"`
 	GatewayNamespace   string `yaml:"gatewayNamespace"`
+	EnablePVC          bool   `yaml:"enablePvc"`
+	StorageClassName   string `yaml:"storageClassName"`
+	StorageSize        string `yaml:"storageSize"`
+	MountPath          string `yaml:"mountPath"`
 }
 
 // validate validates the notebooks configuration.
@@ -108,6 +112,17 @@ func (c *NotebooksConfig) validate() error {
 	}
 	if c.GatewayName != "" && c.GatewayNamespace == "" {
 		return fmt.Errorf("gateway namespace must be set")
+	}
+	if c.EnablePVC {
+		if c.StorageClassName == "" {
+			return fmt.Errorf("storage class name must be set")
+		}
+		if c.StorageSize == "" {
+			return fmt.Errorf("storage size must be set")
+		}
+		if c.MountPath == "" {
+			return fmt.Errorf("mount path must be set")
+		}
 	}
 	return nil
 }

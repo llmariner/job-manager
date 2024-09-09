@@ -20,6 +20,10 @@ data:
       ingressClassName: {{ .Values.notebook.ingressClassName }}
       gatewayName: {{ .Values.notebook.gatewayName }}
       gatewayNamespace: {{ .Values.notebook.gatewayNamespace }}
+      enablePvc: {{ .Values.notebook.enablePvc }}
+      storageClassName: {{ .Values.notebook.storageClassName }}
+      storageSize: {{ .Values.notebook.storageSize }}
+      mountPath: {{ .Values.notebook.mountPath }}
     clusterManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.clusterManagerServerWorkerServiceAddr }}
     jobManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.jobManagerServerWorkerServiceAddr }}
     fileManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.fileManagerServerWorkerServiceAddr }}

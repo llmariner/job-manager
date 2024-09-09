@@ -53,6 +53,10 @@ func NewNotebookManager(
 		ingressClassName: config.IngressClassName,
 		gatewayName:      config.GatewayName,
 		gatewayNamespace: config.GatewayNamespace,
+		enablePVC:        config.EnablePVC,
+		storageClassName: config.StorageClassName,
+		storageSize:      config.StorageSize,
+		mountPath:        config.MountPath,
 		clusterID:        clusterID,
 	}
 }
@@ -66,6 +70,11 @@ type NotebookManager struct {
 	ingressClassName string
 	gatewayName      string
 	gatewayNamespace string
+
+	enablePVC        bool
+	storageClassName string
+	storageSize      string
+	mountPath        string
 
 	clusterID string
 }
@@ -170,12 +179,55 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		resources.WithLimits(limit)
 	}
 
-	// TODO: set volume mounts and volumes for the notebook
 	const (
-		appPort  = 8888
-		portName = "jupyter-web-ui"
+		appPort      = 8888
+		portName     = "jupyter-web-ui"
+		pvcMountName = "work"
 	)
 	var baseURL = fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s", n.clusterID, nb.Notebook.Id)
+
+	containerConf := corev1apply.Container().
+		WithName("jupyterlab").
+		WithImage(nb.Notebook.Image).
+		WithImagePullPolicy(corev1.PullIfNotPresent).
+		// TODO: rethink authentication method
+		WithCommand("start-notebook.py").
+		WithArgs(
+			"--IdentityProvider.token=$(NOTEBOOK_TOKEN)",
+			"--ServerApp.base_url="+baseURL,
+			// This is needed when a user accesses the notebook
+			// via Session Manager/Agent and internal ingress controller.
+			// TODO(kenji): Tighten this.
+			"--NotebookApp.allow_origin=*").
+		WithPorts(corev1apply.ContainerPort().
+			WithName(portName).
+			WithContainerPort(appPort).
+			WithProtocol(corev1.ProtocolTCP)).
+		WithEnv(envs...).
+		WithEnvFrom(corev1apply.EnvFromSource().
+			WithSecretRef(corev1apply.SecretEnvSource().
+				WithName(nb.Notebook.Id))).
+		WithResources(resources)
+
+	podTemplateSpec := corev1apply.PodTemplateSpec().
+		WithLabels(labels).
+		WithSpec(corev1apply.PodSpec().
+			WithContainers(containerConf))
+
+	if n.enablePVC {
+		containerConf = containerConf.
+			WithVolumeMounts(corev1apply.VolumeMount().
+				WithName(pvcMountName).
+				WithMountPath(n.mountPath))
+		podTemplateSpec = corev1apply.PodTemplateSpec().
+			WithLabels(labels).
+			WithSpec(corev1apply.PodSpec().
+				WithContainers(containerConf).
+				WithVolumes(corev1apply.Volume().
+					WithName(pvcMountName).
+					WithPersistentVolumeClaim(corev1apply.PersistentVolumeClaimVolumeSource().
+						WithClaimName(name))))
+	}
 
 	deployConf := appsv1apply.
 		Deployment(name, nb.Notebook.KubernetesNamespace).
@@ -187,31 +239,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 			WithReplicas(1).
 			WithSelector(metav1apply.LabelSelector().
 				WithMatchLabels(labels)).
-			WithTemplate(corev1apply.PodTemplateSpec().
-				WithLabels(labels).
-				WithSpec(corev1apply.PodSpec().
-					WithContainers(corev1apply.Container().
-						WithName("jupyterlab").
-						WithImage(nb.Notebook.Image).
-						WithImagePullPolicy(corev1.PullIfNotPresent).
-						// TODO: rethink authentication method
-						WithCommand("start-notebook.py").
-						WithArgs(
-							"--IdentityProvider.token=$(NOTEBOOK_TOKEN)",
-							"--ServerApp.base_url="+baseURL,
-							// This is needed when a user accesses the notebook
-							// via Session Manager/Agent and internal ingress controller.
-							// TODO(kenji): Tighten this.
-							"--NotebookApp.allow_origin=*").
-						WithPorts(corev1apply.ContainerPort().
-							WithName(portName).
-							WithContainerPort(appPort).
-							WithProtocol(corev1.ProtocolTCP)).
-						WithEnv(envs...).
-						WithEnvFrom(corev1apply.EnvFromSource().
-							WithSecretRef(corev1apply.SecretEnvSource().
-								WithName(nb.Notebook.Id))).
-						WithResources(resources)))))
+			WithTemplate(podTemplateSpec))
 
 	svcConf := corev1apply.Service(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
@@ -302,6 +330,23 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	}
 	if hrConf != nil {
 		objs = append(objs, hrConf)
+	}
+
+	if n.enablePVC {
+		pvcConf := corev1apply.PersistentVolumeClaim(name, nb.Notebook.KubernetesNamespace).
+			WithLabels(labels).
+			WithOwnerReferences(ownerRef).
+			WithAnnotations(map[string]string{
+				notebookManagedAnnotationKey: "true",
+				notebookIDAnnotationKey:      nb.Notebook.Id}).
+			WithSpec(corev1apply.PersistentVolumeClaimSpec().
+				WithAccessModes(corev1.ReadWriteOnce).
+				WithStorageClassName(n.storageClassName).
+				WithResources(corev1apply.VolumeResourceRequirements().
+					WithRequests(corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse(n.storageSize),
+					})))
+		objs = append(objs, pvcConf)
 	}
 
 	for _, obj := range objs {
