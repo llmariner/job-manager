@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/stdr v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/llm-operator/cluster-manager v0.9.0
-	github.com/llm-operator/common v0.3.0
+	github.com/llm-operator/common v0.5.0
 	github.com/llm-operator/file-manager v0.55.0
 	github.com/llm-operator/model-manager v0.76.0
 	github.com/llm-operator/rbac-manager v0.73.0
