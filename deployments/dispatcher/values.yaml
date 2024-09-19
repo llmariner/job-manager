@@ -33,9 +33,6 @@ job:
     key:
 
 notebook:
-  ingressClassName:
-  gatewayName:
-  gatewayNamespace:
   enablePvc: false
   storageClassName: "standard"
   storageSize: "100Gi"
@@ -106,7 +103,7 @@ livenessProbe:
 podSecurityContext:
   fsGroup: 2000
 securityContext:
-  readOnlyRootFilesystem: true  
+  readOnlyRootFilesystem: true
   capabilities:
     drop:
     - ALL
