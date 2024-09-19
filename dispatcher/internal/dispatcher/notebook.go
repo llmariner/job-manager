@@ -184,7 +184,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		portName     = "jupyter-web-ui"
 		pvcMountName = "work"
 	)
-	var baseURL = fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s", n.clusterID, nb.Notebook.Id)
+	baseURL := fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s/%s", n.clusterID, nb.Notebook.Id, nb.Notebook.KubernetesNamespace)
 
 	containerConf := corev1apply.Container().
 		WithName("jupyterlab").
