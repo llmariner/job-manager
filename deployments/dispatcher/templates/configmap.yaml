@@ -17,9 +17,6 @@ data:
         key: {{ .Values.job.wandbApiKeySecret.key }}
     notebook:
       llmOperatorBaseUrl: {{ .Values.global.llmOperatorBaseUrl }}
-      ingressClassName: {{ .Values.notebook.ingressClassName }}
-      gatewayName: {{ .Values.notebook.gatewayName }}
-      gatewayNamespace: {{ .Values.notebook.gatewayNamespace }}
       enablePvc: {{ .Values.notebook.enablePvc }}
       storageClassName: {{ .Values.notebook.storageClassName }}
       storageSize: {{ .Values.notebook.storageSize }}
