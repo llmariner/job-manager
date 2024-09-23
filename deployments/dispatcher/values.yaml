@@ -10,8 +10,6 @@ global:
     accessKeyIdKey:
     secretAccessKeyKey:
 
-  llmOperatorBaseUrl:
-
   worker:
     registrationKeySecret:
       name:
@@ -33,6 +31,7 @@ job:
     key:
 
 notebook:
+  llmOperatorBaseUrl
   enablePvc: false
   storageClassName: "standard"
   storageSize: "100Gi"
