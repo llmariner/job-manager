@@ -31,7 +31,7 @@ job:
     key:
 
 notebook:
-  llmOperatorBaseUrl
+  llmOperatorBaseUrl:
   enablePvc: false
   storageClassName: "standard"
   storageSize: "100Gi"
