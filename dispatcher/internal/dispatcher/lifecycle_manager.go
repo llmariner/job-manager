@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/rbac-manager/pkg/auth"
+	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	batchv1 "k8s.io/api/batch/v1"

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/rbac-manager/pkg/auth"
+	"github.com/llmariner/rbac-manager/pkg/auth"
 	"golang.org/x/sync/errgroup"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
