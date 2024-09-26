@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
@@ -93,17 +94,16 @@ func (f *fakeModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseM
 type fakeS3Client struct {
 }
 
-func (c *fakeS3Client) GeneratePresignedURL(key string, expire time.Duration, requestType is3.RequestType) (string, error) {
+func (c *fakeS3Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType is3.RequestType) (string, error) {
 	return fmt.Sprintf("presigned-%s", key), nil
 }
 
-func (c *fakeS3Client) ListObjectsPages(prefix string, f func(page *s3.ListObjectsOutput, lastPage bool) bool) error {
-	page := &s3.ListObjectsOutput{
-		Contents: []*s3.Object{
+func (c *fakeS3Client) ListObjectsPages(ctx context.Context, prefix string) (*s3.ListObjectsV2Output, error) {
+	return &s3.ListObjectsV2Output{
+		Contents: []types.Object{
 			{Key: proto.String("model-path/obj1")},
 			{Key: proto.String("model-path/path/obj2")},
 		},
-	}
-	f(page, true)
-	return nil
+		IsTruncated: proto.Bool(false),
+	}, nil
 }

@@ -99,7 +99,10 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 	mclient := mv1.NewModelsWorkerServiceClient(mconn)
-	s3Client := s3.NewClient(c.ObjectStore.S3)
+	s3Client, err := s3.NewClient(ctx, c.ObjectStore.S3)
+	if err != nil {
+		return err
+	}
 
 	jconn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, option)
 	if err != nil {
