@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
@@ -29,8 +29,8 @@ type modelClient interface {
 }
 
 type s3Client interface {
-	GeneratePresignedURL(key string, expire time.Duration, requestType is3.RequestType) (string, error)
-	ListObjectsPages(prefix string, f func(page *s3.ListObjectsOutput, lastPage bool) bool) error
+	GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType is3.RequestType) (string, error)
+	ListObjectsPages(ctx context.Context, prefix string) (*s3.ListObjectsV2Output, error)
 }
 
 // NewPreProcessor creates a new pre-processor.
@@ -75,15 +75,19 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	}
 	// Find all files under the path and generate pre-signed URLs for all of them.
 	var paths []string
-	f := func(page *s3.ListObjectsOutput, lastPage bool) bool {
-		for _, obj := range page.Contents {
+	for {
+		result, err := p.s3Client.ListObjectsPages(ctx, mresp.Path)
+		if err != nil {
+			return nil, err
+		}
+		for _, obj := range result.Contents {
 			paths = append(paths, *obj.Key)
 		}
-		return lastPage
+		if !*result.IsTruncated {
+			break
+		}
 	}
-	if err := p.s3Client.ListObjectsPages(mresp.Path, f); err != nil {
-		return nil, err
-	}
+
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("no files found under %s", mresp.Path)
 	}
@@ -91,7 +95,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 
 	baseModelURLs := map[string]string{}
 	for _, path := range paths {
-		url, err := p.s3Client.GeneratePresignedURL(path, preSignedURLExpire, is3.RequestTypeGetObject)
+		url, err := p.s3Client.GeneratePresignedURL(ctx, path, preSignedURLExpire, is3.RequestTypeGetObject)
 		if err != nil {
 			return nil, fmt.Errorf("generate presigned url: %s", err)
 		}
@@ -121,7 +125,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	}
 	outputModelID := rresp.Id
 
-	outputModelURL, err := p.s3Client.GeneratePresignedURL(rresp.Path, preSignedURLExpire, is3.RequestTypePutObject)
+	outputModelURL, err := p.s3Client.GeneratePresignedURL(ctx, rresp.Path, preSignedURLExpire, is3.RequestTypePutObject)
 	if err != nil {
 		return nil, fmt.Errorf("generate presigned url: %s", err)
 	}
@@ -142,7 +146,7 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 	if err != nil {
 		return "", fmt.Errorf("get file path: %s", err)
 	}
-	url, err := p.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
+	url, err := p.s3Client.GeneratePresignedURL(ctx, fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", fmt.Errorf("generate presigned url: %s", err)
 	}

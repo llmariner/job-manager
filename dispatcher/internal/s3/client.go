@@ -1,36 +1,41 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	laws "github.com/llmariner/common/pkg/aws"
 )
 
 // NewClient returns a new S3 client.
-func NewClient(c config.S3Config) *Client {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	conf := &aws.Config{
-		Endpoint: aws.String(c.EndpointURL),
-		Region:   aws.String(c.Region),
-		// This is needed as the minio server does not support the virtual host style.
-		S3ForcePathStyle: aws.Bool(true),
+func NewClient(ctx context.Context, c config.S3Config) (*Client, error) {
+	opts := laws.NewS3ClientOptions{
+		EndpointURL: c.EndpointURL,
+		Region:      c.Region,
+	}
+	if ar := c.AssumeRole; ar != nil {
+		opts.AssumeRole = &laws.AssumeRole{
+			RoleARN:    ar.RoleARN,
+			ExternalID: ar.ExternalID,
+		}
+	}
+	svc, err := laws.NewS3Client(ctx, opts)
+	if err != nil {
+		return nil, err
 	}
 	return &Client{
-		svc:    s3.New(sess, conf),
+		svc:    svc,
 		bucket: c.Bucket,
-	}
+	}, nil
 }
 
 // Client is a client for S3.
 type Client struct {
-	svc    *s3.S3
+	svc    *s3.Client
 	bucket string
 }
 
@@ -45,36 +50,45 @@ const (
 )
 
 // GeneratePresignedURL generates a pre-signed URL.
-func (c *Client) GeneratePresignedURL(key string, expire time.Duration, requestType RequestType) (string, error) {
-	var req *request.Request
+func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType RequestType) (string, error) {
+	presigner := s3.NewPresignClient(c.svc)
+
+	//	var req *request.Request
 	switch requestType {
 	case RequestTypeGetObject:
-		req, _ = c.svc.GetObjectRequest(&s3.GetObjectInput{
+		req, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
 			Bucket: aws.String(c.bucket),
 			Key:    aws.String(key),
+		}, func(opts *s3.PresignOptions) {
+			opts.Expires = expire
 		})
+		if err != nil {
+			return "", err
+		}
+		return req.URL, nil
 	case RequestTypePutObject:
-		req, _ = c.svc.PutObjectRequest(&s3.PutObjectInput{
+		req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
 			Bucket: aws.String(c.bucket),
 			Key:    aws.String(key),
+		}, func(opts *s3.PresignOptions) {
+			opts.Expires = expire
 		})
+		if err != nil {
+			return "", err
+		}
+		return req.URL, nil
 	default:
 		return "", fmt.Errorf("unknown request type: %s", requestType)
 	}
-	url, err := req.Presign(expire)
-	if err != nil {
-		return "", err
-	}
-	return url, nil
 }
 
 // ListObjectsPages returns S3 objects with pagination.
 func (c *Client) ListObjectsPages(
+	ctx context.Context,
 	prefix string,
-	f func(page *s3.ListObjectsOutput, lastPage bool) bool,
-) error {
-	return c.svc.ListObjectsPages(&s3.ListObjectsInput{
+) (*s3.ListObjectsV2Output, error) {
+	return c.svc.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(c.bucket),
 		Prefix: aws.String(prefix),
-	}, f)
+	})
 }

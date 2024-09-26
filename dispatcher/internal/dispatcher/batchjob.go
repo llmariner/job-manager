@@ -454,7 +454,7 @@ func (m *BatchJobManager) getNameAndPresignedURL(ctx context.Context, fileID str
 	if err != nil {
 		return "", "", fmt.Errorf("get file path: %s", err)
 	}
-	url, err := m.s3Client.GeneratePresignedURL(fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
+	url, err := m.s3Client.GeneratePresignedURL(ctx, fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", "", fmt.Errorf("generate presigned url: %s", err)
 	}

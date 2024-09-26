@@ -33,6 +33,13 @@ data:
         endpointUrl: {{ .Values.global.objectStore.s3.endpointUrl }}
         region: {{ .Values.global.objectStore.s3.region }}
         bucket: {{ .Values.global.objectStore.s3.bucket }}
+        {{- with .Values.global.objectStore.s3.assumeRole }}
+        {{- if .roleArn }}
+	assumeRole:
+          roleArn: {{ .roleArn }}
+          externalId: {{ .externalId }}
+        {{- end }}
+        {{- end }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-dispatcher.fullname" . }}

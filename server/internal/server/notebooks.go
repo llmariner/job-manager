@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/llm-operator/common/pkg/id"
+	"github.com/llmariner/common/pkg/id"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	"google.golang.org/grpc/codes"
