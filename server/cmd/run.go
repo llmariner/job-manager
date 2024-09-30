@@ -13,7 +13,7 @@ import (
 	"github.com/llm-operator/job-manager/server/internal/k8s"
 	"github.com/llm-operator/job-manager/server/internal/server"
 	"github.com/llm-operator/job-manager/server/internal/store"
-	mv1 "github.com/llm-operator/model-manager/api/v1"
+	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/common/pkg/db"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
