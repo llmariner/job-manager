@@ -1,6 +1,6 @@
 module github.com/llm-operator/job-manager
 
-go 1.22.2
+go 1.23.1
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.31.0
@@ -22,7 +22,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.9
 	k8s.io/api v0.30.0
-	k8s.io/apimachinery v0.30.0
+	k8s.io/apimachinery v0.30.1
 	k8s.io/client-go v0.30.0
 	k8s.io/utils v0.0.0-20240423183400-0849a56e8f22
 	sigs.k8s.io/controller-runtime v0.18.0
@@ -61,6 +61,7 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/google/pprof v0.0.0-20221118152302-e6195bd50e26 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
