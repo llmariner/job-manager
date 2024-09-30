@@ -7,19 +7,19 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/llmariner/api-usage/pkg/sender"
+	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
 	"github.com/llmariner/job-manager/server/internal/store"
-	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -72,8 +72,6 @@ type S struct {
 
 	srv *grpc.Server
 
-	enableAuth bool
-
 	store            *store.S
 	fileGetClient    fileGetClient
 	modelClient      modelClient
@@ -88,10 +86,10 @@ type S struct {
 }
 
 // Run starts the gRPC server.
-func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
+func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig, usage sender.UsageSetter) error {
 	s.logger.Info("Starting gRPC server", "port", port)
 
-	var opts []grpc.ServerOption
+	var opt grpc.ServerOption
 	if authConfig.Enable {
 		ai, err := auth.NewInterceptor(ctx, auth.Config{
 			RBACServerAddr: authConfig.RBACInternalServerAddr,
@@ -114,11 +112,19 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) err
 			}
 			return authFn(ctx, req, info, handler)
 		}
-		opts = append(opts, grpc.ChainUnaryInterceptor(healthSkip))
-		s.enableAuth = true
+		opt = grpc.ChainUnaryInterceptor(healthSkip, sender.Unary(usage))
+	} else {
+		fakeAuth := func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+			if info.FullMethod == "/grpc.health.v1.Health/Check" {
+				// Skip authentication for health check
+				return handler(ctx, req)
+			}
+			return handler(fakeAuthInto(ctx), req)
+		}
+		opt = grpc.ChainUnaryInterceptor(fakeAuth, sender.Unary(usage))
 	}
 
-	grpcServer := grpc.NewServer(opts...)
+	grpcServer := grpc.NewServer(opt)
 	v1.RegisterFineTuningServiceServer(grpcServer, s)
 	v1.RegisterWorkspaceServiceServer(grpcServer, s)
 	v1.RegisterBatchServiceServer(grpcServer, s)
@@ -145,34 +151,20 @@ func (s *S) Stop() {
 	s.srv.Stop()
 }
 
-func (s *S) extractUserInfoFromContext(ctx context.Context) (*auth.UserInfo, error) {
-	if !s.enableAuth {
-		return &auth.UserInfo{
-			OrganizationID: "default",
-			ProjectID:      defaultProjectID,
-			AssignedKubernetesEnvs: []auth.AssignedKubernetesEnv{
-				{
-					ClusterID: defaultClusterID,
-					Namespace: "default",
-				},
+// fakeAuthInto sets dummy user info and token into the context.
+func fakeAuthInto(ctx context.Context) context.Context {
+	// Set dummy user info and token
+	ctx = auth.AppendUserInfoToContext(ctx, auth.UserInfo{
+		OrganizationID: "default",
+		ProjectID:      defaultProjectID,
+		AssignedKubernetesEnvs: []auth.AssignedKubernetesEnv{
+			{
+				ClusterID: defaultClusterID,
+				Namespace: "default",
 			},
-			TenantID: defaultTenantID,
-		}, nil
-	}
-	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "user info not found")
-	}
-	return userInfo, nil
-}
-
-func (s *S) extractTokenFromContext(ctx context.Context) (string, error) {
-	if !s.enableAuth {
-		return "token", nil
-	}
-	token, err := auth.ExtractTokenFromContext(ctx)
-	if err != nil {
-		return "", status.Errorf(codes.Internal, "extract token: %s", err)
-	}
-	return token, nil
+		},
+		TenantID: defaultTenantID,
+	})
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer token"))
+	return ctx
 }

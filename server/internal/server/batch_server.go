@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -18,9 +19,9 @@ import (
 
 // CreateBatchJob creates a batch job.
 func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (*v1.BatchJob, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Image == "" {
@@ -88,7 +89,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		return nil, status.Errorf(codes.Internal, "marshal batch job: %s", err)
 	}
 
-	apikey, err := s.extractTokenFromContext(ctx)
+	apikey, err := auth.ExtractTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +125,9 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 
 // ListBatchJobs lists batch jobs.
 func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v1.ListBatchJobsResponse, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Limit < 0 {
@@ -173,9 +174,9 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 
 // GetBatchJob gets a batch job.
 func (s *S) GetBatchJob(ctx context.Context, req *v1.GetBatchJobRequest) (*v1.BatchJob, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -199,9 +200,9 @@ func (s *S) GetBatchJob(ctx context.Context, req *v1.GetBatchJobRequest) (*v1.Ba
 
 // DeleteBatchJob deletes a batch job.
 func (s *S) DeleteBatchJob(ctx context.Context, req *v1.DeleteBatchJobRequest) (*v1.BatchJob, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -238,9 +239,9 @@ func (s *S) DeleteBatchJob(ctx context.Context, req *v1.DeleteBatchJobRequest) (
 
 // CancelBatchJob cancels a batch job.
 func (s *S) CancelBatchJob(ctx context.Context, req *v1.CancelBatchJobRequest) (*v1.BatchJob, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
