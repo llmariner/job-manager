@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	"github.com/stretchr/testify/assert"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

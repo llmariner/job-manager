@@ -16,7 +16,7 @@ make build-dispatcher
 ```yaml
 jobPollingInterval: 10s
 job:
-  image: llm-operator/experiments-fake-job
+  image: llmariner/experiments-fake-job
   version: latest
   numGpus: 0
 

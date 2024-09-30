@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr/testr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/server/internal/k8s"
-	"github.com/llm-operator/job-manager/server/internal/store"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/k8s"
+	"github.com/llmariner/job-manager/server/internal/store"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"

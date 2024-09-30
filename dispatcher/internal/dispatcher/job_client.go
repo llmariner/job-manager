@@ -11,8 +11,8 @@ import (
 	// To embed the command template.
 	_ "embed"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	managedJobAnnotationKey = "llm-operator/managed-pod"
-	jobIDAnnotationKey      = "llm-operator/job-id"
+	managedJobAnnotationKey = "llmariner/managed-pod"
+	jobIDAnnotationKey      = "llmariner/job-id"
 
 	kueueQueueNameLabelKey = "kueue.x-k8s.io/queue-name"
 
@@ -61,7 +61,7 @@ type JobClient struct {
 }
 
 func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult *PreProcessResult) error {
-	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llm-operator/job-manager/tree/main/build/experiments/fine-tuning.
+	// TODO(kenji): Create a real fine-tuning job. See https://github.com/llmariner/job-manager/tree/main/build/experiments/fine-tuning.
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Creating a k8s Job resource for a job")
 

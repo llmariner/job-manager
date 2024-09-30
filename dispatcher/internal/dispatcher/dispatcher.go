@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"golang.org/x/sync/errgroup"
 	ctrl "sigs.k8s.io/controller-runtime"

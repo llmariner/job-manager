@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -69,7 +69,7 @@ func (s *LifecycleManager) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(s)
 }
 
-// Reconcile reconciles the pod managed by llm-operator.
+// Reconcile reconciles the pod managed by llmariner.
 func (s *LifecycleManager) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,

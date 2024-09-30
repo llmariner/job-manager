@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	is3 "github.com/llmariner/job-manager/dispatcher/internal/s3"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"google.golang.org/grpc"

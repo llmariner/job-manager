@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/internal/config"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	notebookManagedAnnotationKey = "llm-operator/managed-notebook"
-	notebookIDAnnotationKey      = "llm-operator/notebook-id"
+	notebookManagedAnnotationKey = "llmariner/managed-notebook"
+	notebookIDAnnotationKey      = "llmariner/notebook-id"
 
 	nbManagerName = "notebook-manager"
 )

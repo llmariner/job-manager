@@ -4,7 +4,7 @@ package llmariner.fine_tuning.server.v1;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/llm-operator/job-manager/api/v1";
+option go_package = "github.com/llmariner/job-manager/api/v1";
 
 // The API specification fllows OpenAPI API specification (https://platform.openai.com/docs/api-reference/fine-tuning/jobs).
 

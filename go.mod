@@ -1,4 +1,4 @@
-module github.com/llm-operator/job-manager
+module github.com/llmariner/job-manager
 
 go 1.23.1
 
