@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +61,7 @@ func TestCreateBatchJob(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, map[string]string{"t0": "img0"})
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, map[string]string{"t0": "img0"}, testr.New(t))
 			resp, err := srv.CreateBatchJob(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -96,7 +97,7 @@ func TestListBatchJobs(t *testing.T) {
 	err := st.SetBatchJobState("nb10", 0, store.BatchJobStateDeleted)
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	resp, err := srv.ListBatchJobs(context.Background(), &v1.ListBatchJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -140,7 +141,7 @@ func TestGetBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	resp, err := srv.GetBatchJob(context.Background(), &v1.GetBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.BatchJobQueuedActionCreate, store.BatchJobState(resp.Status))
@@ -201,7 +202,7 @@ func TestCancelBatchJob(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil, nil)
+			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 			resp, err := srv.CancelBatchJob(context.Background(), &v1.CancelBatchJobRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -249,7 +250,7 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st)
+	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalBatchJobsRequest{}
 	got, err := srv.ListQueuedInternalBatchJobs(context.Background(), req)
 	assert.NoError(t, err)
@@ -272,7 +273,7 @@ func TestGetInternalBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := NewWorkerServiceServer(st)
+	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.GetInternalBatchJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalBatchJob(context.Background(), req)
 	assert.NoError(t, err)
@@ -294,7 +295,7 @@ func TestDeleteBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	_, err = srv.DeleteBatchJob(context.Background(), &v1.DeleteBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 }
@@ -385,7 +386,7 @@ func TestUpdateBatchJobState(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := NewWorkerServiceServer(st)
+			srv := NewWorkerServiceServer(st, testr.New(t))
 			_, err = srv.UpdateBatchJobState(context.Background(), &v1.UpdateBatchJobStateRequest{
 				Id:    batchJobID,
 				State: test.state,

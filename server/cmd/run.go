@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-logr/stdr"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/llmariner/common/pkg/db"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/config"
@@ -15,6 +15,7 @@ import (
 	"github.com/llm-operator/job-manager/server/internal/server"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	mv1 "github.com/llm-operator/model-manager/api/v1"
+	"github.com/llmariner/common/pkg/db"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -23,34 +24,37 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const flagConfig = "config"
-
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "run",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		path, err := cmd.Flags().GetString(flagConfig)
-		if err != nil {
-			return err
-		}
-
-		c, err := config.Parse(path)
-		if err != nil {
-			return err
-		}
-
-		if err := c.Validate(); err != nil {
-			return err
-		}
-
-		if err := run(cmd.Context(), &c); err != nil {
-			return err
-		}
-		return nil
-	},
+func runCmd() *cobra.Command {
+	var path string
+	var logLevel int
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "run",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := config.Parse(path)
+			if err != nil {
+				return err
+			}
+			if err := c.Validate(); err != nil {
+				return err
+			}
+			stdr.SetVerbosity(logLevel)
+			if err := run(cmd.Context(), &c); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&path, "config", "", "Path to the config file")
+	cmd.Flags().IntVar(&logLevel, "v", 0, "Log level")
+	_ = cmd.MarkFlagRequired("config")
+	return cmd
 }
 
 func run(ctx context.Context, c *config.Config) error {
+	logger := stdr.New(log.Default())
+	log := logger.WithName("boot")
+
 	dbInst, err := db.OpenDB(c.Database)
 	if err != nil {
 		return err
@@ -93,7 +97,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	errCh := make(chan error)
 	go func() {
-		log.Printf("Starting HTTP server on port %d", c.HTTPPort)
+		log.Info("Starting HTTP server...", "port", c.HTTPPort)
 		errCh <- http.ListenAndServe(fmt.Sprintf(":%d", c.HTTPPort), mux)
 	}()
 
@@ -112,19 +116,14 @@ func run(ctx context.Context, c *config.Config) error {
 	k8sClientFactory := k8s.NewClientFactory(c.SessionManagerServerEndpoint)
 
 	go func() {
-		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images)
+		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images, logger)
 		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
 	}()
 
 	go func() {
-		s := server.NewWorkerServiceServer(st)
+		s := server.NewWorkerServiceServer(st, logger)
 		errCh <- s.Run(ctx, c.WorkerServiceGRPCPort, c.AuthConfig)
 	}()
 
 	return <-errCh
-}
-
-func init() {
-	runCmd.Flags().StringP(flagConfig, "c", "", "Configuration file path")
-	_ = runCmd.MarkFlagRequired(flagConfig)
 }
