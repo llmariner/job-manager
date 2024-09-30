@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
-	mv1 "github.com/llm-operator/model-manager/api/v1"
+	mv1 "github.com/llmariner/model-manager/api/v1"
 	"google.golang.org/grpc"
 	ctrl "sigs.k8s.io/controller-runtime"
 )

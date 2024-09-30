@@ -7,9 +7,9 @@ import (
 
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
-	mv1 "github.com/llm-operator/model-manager/api/v1"
 	"github.com/llmariner/common/pkg/id"
 	fv1 "github.com/llmariner/file-manager/api/v1"
+	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
