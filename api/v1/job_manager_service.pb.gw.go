@@ -217,7 +217,7 @@ func RegisterFineTuningServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/CreateJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -240,7 +240,7 @@ func RegisterFineTuningServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/ListJobs", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -263,7 +263,7 @@ func RegisterFineTuningServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/GetJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -286,7 +286,7 @@ func RegisterFineTuningServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}/cancel"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/CancelJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -348,7 +348,7 @@ func RegisterFineTuningServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/CreateJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -368,7 +368,7 @@ func RegisterFineTuningServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/ListJobs", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -388,7 +388,7 @@ func RegisterFineTuningServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/GetJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -408,7 +408,7 @@ func RegisterFineTuningServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}/cancel"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.fine_tuning.server.v1.FineTuningService/CancelJob", runtime.WithHTTPPathPattern("/v1/fine_tuning/jobs/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

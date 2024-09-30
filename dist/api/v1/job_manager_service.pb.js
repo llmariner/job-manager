@@ -45,12 +45,12 @@ export class FineTuningService {
 }
 export class FineTuningWorkerService {
     static ListQueuedInternalJobs(req, initReq) {
-        return fm.fetchReq(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
+        return fm.fetchReq(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
     }
     static GetInternalJob(req, initReq) {
-        return fm.fetchReq(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
+        return fm.fetchReq(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
     }
     static UpdateJobPhase(req, initReq) {
-        return fm.fetchReq(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
+        return fm.fetchReq(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
     }
 }

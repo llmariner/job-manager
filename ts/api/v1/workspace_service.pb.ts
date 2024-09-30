@@ -152,9 +152,9 @@ export class WorkspaceService {
 }
 export class WorkspaceWorkerService {
   static ListQueuedInternalNotebooks(req: ListQueuedInternalNotebooksRequest, initReq?: fm.InitReq): Promise<ListQueuedInternalNotebooksResponse> {
-    return fm.fetchReq<ListQueuedInternalNotebooksRequest, ListQueuedInternalNotebooksResponse>(`/llmoperator.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<ListQueuedInternalNotebooksRequest, ListQueuedInternalNotebooksResponse>(`/llmariner.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
   static UpdateNotebookState(req: UpdateNotebookStateRequest, initReq?: fm.InitReq): Promise<UpdateNotebookStateResponse> {
-    return fm.fetchReq<UpdateNotebookStateRequest, UpdateNotebookStateResponse>(`/llmoperator.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<UpdateNotebookStateRequest, UpdateNotebookStateResponse>(`/llmariner.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
 }

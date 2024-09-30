@@ -269,7 +269,7 @@ func RegisterBatchServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/CreateBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/CreateBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -292,7 +292,7 @@ func RegisterBatchServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/ListBatchJobs", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/ListBatchJobs", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -315,7 +315,7 @@ func RegisterBatchServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/GetBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/GetBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -338,7 +338,7 @@ func RegisterBatchServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/CancelBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}/cancel"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/CancelBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -361,7 +361,7 @@ func RegisterBatchServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/DeleteBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/DeleteBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -423,7 +423,7 @@ func RegisterBatchServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/CreateBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/CreateBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -443,7 +443,7 @@ func RegisterBatchServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/ListBatchJobs", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/ListBatchJobs", runtime.WithHTTPPathPattern("/v1/batch/jobs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -463,7 +463,7 @@ func RegisterBatchServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/GetBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/GetBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -483,7 +483,7 @@ func RegisterBatchServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/CancelBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}/cancel"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/CancelBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}/cancel"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -503,7 +503,7 @@ func RegisterBatchServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.batch.server.v1.BatchService/DeleteBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.batch.server.v1.BatchService/DeleteBatchJob", runtime.WithHTTPPathPattern("/v1/batch/jobs/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

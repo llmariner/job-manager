@@ -157,12 +157,12 @@ export class FineTuningService {
 }
 export class FineTuningWorkerService {
   static ListQueuedInternalJobs(req: ListQueuedInternalJobsRequest, initReq?: fm.InitReq): Promise<ListQueuedInternalJobsResponse> {
-    return fm.fetchReq<ListQueuedInternalJobsRequest, ListQueuedInternalJobsResponse>(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<ListQueuedInternalJobsRequest, ListQueuedInternalJobsResponse>(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
   static GetInternalJob(req: GetInternalJobRequest, initReq?: fm.InitReq): Promise<InternalJob> {
-    return fm.fetchReq<GetInternalJobRequest, InternalJob>(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<GetInternalJobRequest, InternalJob>(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
   static UpdateJobPhase(req: UpdateJobPhaseRequest, initReq?: fm.InitReq): Promise<UpdateJobPhaseResponse> {
-    return fm.fetchReq<UpdateJobPhaseRequest, UpdateJobPhaseResponse>(`/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<UpdateJobPhaseRequest, UpdateJobPhaseResponse>(`/llmariner.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
 }

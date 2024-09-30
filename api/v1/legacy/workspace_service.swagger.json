@@ -1,0 +1,196 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/v1/legacy/workspace_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "WorkspaceWorkerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "ResourcesQuantity": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limits": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "serverv1Resources": {
+      "type": "object",
+      "properties": {
+        "cpuMilicore": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "memoryMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "storageMegabytes": {
+          "$ref": "#/definitions/ResourcesQuantity"
+        },
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1InternalNotebook": {
+      "type": "object",
+      "properties": {
+        "notebook": {
+          "$ref": "#/definitions/v1Notebook"
+        },
+        "state": {
+          "$ref": "#/definitions/v1NotebookState"
+        },
+        "queuedAction": {
+          "$ref": "#/definitions/v1NotebookQueuedAction"
+        }
+      }
+    },
+    "v1ListQueuedInternalNotebooksResponse": {
+      "type": "object",
+      "properties": {
+        "notebooks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1InternalNotebook"
+          }
+        }
+      }
+    },
+    "v1Notebook": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "stoppedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "resources": {
+          "$ref": "#/definitions/serverv1Resources"
+        },
+        "envs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "error": {
+          "$ref": "#/definitions/v1NotebookError"
+        },
+        "status": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string",
+          "description": "this field is populated only when a new notebook is created."
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "kubernetesNamespace": {
+          "type": "string"
+        },
+        "clusterId": {
+          "type": "string",
+          "description": "cluster_id is the ID of the cluster where the notebook runs."
+        }
+      }
+    },
+    "v1NotebookError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "v1NotebookQueuedAction": {
+      "type": "string",
+      "enum": [
+        "ACTION_UNSPECIFIED",
+        "STARTING",
+        "STOPPING",
+        "DELETING"
+      ],
+      "default": "ACTION_UNSPECIFIED"
+    },
+    "v1NotebookState": {
+      "type": "string",
+      "enum": [
+        "STATE_UNSPECIFIED",
+        "QUEUED",
+        "INITIALIZING",
+        "RUNNING",
+        "STOPPED",
+        "FAILED",
+        "DELETED"
+      ],
+      "default": "STATE_UNSPECIFIED"
+    },
+    "v1UpdateNotebookStateResponse": {
+      "type": "object"
+    }
+  }
+}

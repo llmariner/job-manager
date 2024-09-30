@@ -34,7 +34,7 @@ func NewFineTuningServiceClient(cc grpc.ClientConnInterface) FineTuningServiceCl
 
 func (c *fineTuningServiceClient) CreateJob(ctx context.Context, in *CreateJobRequest, opts ...grpc.CallOption) (*Job, error) {
 	out := new(Job)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningService/CreateJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (c *fineTuningServiceClient) CreateJob(ctx context.Context, in *CreateJobRe
 
 func (c *fineTuningServiceClient) ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
 	out := new(ListJobsResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningService/ListJobs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *fineTuningServiceClient) ListJobs(ctx context.Context, in *ListJobsRequ
 
 func (c *fineTuningServiceClient) GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*Job, error) {
 	out := new(Job)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningService/GetJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *fineTuningServiceClient) GetJob(ctx context.Context, in *GetJobRequest,
 
 func (c *fineTuningServiceClient) CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*Job, error) {
 	out := new(Job)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningService/CancelJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func _FineTuningService_CreateJob_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/CreateJob",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningService/CreateJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningServiceServer).CreateJob(ctx, req.(*CreateJobRequest))
@@ -136,7 +136,7 @@ func _FineTuningService_ListJobs_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/ListJobs",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningService/ListJobs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningServiceServer).ListJobs(ctx, req.(*ListJobsRequest))
@@ -154,7 +154,7 @@ func _FineTuningService_GetJob_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/GetJob",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningService/GetJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningServiceServer).GetJob(ctx, req.(*GetJobRequest))
@@ -172,7 +172,7 @@ func _FineTuningService_CancelJob_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningService/CancelJob",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningService/CancelJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningServiceServer).CancelJob(ctx, req.(*CancelJobRequest))
@@ -184,7 +184,7 @@ func _FineTuningService_CancelJob_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FineTuningService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.fine_tuning.server.v1.FineTuningService",
+	ServiceName: "llmariner.fine_tuning.server.v1.FineTuningService",
 	HandlerType: (*FineTuningServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -228,7 +228,7 @@ func NewFineTuningWorkerServiceClient(cc grpc.ClientConnInterface) FineTuningWor
 
 func (c *fineTuningWorkerServiceClient) ListQueuedInternalJobs(ctx context.Context, in *ListQueuedInternalJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalJobsResponse, error) {
 	out := new(ListQueuedInternalJobsResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (c *fineTuningWorkerServiceClient) ListQueuedInternalJobs(ctx context.Conte
 
 func (c *fineTuningWorkerServiceClient) GetInternalJob(ctx context.Context, in *GetInternalJobRequest, opts ...grpc.CallOption) (*InternalJob, error) {
 	out := new(InternalJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ func (c *fineTuningWorkerServiceClient) GetInternalJob(ctx context.Context, in *
 
 func (c *fineTuningWorkerServiceClient) UpdateJobPhase(ctx context.Context, in *UpdateJobPhaseRequest, opts ...grpc.CallOption) (*UpdateJobPhaseResponse, error) {
 	out := new(UpdateJobPhaseResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func _FineTuningWorkerService_ListQueuedInternalJobs_Handler(srv interface{}, ct
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/ListQueuedInternalJobs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningWorkerServiceServer).ListQueuedInternalJobs(ctx, req.(*ListQueuedInternalJobsRequest))
@@ -319,7 +319,7 @@ func _FineTuningWorkerService_GetInternalJob_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/GetInternalJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningWorkerServiceServer).GetInternalJob(ctx, req.(*GetInternalJobRequest))
@@ -337,7 +337,7 @@ func _FineTuningWorkerService_UpdateJobPhase_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase",
+		FullMethod: "/llmariner.fine_tuning.server.v1.FineTuningWorkerService/UpdateJobPhase",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FineTuningWorkerServiceServer).UpdateJobPhase(ctx, req.(*UpdateJobPhaseRequest))
@@ -349,7 +349,7 @@ func _FineTuningWorkerService_UpdateJobPhase_Handler(srv interface{}, ctx contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FineTuningWorkerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.fine_tuning.server.v1.FineTuningWorkerService",
+	ServiceName: "llmariner.fine_tuning.server.v1.FineTuningWorkerService",
 	HandlerType: (*FineTuningWorkerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
