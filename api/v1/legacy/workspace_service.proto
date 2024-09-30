@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package llmoperator.workspace.server.v1;
+
+import "google/api/annotations.proto";
+import "api/v1/workspace_service.proto";
+
+option go_package = "github.com/llm-operator/job-manager/api/v1/legacy";
+
+service WorkspaceWorkerService {
+  rpc ListQueuedInternalNotebooks(llmariner.workspace.server.v1.ListQueuedInternalNotebooksRequest) returns (llmariner.workspace.server.v1.ListQueuedInternalNotebooksResponse);
+  rpc UpdateNotebookState(llmariner.workspace.server.v1.UpdateNotebookStateRequest) returns (llmariner.workspace.server.v1.UpdateNotebookStateResponse);
+}

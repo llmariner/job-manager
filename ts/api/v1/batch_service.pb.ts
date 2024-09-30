@@ -147,12 +147,12 @@ export class BatchService {
 }
 export class BatchWorkerService {
   static ListQueuedInternalBatchJobs(req: ListQueuedInternalBatchJobsRequest, initReq?: fm.InitReq): Promise<ListQueuedInternalBatchJobsResponse> {
-    return fm.fetchReq<ListQueuedInternalBatchJobsRequest, ListQueuedInternalBatchJobsResponse>(`/llmoperator.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<ListQueuedInternalBatchJobsRequest, ListQueuedInternalBatchJobsResponse>(`/llmariner.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
   static GetInternalBatchJob(req: GetInternalBatchJobRequest, initReq?: fm.InitReq): Promise<InternalBatchJob> {
-    return fm.fetchReq<GetInternalBatchJobRequest, InternalBatchJob>(`/llmoperator.batch.server.v1.BatchWorkerService/GetInternalBatchJob`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<GetInternalBatchJobRequest, InternalBatchJob>(`/llmariner.batch.server.v1.BatchWorkerService/GetInternalBatchJob`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
   static UpdateBatchJobState(req: UpdateBatchJobStateRequest, initReq?: fm.InitReq): Promise<UpdateBatchJobStateResponse> {
-    return fm.fetchReq<UpdateBatchJobStateRequest, UpdateBatchJobStateResponse>(`/llmoperator.batch.server.v1.BatchWorkerService/UpdateBatchJobState`, {...initReq, method: "POST", body: JSON.stringify(req)})
+    return fm.fetchReq<UpdateBatchJobStateRequest, UpdateBatchJobStateResponse>(`/llmariner.batch.server.v1.BatchWorkerService/UpdateBatchJobState`, {...initReq, method: "POST", body: JSON.stringify(req)})
   }
 }

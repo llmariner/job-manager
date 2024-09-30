@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
+	v1legacy "github.com/llm-operator/job-manager/api/v1/legacy"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -28,11 +29,26 @@ func NewWorkerServiceServer(s *store.S, logger logr.Logger) *WS {
 	}
 }
 
+// nolint:unused
+type legacyFineTuningServiceServer = v1legacy.UnimplementedFineTuningWorkerServiceServer
+
+// nolint:unused
+type legacyWorkspaceServiceServer = v1legacy.UnimplementedWorkspaceWorkerServiceServer
+
+// nolint:unused
+type legacyBatchServiceServer = v1legacy.UnimplementedBatchWorkerServiceServer
+
 // WS is a server for worker services.
 type WS struct {
 	v1.UnimplementedFineTuningWorkerServiceServer
 	v1.UnimplementedWorkspaceWorkerServiceServer
 	v1.UnimplementedBatchWorkerServiceServer
+	// nolint:unused
+	legacyFineTuningServiceServer
+	// nolint:unused
+	legacyWorkspaceServiceServer
+	// nolint:unused
+	legacyBatchServiceServer
 
 	srv    *grpc.Server
 	store  *store.S
@@ -62,6 +78,9 @@ func (ws *WS) Run(ctx context.Context, port int, authConfig config.AuthConfig) e
 	v1.RegisterFineTuningWorkerServiceServer(srv, ws)
 	v1.RegisterWorkspaceWorkerServiceServer(srv, ws)
 	v1.RegisterBatchWorkerServiceServer(srv, ws)
+	v1legacy.RegisterFineTuningWorkerServiceServer(srv, ws)
+	v1legacy.RegisterWorkspaceWorkerServiceServer(srv, ws)
+	v1legacy.RegisterBatchWorkerServiceServer(srv, ws)
 	reflection.Register(srv)
 
 	ws.srv = srv

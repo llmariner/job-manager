@@ -36,7 +36,7 @@ func NewWorkspaceServiceClient(cc grpc.ClientConnInterface) WorkspaceServiceClie
 
 func (c *workspaceServiceClient) CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*Notebook, error) {
 	out := new(Notebook)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/CreateNotebook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/CreateNotebook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *workspaceServiceClient) CreateNotebook(ctx context.Context, in *CreateN
 
 func (c *workspaceServiceClient) ListNotebooks(ctx context.Context, in *ListNotebooksRequest, opts ...grpc.CallOption) (*ListNotebooksResponse, error) {
 	out := new(ListNotebooksResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/ListNotebooks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (c *workspaceServiceClient) ListNotebooks(ctx context.Context, in *ListNote
 
 func (c *workspaceServiceClient) GetNotebook(ctx context.Context, in *GetNotebookRequest, opts ...grpc.CallOption) (*Notebook, error) {
 	out := new(Notebook)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/GetNotebook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/GetNotebook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *workspaceServiceClient) GetNotebook(ctx context.Context, in *GetNoteboo
 
 func (c *workspaceServiceClient) DeleteNotebook(ctx context.Context, in *DeleteNotebookRequest, opts ...grpc.CallOption) (*DeleteNotebookResponse, error) {
 	out := new(DeleteNotebookResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/DeleteNotebook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/DeleteNotebook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (c *workspaceServiceClient) DeleteNotebook(ctx context.Context, in *DeleteN
 
 func (c *workspaceServiceClient) StopNotebook(ctx context.Context, in *StopNotebookRequest, opts ...grpc.CallOption) (*Notebook, error) {
 	out := new(Notebook)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/StopNotebook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/StopNotebook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *workspaceServiceClient) StopNotebook(ctx context.Context, in *StopNoteb
 
 func (c *workspaceServiceClient) StartNotebook(ctx context.Context, in *StartNotebookRequest, opts ...grpc.CallOption) (*Notebook, error) {
 	out := new(Notebook)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceService/StartNotebook", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func _WorkspaceService_CreateNotebook_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/CreateNotebook",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/CreateNotebook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).CreateNotebook(ctx, req.(*CreateNotebookRequest))
@@ -164,7 +164,7 @@ func _WorkspaceService_ListNotebooks_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/ListNotebooks",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).ListNotebooks(ctx, req.(*ListNotebooksRequest))
@@ -182,7 +182,7 @@ func _WorkspaceService_GetNotebook_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/GetNotebook",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/GetNotebook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).GetNotebook(ctx, req.(*GetNotebookRequest))
@@ -200,7 +200,7 @@ func _WorkspaceService_DeleteNotebook_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/DeleteNotebook",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/DeleteNotebook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).DeleteNotebook(ctx, req.(*DeleteNotebookRequest))
@@ -218,7 +218,7 @@ func _WorkspaceService_StopNotebook_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/StopNotebook",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/StopNotebook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).StopNotebook(ctx, req.(*StopNotebookRequest))
@@ -236,7 +236,7 @@ func _WorkspaceService_StartNotebook_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceService/StartNotebook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceServiceServer).StartNotebook(ctx, req.(*StartNotebookRequest))
@@ -248,7 +248,7 @@ func _WorkspaceService_StartNotebook_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkspaceService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.workspace.server.v1.WorkspaceService",
+	ServiceName: "llmariner.workspace.server.v1.WorkspaceService",
 	HandlerType: (*WorkspaceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -298,7 +298,7 @@ func NewWorkspaceWorkerServiceClient(cc grpc.ClientConnInterface) WorkspaceWorke
 
 func (c *workspaceWorkerServiceClient) ListQueuedInternalNotebooks(ctx context.Context, in *ListQueuedInternalNotebooksRequest, opts ...grpc.CallOption) (*ListQueuedInternalNotebooksResponse, error) {
 	out := new(ListQueuedInternalNotebooksResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (c *workspaceWorkerServiceClient) ListQueuedInternalNotebooks(ctx context.C
 
 func (c *workspaceWorkerServiceClient) UpdateNotebookState(ctx context.Context, in *UpdateNotebookStateRequest, opts ...grpc.CallOption) (*UpdateNotebookStateResponse, error) {
 	out := new(UpdateNotebookStateResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func _WorkspaceWorkerService_ListQueuedInternalNotebooks_Handler(srv interface{}
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceWorkerService/ListQueuedInternalNotebooks",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceWorkerServiceServer).ListQueuedInternalNotebooks(ctx, req.(*ListQueuedInternalNotebooksRequest))
@@ -375,7 +375,7 @@ func _WorkspaceWorkerService_UpdateNotebookState_Handler(srv interface{}, ctx co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState",
+		FullMethod: "/llmariner.workspace.server.v1.WorkspaceWorkerService/UpdateNotebookState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkspaceWorkerServiceServer).UpdateNotebookState(ctx, req.(*UpdateNotebookStateRequest))
@@ -387,7 +387,7 @@ func _WorkspaceWorkerService_UpdateNotebookState_Handler(srv interface{}, ctx co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorkspaceWorkerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.workspace.server.v1.WorkspaceWorkerService",
+	ServiceName: "llmariner.workspace.server.v1.WorkspaceWorkerService",
 	HandlerType: (*WorkspaceWorkerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

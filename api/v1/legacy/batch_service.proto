@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package llmoperator.batch.server.v1;
+
+import "google/api/annotations.proto";
+import "api/v1/batch_service.proto";
+
+option go_package = "github.com/llm-operator/job-manager/api/v1/legacy";
+
+service BatchWorkerService {
+  rpc ListQueuedInternalBatchJobs(llmariner.batch.server.v1.ListQueuedInternalBatchJobsRequest) returns (llmariner.batch.server.v1.ListQueuedInternalBatchJobsResponse);
+  rpc GetInternalBatchJob(llmariner.batch.server.v1.GetInternalBatchJobRequest) returns (llmariner.batch.server.v1.InternalBatchJob);
+  rpc UpdateBatchJobState(llmariner.batch.server.v1.UpdateBatchJobStateRequest) returns (llmariner.batch.server.v1.UpdateBatchJobStateResponse);
+}

@@ -321,7 +321,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/CreateNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/CreateNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -344,7 +344,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -367,7 +367,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/GetNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/GetNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -390,7 +390,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/DeleteNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/DeleteNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -413,7 +413,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StopNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:stop"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/StopNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:stop"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -436,7 +436,7 @@ func RegisterWorkspaceServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -498,7 +498,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/CreateNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/CreateNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -518,7 +518,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/ListNotebooks", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -538,7 +538,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/GetNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/GetNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -558,7 +558,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/DeleteNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/DeleteNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -578,7 +578,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StopNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:stop"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/StopNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:stop"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -598,7 +598,7 @@ func RegisterWorkspaceServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmoperator.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/llmariner.workspace.server.v1.WorkspaceService/StartNotebook", runtime.WithHTTPPathPattern("/v1/workspaces/notebooks/{id}/actions:start"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

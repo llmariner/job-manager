@@ -35,7 +35,7 @@ func NewBatchServiceClient(cc grpc.ClientConnInterface) BatchServiceClient {
 
 func (c *batchServiceClient) CreateBatchJob(ctx context.Context, in *CreateBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error) {
 	out := new(BatchJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchService/CreateBatchJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchService/CreateBatchJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *batchServiceClient) CreateBatchJob(ctx context.Context, in *CreateBatch
 
 func (c *batchServiceClient) ListBatchJobs(ctx context.Context, in *ListBatchJobsRequest, opts ...grpc.CallOption) (*ListBatchJobsResponse, error) {
 	out := new(ListBatchJobsResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchService/ListBatchJobs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchService/ListBatchJobs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *batchServiceClient) ListBatchJobs(ctx context.Context, in *ListBatchJob
 
 func (c *batchServiceClient) GetBatchJob(ctx context.Context, in *GetBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error) {
 	out := new(BatchJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchService/GetBatchJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchService/GetBatchJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *batchServiceClient) GetBatchJob(ctx context.Context, in *GetBatchJobReq
 
 func (c *batchServiceClient) CancelBatchJob(ctx context.Context, in *CancelBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error) {
 	out := new(BatchJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchService/CancelBatchJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchService/CancelBatchJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (c *batchServiceClient) CancelBatchJob(ctx context.Context, in *CancelBatch
 
 func (c *batchServiceClient) DeleteBatchJob(ctx context.Context, in *DeleteBatchJobRequest, opts ...grpc.CallOption) (*BatchJob, error) {
 	out := new(BatchJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchService/DeleteBatchJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchService/DeleteBatchJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func _BatchService_CreateBatchJob_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchService/CreateBatchJob",
+		FullMethod: "/llmariner.batch.server.v1.BatchService/CreateBatchJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchServiceServer).CreateBatchJob(ctx, req.(*CreateBatchJobRequest))
@@ -150,7 +150,7 @@ func _BatchService_ListBatchJobs_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchService/ListBatchJobs",
+		FullMethod: "/llmariner.batch.server.v1.BatchService/ListBatchJobs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchServiceServer).ListBatchJobs(ctx, req.(*ListBatchJobsRequest))
@@ -168,7 +168,7 @@ func _BatchService_GetBatchJob_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchService/GetBatchJob",
+		FullMethod: "/llmariner.batch.server.v1.BatchService/GetBatchJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchServiceServer).GetBatchJob(ctx, req.(*GetBatchJobRequest))
@@ -186,7 +186,7 @@ func _BatchService_CancelBatchJob_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchService/CancelBatchJob",
+		FullMethod: "/llmariner.batch.server.v1.BatchService/CancelBatchJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchServiceServer).CancelBatchJob(ctx, req.(*CancelBatchJobRequest))
@@ -204,7 +204,7 @@ func _BatchService_DeleteBatchJob_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchService/DeleteBatchJob",
+		FullMethod: "/llmariner.batch.server.v1.BatchService/DeleteBatchJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchServiceServer).DeleteBatchJob(ctx, req.(*DeleteBatchJobRequest))
@@ -216,7 +216,7 @@ func _BatchService_DeleteBatchJob_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BatchService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.batch.server.v1.BatchService",
+	ServiceName: "llmariner.batch.server.v1.BatchService",
 	HandlerType: (*BatchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -263,7 +263,7 @@ func NewBatchWorkerServiceClient(cc grpc.ClientConnInterface) BatchWorkerService
 
 func (c *batchWorkerServiceClient) ListQueuedInternalBatchJobs(ctx context.Context, in *ListQueuedInternalBatchJobsRequest, opts ...grpc.CallOption) (*ListQueuedInternalBatchJobsResponse, error) {
 	out := new(ListQueuedInternalBatchJobsResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (c *batchWorkerServiceClient) ListQueuedInternalBatchJobs(ctx context.Conte
 
 func (c *batchWorkerServiceClient) GetInternalBatchJob(ctx context.Context, in *GetInternalBatchJobRequest, opts ...grpc.CallOption) (*InternalBatchJob, error) {
 	out := new(InternalBatchJob)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchWorkerService/GetInternalBatchJob", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchWorkerService/GetInternalBatchJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +281,7 @@ func (c *batchWorkerServiceClient) GetInternalBatchJob(ctx context.Context, in *
 
 func (c *batchWorkerServiceClient) UpdateBatchJobState(ctx context.Context, in *UpdateBatchJobStateRequest, opts ...grpc.CallOption) (*UpdateBatchJobStateResponse, error) {
 	out := new(UpdateBatchJobStateResponse)
-	err := c.cc.Invoke(ctx, "/llmoperator.batch.server.v1.BatchWorkerService/UpdateBatchJobState", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/llmariner.batch.server.v1.BatchWorkerService/UpdateBatchJobState", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +334,7 @@ func _BatchWorkerService_ListQueuedInternalBatchJobs_Handler(srv interface{}, ct
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs",
+		FullMethod: "/llmariner.batch.server.v1.BatchWorkerService/ListQueuedInternalBatchJobs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchWorkerServiceServer).ListQueuedInternalBatchJobs(ctx, req.(*ListQueuedInternalBatchJobsRequest))
@@ -352,7 +352,7 @@ func _BatchWorkerService_GetInternalBatchJob_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchWorkerService/GetInternalBatchJob",
+		FullMethod: "/llmariner.batch.server.v1.BatchWorkerService/GetInternalBatchJob",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchWorkerServiceServer).GetInternalBatchJob(ctx, req.(*GetInternalBatchJobRequest))
@@ -370,7 +370,7 @@ func _BatchWorkerService_UpdateBatchJobState_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmoperator.batch.server.v1.BatchWorkerService/UpdateBatchJobState",
+		FullMethod: "/llmariner.batch.server.v1.BatchWorkerService/UpdateBatchJobState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BatchWorkerServiceServer).UpdateBatchJobState(ctx, req.(*UpdateBatchJobStateRequest))
@@ -382,7 +382,7 @@ func _BatchWorkerService_UpdateBatchJobState_Handler(srv interface{}, ctx contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BatchWorkerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "llmoperator.batch.server.v1.BatchWorkerService",
+	ServiceName: "llmariner.batch.server.v1.BatchWorkerService",
 	HandlerType: (*BatchWorkerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
