@@ -1,5 +1,5 @@
 {
-  "name": "@llm-operator-types/job-manager",
+  "name": "@llmariner-types/job-manager",
   "version": "1.0.0",
   "description": "job-manager",
   "main": "dist/index.js",
@@ -17,12 +17,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/llm-operator/job-manager.git"
+    "url": "git+https://github.com/llmariner/job-manager.git"
   },
-  "author": "llm-operator",
+  "author": "llmariner",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/llm-operator/job-manager/issues"
+    "url": "https://github.com/llmariner/job-manager/issues"
   },
-  "homepage": "https://github.com/llm-operator/job-manager#readme"
+  "homepage": "https://github.com/llmariner/job-manager#readme"
 }

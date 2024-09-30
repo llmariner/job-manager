@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/dispatcher/internal/config"
-	is3 "github.com/llm-operator/job-manager/dispatcher/internal/s3"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/dispatcher/internal/config"
+	is3 "github.com/llmariner/job-manager/dispatcher/internal/s3"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	batchJobManagedAnnotationKey = "llm-operator/managed-batchjob"
-	batchJobIDAnnotationKey      = "llm-operator/batchjob-id"
+	batchJobManagedAnnotationKey = "llmariner/managed-batchjob"
+	batchJobIDAnnotationKey      = "llmariner/batchjob-id"
 
 	bjManagerName = "batchjob-manager"
 )

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/server/internal/store"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/common/pkg/id"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"

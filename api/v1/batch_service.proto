@@ -4,7 +4,7 @@ package llmariner.batch.server.v1;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/llm-operator/job-manager/api/v1";
+option go_package = "github.com/llmariner/job-manager/api/v1";
 
 message BatchJob {
   string id = 1;

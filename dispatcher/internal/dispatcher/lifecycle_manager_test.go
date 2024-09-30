@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/llm-operator/job-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"

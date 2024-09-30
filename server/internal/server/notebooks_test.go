@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr/testr"
-	v1 "github.com/llm-operator/job-manager/api/v1"
-	"github.com/llm-operator/job-manager/server/internal/store"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

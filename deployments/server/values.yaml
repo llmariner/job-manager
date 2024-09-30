@@ -56,7 +56,7 @@ batchJob:
 replicaCount: 1
 
 image:
-  repository: public.ecr.aws/cloudnatix/llm-operator/job-manager-server
+  repository: public.ecr.aws/cloudnatix/llmariner/job-manager-server
   pullPolicy: IfNotPresent
 
 podAnnotations:
