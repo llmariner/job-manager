@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 
+	"github.com/go-logr/logr"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/config"
@@ -46,6 +46,7 @@ func New(
 	k8sClientFactory k8s.ClientFactory,
 	nbImageTypes map[string]string,
 	batchJobImages map[string]string,
+	logger logr.Logger,
 ) *S {
 	nbtypes := make([]string, 0, len(nbImageTypes))
 	for t := range nbImageTypes {
@@ -59,6 +60,7 @@ func New(
 		nbImageTypes:     nbImageTypes,
 		nbImageTypeStr:   strings.Join(nbtypes, ", "),
 		batchJobImages:   batchJobImages,
+		logger:           logger.WithName("grpc"),
 	}
 }
 
@@ -81,11 +83,13 @@ type S struct {
 	nbImageTypeStr string
 
 	batchJobImages map[string]string
+
+	logger logr.Logger
 }
 
 // Run starts the gRPC server.
 func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
-	log.Printf("Starting server on port %d\n", port)
+	s.logger.Info("Starting gRPC server", "port", port)
 
 	var opts []grpc.ServerOption
 	if authConfig.Enable {

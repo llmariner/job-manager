@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"log"
-	"log/slog"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/stdr"
 	cv1 "github.com/llm-operator/cluster-manager/api/v1"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
@@ -27,39 +27,40 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
-const flagConfig = "config"
-
-var setupLog = ctrl.Log.WithName("setup")
-
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "run",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		path, err := cmd.Flags().GetString(flagConfig)
-		if err != nil {
-			return err
-		}
-
-		c, err := config.Parse(path)
-		if err != nil {
-			return err
-		}
-
-		if err := c.Validate(); err != nil {
-			return err
-		}
-
-		if err := run(cmd.Context(), &c); err != nil {
-			return err
-		}
-		return nil
-	},
+func runCmd() *cobra.Command {
+	var path string
+	var logLevel int
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "run",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := config.Parse(path)
+			if err != nil {
+				return err
+			}
+			if err := c.Validate(); err != nil {
+				return err
+			}
+			stdr.SetVerbosity(logLevel)
+			if err := run(cmd.Context(), &c); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&path, "config", "", "Path to the config file")
+	cmd.Flags().IntVar(&logLevel, "v", 0, "Log level")
+	_ = cmd.MarkFlagRequired("config")
+	return cmd
 }
 
 func run(ctx context.Context, c *config.Config) error {
-	ctrl.SetLogger(logr.FromSlogHandler(slog.Default().Handler()))
+	logger := stdr.New(log.Default())
+	log := logger.WithName("boot")
+	ctx = ctrl.LoggerInto(ctx, log)
+	ctrl.SetLogger(logger)
 
-	restConfig, err := newRestConfig(c.Debug.KubeconfigPath)
+	restConfig, err := newRestConfig(log, c.Debug.KubeconfigPath)
 	if err != nil {
 		return err
 	}
@@ -169,21 +170,16 @@ func getClusterID(ctx context.Context, c *config.Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Obtained the cluster ID: %q\n", cluster.Id)
+	ctrl.LoggerFrom(ctx).Info("Obtained the cluster ID", "clusterID", cluster.Id)
 	return cluster.Id, nil
 }
 
-func newRestConfig(kubeconfigPath string) (*rest.Config, error) {
+func newRestConfig(log logr.Logger, kubeconfigPath string) (*rest.Config, error) {
 	if kubeconfigPath != "" {
-		setupLog.Info("Using kubeconfig at", "path", kubeconfigPath)
+		log.Info("Using kubeconfig at", "path", kubeconfigPath)
 		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
 	return rest.InClusterConfig()
-}
-
-func init() {
-	runCmd.Flags().StringP(flagConfig, "c", "", "Configuration file path")
-	_ = runCmd.MarkFlagRequired(flagConfig)
 }
 
 func grpcOption(c *config.Config) grpc.DialOption {

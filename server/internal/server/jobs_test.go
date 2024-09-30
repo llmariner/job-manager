@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	fv1 "github.com/llm-operator/file-manager/api/v1"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/k8s"
@@ -97,7 +98,8 @@ func TestCreateJob(t *testing.T) {
 				},
 				nil,
 				nil,
-				nil)
+				nil,
+				testr.New(t))
 			resp, err := srv.CreateJob(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -132,7 +134,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
 	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -176,7 +178,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
 	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
@@ -226,7 +228,7 @@ func TestJobCancel(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil)
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
 			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -270,7 +272,7 @@ func TestListQueuedInternalJobs(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st)
+	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalJobsRequest{}
 	got, err := srv.ListQueuedInternalJobs(context.Background(), req)
 	assert.NoError(t, err)
@@ -293,7 +295,7 @@ func TestGetInternalJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := NewWorkerServiceServer(st)
+	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.GetInternalJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalJob(context.Background(), req)
 	assert.NoError(t, err)
@@ -411,7 +413,7 @@ func TestUpdateJobPhase(t *testing.T) {
 
 			test.req.Id = jobID
 
-			srv := NewWorkerServiceServer(st)
+			srv := NewWorkerServiceServer(st, testr.New(t))
 			_, err = srv.UpdateJobPhase(context.Background(), test.req)
 			if test.wantError {
 				assert.Error(t, err)

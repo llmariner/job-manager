@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
+	"github.com/go-logr/logr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/config"
 	"github.com/llm-operator/job-manager/server/internal/store"
@@ -21,9 +21,10 @@ const (
 )
 
 // NewWorkerServiceServer creates a new worker service server.
-func NewWorkerServiceServer(s *store.S) *WS {
+func NewWorkerServiceServer(s *store.S, logger logr.Logger) *WS {
 	return &WS{
-		store: s,
+		store:  s,
+		logger: logger.WithName("worker"),
 	}
 }
 
@@ -33,15 +34,16 @@ type WS struct {
 	v1.UnimplementedWorkspaceWorkerServiceServer
 	v1.UnimplementedBatchWorkerServiceServer
 
-	srv   *grpc.Server
-	store *store.S
+	srv    *grpc.Server
+	store  *store.S
+	logger logr.Logger
 
 	enableAuth bool
 }
 
 // Run runs the worker service server.
 func (ws *WS) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
-	log.Printf("Starting worker service server on port %d", port)
+	ws.logger.Info("Starting worker service server...", "port", port)
 
 	var opts []grpc.ServerOption
 	if authConfig.Enable {

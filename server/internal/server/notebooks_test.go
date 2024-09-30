@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-logr/logr/testr"
 	v1 "github.com/llm-operator/job-manager/api/v1"
 	"github.com/llm-operator/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
@@ -54,7 +55,7 @@ func TestCreateNotebook(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil)
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
 			resp, err := srv.CreateNotebook(context.Background(), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -72,8 +73,8 @@ func TestCreateNotebook_SameName(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil)
-	wsrv := NewWorkerServiceServer(st)
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
+	wsrv := NewWorkerServiceServer(st, testr.New(t))
 
 	req := &v1.CreateNotebookRequest{
 		Name: "nb0",
@@ -127,7 +128,7 @@ func TestListNotebooks(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	resp, err := srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
@@ -171,7 +172,7 @@ func TestGetNotebook(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	resp, err := srv.GetNotebook(context.Background(), &v1.GetNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.NotebookQueuedActionStart, store.NotebookState(resp.Status))
@@ -227,7 +228,7 @@ func TestStopNotebook(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil, nil)
+			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 			resp, err := srv.StopNotebook(context.Background(), &v1.StopNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -285,7 +286,7 @@ func TestStartNotebook(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil, nil)
+			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 			resp, err := srv.StartNotebook(context.Background(), &v1.StartNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -308,7 +309,7 @@ func TestDeleteNotebook(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil)
+	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
 	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 }
@@ -349,7 +350,7 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st)
+	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalNotebooksRequest{}
 	got, err := srv.ListQueuedInternalNotebooks(context.Background(), req)
 	assert.NoError(t, err)
@@ -461,7 +462,7 @@ func TestUpdateNotebookState(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := NewWorkerServiceServer(st)
+			srv := NewWorkerServiceServer(st, testr.New(t))
 			_, err = srv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
 				Id:    notebookID,
 				State: test.state,
