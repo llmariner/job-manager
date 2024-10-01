@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/llmariner/api-usage/pkg/sender"
 	"github.com/llmariner/common/pkg/db"
 	"gopkg.in/yaml.v3"
 )
@@ -18,9 +19,9 @@ type Config struct {
 	ModelManagerServerAddr       string `yaml:"modelManagerServerAddr"`
 	SessionManagerServerEndpoint string `yaml:"sessionManagerServerEndpoint"`
 
-	Database db.Config `yaml:"database"`
-
-	AuthConfig AuthConfig `yaml:"auth"`
+	Database    db.Config     `yaml:"database"`
+	UsageSender sender.Config `yaml:"usageSender"`
+	AuthConfig  AuthConfig    `yaml:"auth"`
 
 	NotebookConfig NotebookConfig `yaml:"notebook"`
 	BatchJobConfig BatchJobConfig `yaml:"batchJob"`
@@ -100,6 +101,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.BatchJobConfig.Validate(); err != nil {
 		return fmt.Errorf("batch job: %s", err)
+	}
+	if err := c.UsageSender.Validate(); err != nil {
+		return err
 	}
 	return nil
 }

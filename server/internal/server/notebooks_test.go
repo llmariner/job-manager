@@ -56,7 +56,7 @@ func TestCreateNotebook(t *testing.T) {
 			defer tearDown()
 
 			srv := New(st, nil, nil, &noopK8sClientFactory{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
-			resp, err := srv.CreateNotebook(context.Background(), tc.req)
+			resp, err := srv.CreateNotebook(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -82,29 +82,30 @@ func TestCreateNotebook_SameName(t *testing.T) {
 			Image: &v1.CreateNotebookRequest_Image_Uri{Uri: "img0"},
 		},
 	}
-	resp, err := srv.CreateNotebook(context.Background(), req)
+	ctx := fakeAuthInto(context.Background())
+	resp, err := srv.CreateNotebook(ctx, req)
 	assert.NoError(t, err)
 
 	_, err = st.GetNotebookByIDAndProjectID(resp.Id, defaultProjectID)
 	assert.NoError(t, err)
 
 	// Create another notebook with the same name.
-	_, err = srv.CreateNotebook(context.Background(), req)
+	_, err = srv.CreateNotebook(ctx, req)
 	assert.Error(t, err)
 	assert.Equal(t, codes.AlreadyExists, status.Code(err))
 
 	// Delete the notebook.
-	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: resp.Id})
+	_, err = srv.DeleteNotebook(ctx, &v1.DeleteNotebookRequest{Id: resp.Id})
 	assert.NoError(t, err)
 
-	_, err = wsrv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
+	_, err = wsrv.UpdateNotebookState(ctx, &v1.UpdateNotebookStateRequest{
 		Id:    resp.Id,
 		State: v1.NotebookState_DELETED,
 	})
 	assert.NoError(t, err)
 
 	// Can create a notebook with the same name.
-	_, err = srv.CreateNotebook(context.Background(), req)
+	_, err = srv.CreateNotebook(ctx, req)
 	assert.NoError(t, err)
 }
 
@@ -129,7 +130,8 @@ func TestListNotebooks(t *testing.T) {
 	}
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	resp, err := srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{Limit: 5})
+	ctx := fakeAuthInto(context.Background())
+	resp, err := srv.ListNotebooks(ctx, &v1.ListNotebooksRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Notebooks, 5)
@@ -138,7 +140,7 @@ func TestListNotebooks(t *testing.T) {
 		assert.Equal(t, want[i], notebook.Id)
 	}
 
-	resp, err = srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{After: resp.Notebooks[4].Id, Limit: 2})
+	resp, err = srv.ListNotebooks(ctx, &v1.ListNotebooksRequest{After: resp.Notebooks[4].Id, Limit: 2})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Notebooks, 2)
@@ -147,7 +149,7 @@ func TestListNotebooks(t *testing.T) {
 		assert.Equal(t, want[i], notebook.Id)
 	}
 
-	resp, err = srv.ListNotebooks(context.Background(), &v1.ListNotebooksRequest{After: resp.Notebooks[1].Id, Limit: 3})
+	resp, err = srv.ListNotebooks(ctx, &v1.ListNotebooksRequest{After: resp.Notebooks[1].Id, Limit: 3})
 	assert.NoError(t, err)
 	assert.False(t, resp.HasMore)
 	assert.Len(t, resp.Notebooks, 3)
@@ -173,7 +175,7 @@ func TestGetNotebook(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	resp, err := srv.GetNotebook(context.Background(), &v1.GetNotebookRequest{Id: nbID})
+	resp, err := srv.GetNotebook(fakeAuthInto(context.Background()), &v1.GetNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.NotebookQueuedActionStart, store.NotebookState(resp.Status))
 }
@@ -229,7 +231,7 @@ func TestStopNotebook(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-			resp, err := srv.StopNotebook(context.Background(), &v1.StopNotebookRequest{Id: nbID})
+			resp, err := srv.StopNotebook(fakeAuthInto(context.Background()), &v1.StopNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
 		})
@@ -287,7 +289,7 @@ func TestStartNotebook(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-			resp, err := srv.StartNotebook(context.Background(), &v1.StartNotebookRequest{Id: nbID})
+			resp, err := srv.StartNotebook(fakeAuthInto(context.Background()), &v1.StartNotebookRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
 		})
@@ -310,7 +312,7 @@ func TestDeleteNotebook(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	_, err = srv.DeleteNotebook(context.Background(), &v1.DeleteNotebookRequest{Id: nbID})
+	_, err = srv.DeleteNotebook(fakeAuthInto(context.Background()), &v1.DeleteNotebookRequest{Id: nbID})
 	assert.NoError(t, err)
 }
 
@@ -352,7 +354,7 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalNotebooksRequest{}
-	got, err := srv.ListQueuedInternalNotebooks(context.Background(), req)
+	got, err := srv.ListQueuedInternalNotebooks(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
 
 	want := []string{"nb0", "nb3"}
@@ -463,7 +465,7 @@ func TestUpdateNotebookState(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := NewWorkerServiceServer(st, testr.New(t))
-			_, err = srv.UpdateNotebookState(context.Background(), &v1.UpdateNotebookStateRequest{
+			_, err = srv.UpdateNotebookState(fakeAuthInto(context.Background()), &v1.UpdateNotebookStateRequest{
 				Id:    notebookID,
 				State: test.state,
 			})

@@ -3,12 +3,14 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/llmariner/common/pkg/id"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
+	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -17,9 +19,9 @@ import (
 
 // CreateNotebook creates a notebook.
 func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (*v1.Notebook, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Name == "" {
@@ -80,7 +82,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "marshal notebook: %s", err)
 	}
 
-	apikey, err := s.extractTokenFromContext(ctx)
+	apikey, err := auth.ExtractTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +124,9 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 
 // ListNotebooks lists notebooks.
 func (s *S) ListNotebooks(ctx context.Context, req *v1.ListNotebooksRequest) (*v1.ListNotebooksResponse, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Limit < 0 {
@@ -171,9 +173,9 @@ func (s *S) ListNotebooks(ctx context.Context, req *v1.ListNotebooksRequest) (*v
 
 // GetNotebook gets a notebook.
 func (s *S) GetNotebook(ctx context.Context, req *v1.GetNotebookRequest) (*v1.Notebook, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -197,9 +199,9 @@ func (s *S) GetNotebook(ctx context.Context, req *v1.GetNotebookRequest) (*v1.No
 
 // StopNotebook stops a notebook.
 func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.Notebook, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -247,9 +249,9 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 
 // StartNotebook starts a notebook.
 func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v1.Notebook, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -297,9 +299,9 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 
 // DeleteNotebook deletes a notebook.
 func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (*v1.DeleteNotebookResponse, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {

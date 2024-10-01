@@ -62,7 +62,7 @@ func TestCreateBatchJob(t *testing.T) {
 			defer tearDown()
 
 			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, map[string]string{"t0": "img0"}, testr.New(t))
-			resp, err := srv.CreateBatchJob(context.Background(), tc.req)
+			resp, err := srv.CreateBatchJob(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -98,7 +98,8 @@ func TestListBatchJobs(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	resp, err := srv.ListBatchJobs(context.Background(), &v1.ListBatchJobsRequest{Limit: 5})
+	ctx := fakeAuthInto(context.Background())
+	resp, err := srv.ListBatchJobs(ctx, &v1.ListBatchJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Jobs, 5)
@@ -107,7 +108,7 @@ func TestListBatchJobs(t *testing.T) {
 		assert.Equal(t, want[i], batchJob.Id)
 	}
 
-	resp, err = srv.ListBatchJobs(context.Background(), &v1.ListBatchJobsRequest{After: resp.Jobs[4].Id, Limit: 2})
+	resp, err = srv.ListBatchJobs(ctx, &v1.ListBatchJobsRequest{After: resp.Jobs[4].Id, Limit: 2})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Jobs, 2)
@@ -116,7 +117,7 @@ func TestListBatchJobs(t *testing.T) {
 		assert.Equal(t, want[i], batchJob.Id)
 	}
 
-	resp, err = srv.ListBatchJobs(context.Background(), &v1.ListBatchJobsRequest{After: resp.Jobs[1].Id, Limit: 3})
+	resp, err = srv.ListBatchJobs(ctx, &v1.ListBatchJobsRequest{After: resp.Jobs[1].Id, Limit: 3})
 	assert.NoError(t, err)
 	assert.False(t, resp.HasMore)
 	assert.Len(t, resp.Jobs, 3)
@@ -142,7 +143,7 @@ func TestGetBatchJob(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	resp, err := srv.GetBatchJob(context.Background(), &v1.GetBatchJobRequest{Id: nbID})
+	resp, err := srv.GetBatchJob(fakeAuthInto(context.Background()), &v1.GetBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.BatchJobQueuedActionCreate, store.BatchJobState(resp.Status))
 }
@@ -203,7 +204,7 @@ func TestCancelBatchJob(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-			resp, err := srv.CancelBatchJob(context.Background(), &v1.CancelBatchJobRequest{Id: nbID})
+			resp, err := srv.CancelBatchJob(fakeAuthInto(context.Background()), &v1.CancelBatchJobRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
 		})
@@ -252,7 +253,7 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalBatchJobsRequest{}
-	got, err := srv.ListQueuedInternalBatchJobs(context.Background(), req)
+	got, err := srv.ListQueuedInternalBatchJobs(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
 
 	want := []string{"job0", "job3"}
@@ -275,7 +276,7 @@ func TestGetInternalBatchJob(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.GetInternalBatchJobRequest{Id: "job0"}
-	resp, err := srv.GetInternalBatchJob(context.Background(), req)
+	resp, err := srv.GetInternalBatchJob(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
 }
@@ -296,7 +297,7 @@ func TestDeleteBatchJob(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, nil, nil, nil, testr.New(t))
-	_, err = srv.DeleteBatchJob(context.Background(), &v1.DeleteBatchJobRequest{Id: nbID})
+	_, err = srv.DeleteBatchJob(fakeAuthInto(context.Background()), &v1.DeleteBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 }
 
@@ -387,7 +388,7 @@ func TestUpdateBatchJobState(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := NewWorkerServiceServer(st, testr.New(t))
-			_, err = srv.UpdateBatchJobState(context.Background(), &v1.UpdateBatchJobStateRequest{
+			_, err = srv.UpdateBatchJobState(fakeAuthInto(context.Background()), &v1.UpdateBatchJobStateRequest{
 				Id:    batchJobID,
 				State: test.state,
 			})

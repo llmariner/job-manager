@@ -3,12 +3,13 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
-	v1 "github.com/llmariner/job-manager/api/v1"
-	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/common/pkg/id"
 	fv1 "github.com/llmariner/file-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/store"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
@@ -22,9 +23,9 @@ func (s *S) CreateJob(
 	ctx context.Context,
 	req *v1.CreateJobRequest,
 ) (*v1.Job, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	// TODO(kenji): Add more validation.
@@ -164,9 +165,9 @@ func (s *S) ListJobs(
 	ctx context.Context,
 	req *v1.ListJobsRequest,
 ) (*v1.ListJobsResponse, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Limit < 0 {
@@ -217,9 +218,9 @@ func (s *S) GetJob(
 	ctx context.Context,
 	req *v1.GetJobRequest,
 ) (*v1.Job, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -248,9 +249,9 @@ func (s *S) CancelJob(
 	ctx context.Context,
 	req *v1.CancelJobRequest,
 ) (*v1.Job, error) {
-	userInfo, err := s.extractUserInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract user info from context")
 	}
 
 	if req.Id == "" {

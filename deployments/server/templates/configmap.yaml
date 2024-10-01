@@ -32,3 +32,5 @@ data:
     batchJob:
       images:
         {{- toYaml .Values.batchJob.images | nindent 8 }}
+    usageSender:
+      {{- toYaml .Values.global.usageSender | nindent 6 }}

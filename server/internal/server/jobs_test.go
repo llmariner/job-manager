@@ -100,7 +100,7 @@ func TestCreateJob(t *testing.T) {
 				nil,
 				nil,
 				testr.New(t))
-			resp, err := srv.CreateJob(context.Background(), tc.req)
+			resp, err := srv.CreateJob(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
@@ -135,7 +135,8 @@ func TestListJobs(t *testing.T) {
 	}
 
 	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
-	resp, err := srv.ListJobs(context.Background(), &v1.ListJobsRequest{Limit: 5})
+	ctx := fakeAuthInto(context.Background())
+	resp, err := srv.ListJobs(ctx, &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Data, 5)
@@ -144,7 +145,7 @@ func TestListJobs(t *testing.T) {
 		assert.Equal(t, want[i], job.Id)
 	}
 
-	resp, err = srv.ListJobs(context.Background(), &v1.ListJobsRequest{After: resp.Data[4].Id, Limit: 2})
+	resp, err = srv.ListJobs(ctx, &v1.ListJobsRequest{After: resp.Data[4].Id, Limit: 2})
 	assert.NoError(t, err)
 	assert.True(t, resp.HasMore)
 	assert.Len(t, resp.Data, 2)
@@ -153,7 +154,7 @@ func TestListJobs(t *testing.T) {
 		assert.Equal(t, want[i], job.Id)
 	}
 
-	resp, err = srv.ListJobs(context.Background(), &v1.ListJobsRequest{After: resp.Data[1].Id, Limit: 3})
+	resp, err = srv.ListJobs(ctx, &v1.ListJobsRequest{After: resp.Data[1].Id, Limit: 3})
 	assert.NoError(t, err)
 	assert.False(t, resp.HasMore)
 	assert.Len(t, resp.Data, 3)
@@ -179,7 +180,7 @@ func TestGetJob(t *testing.T) {
 	assert.NoError(t, err)
 
 	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
-	resp, err := srv.GetJob(context.Background(), &v1.GetJobRequest{Id: jobID})
+	resp, err := srv.GetJob(fakeAuthInto(context.Background()), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
 }
@@ -229,7 +230,7 @@ func TestJobCancel(t *testing.T) {
 			assert.NoError(t, err)
 
 			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
-			resp, err := srv.CancelJob(context.Background(), &v1.CancelJobRequest{Id: jobID})
+			resp, err := srv.CancelJob(fakeAuthInto(context.Background()), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
 		})
@@ -274,7 +275,7 @@ func TestListQueuedInternalJobs(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.ListQueuedInternalJobsRequest{}
-	got, err := srv.ListQueuedInternalJobs(context.Background(), req)
+	got, err := srv.ListQueuedInternalJobs(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
 
 	want := []string{"job0", "job3"}
@@ -297,7 +298,7 @@ func TestGetInternalJob(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.GetInternalJobRequest{Id: "job0"}
-	resp, err := srv.GetInternalJob(context.Background(), req)
+	resp, err := srv.GetInternalJob(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
 	assert.Equal(t, store.JobStateRunning, store.JobState(resp.Job.Status))
 }
@@ -414,7 +415,7 @@ func TestUpdateJobPhase(t *testing.T) {
 			test.req.Id = jobID
 
 			srv := NewWorkerServiceServer(st, testr.New(t))
-			_, err = srv.UpdateJobPhase(context.Background(), test.req)
+			_, err = srv.UpdateJobPhase(fakeAuthInto(context.Background()), test.req)
 			if test.wantError {
 				assert.Error(t, err)
 				return

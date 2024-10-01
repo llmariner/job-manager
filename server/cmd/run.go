@@ -8,14 +8,15 @@ import (
 
 	"github.com/go-logr/stdr"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/llmariner/api-usage/pkg/sender"
+	"github.com/llmariner/common/pkg/db"
+	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
 	"github.com/llmariner/job-manager/server/internal/server"
 	"github.com/llmariner/job-manager/server/internal/store"
 	mv1 "github.com/llmariner/model-manager/api/v1"
-	"github.com/llmariner/common/pkg/db"
-	fv1 "github.com/llmariner/file-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -115,9 +116,15 @@ func run(ctx context.Context, c *config.Config) error {
 
 	k8sClientFactory := k8s.NewClientFactory(c.SessionManagerServerEndpoint)
 
+	usage, err := sender.New(ctx, c.UsageSender, grpc.WithTransportCredentials(insecure.NewCredentials()), logger)
+	if err != nil {
+		return err
+	}
+	go func() { usage.Run(ctx) }()
+
 	go func() {
 		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images, logger)
-		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig)
+		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig, usage)
 	}()
 
 	go func() {
