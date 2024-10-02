@@ -86,4 +86,25 @@ spec:
             name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
             port:
               number: {{ .Values.workerServiceGrpcPort }}
+      - path: /llmariner.fine_tuning.server.v1.FineTuningWorkerService
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
+            port:
+              number: {{ .Values.workerServiceGrpcPort }}
+      - path: /llmariner.workspace.server.v1.WorkspaceWorkerService
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
+            port:
+              number: {{ .Values.workerServiceGrpcPort }}
+      - path: /llmariner.batch.server.v1.BatchWorkerService
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
+            port:
+              number: {{ .Values.workerServiceGrpcPort }}
 {{- end -}}

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	is3 "github.com/llmariner/job-manager/dispatcher/internal/s3"
-	fv1 "github.com/llmariner/file-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -65,7 +65,7 @@ type BatchJobManagerOptions struct {
 	FileClient fileClient
 	BwClient   v1.BatchWorkerServiceClient
 
-	LlmoBaseURL string
+	LlmaBaseURL string
 	ClusterID   string
 
 	WandbConfig config.WandbAPIKeySecretConfig
@@ -79,7 +79,7 @@ func NewBatchJobManager(opts BatchJobManagerOptions) *BatchJobManager {
 		s3Client:    opts.S3Client,
 		fileClient:  opts.FileClient,
 		bwClient:    opts.BwClient,
-		llmoBaseURL: opts.LlmoBaseURL,
+		llmaBaseURL: opts.LlmaBaseURL,
 		clusterID:   opts.ClusterID,
 		wandbConfig: opts.WandbConfig,
 		kueueConfig: opts.KueueConfig,
@@ -93,7 +93,7 @@ type BatchJobManager struct {
 	fileClient fileClient
 	bwClient   v1.BatchWorkerServiceClient
 
-	llmoBaseURL string
+	llmaBaseURL string
 	clusterID   string
 
 	wandbConfig config.WandbAPIKeySecretConfig
@@ -215,7 +215,7 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 
 	name := ibjob.Job.Id
 	labels := map[string]string{
-		"app.kubernetes.io/name":       "llmo-batch-job",
+		"app.kubernetes.io/name":       "llma-batch-job",
 		"app.kubernetes.io/instance":   name,
 		"app.kubernetes.io/created-by": bjManagerName,
 	}
@@ -227,7 +227,7 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 	for k, v := range ibjob.Job.Envs {
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
-	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(m.llmoBaseURL))
+	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(m.llmaBaseURL))
 	if c := m.wandbConfig; c.Name != "" && c.Key != "" {
 		envs = append(envs, corev1apply.EnvVar().
 			WithName("WANDB_API_KEY").

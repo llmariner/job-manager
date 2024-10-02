@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
+	cv1 "github.com/llmariner/cluster-manager/api/v1"
+	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	"github.com/llmariner/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llmariner/job-manager/dispatcher/internal/s3"
-	cv1 "github.com/llmariner/cluster-manager/api/v1"
-	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
@@ -123,7 +123,7 @@ func run(ctx context.Context, c *config.Config) error {
 		S3Client:    s3Client,
 		FileClient:  fclient,
 		BwClient:    bwClient,
-		LlmoBaseURL: c.Notebook.LLMOperatorBaseURL,
+		LlmaBaseURL: c.Notebook.LLMarinerBaseURL,
 		ClusterID:   clusterID,
 		WandbConfig: c.Job.WandbAPIKeySecret,
 		KueueConfig: c.KueueIntegration,

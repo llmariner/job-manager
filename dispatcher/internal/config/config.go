@@ -109,17 +109,17 @@ func (c *JobConfig) validate() error {
 
 // NotebooksConfig is the notebooks configuration.
 type NotebooksConfig struct {
-	LLMOperatorBaseURL string `yaml:"llmOperatorBaseUrl"`
-	EnablePVC          bool   `yaml:"enablePvc"`
-	StorageClassName   string `yaml:"storageClassName"`
-	StorageSize        string `yaml:"storageSize"`
-	MountPath          string `yaml:"mountPath"`
+	LLMarinerBaseURL string `yaml:"llmarinerBaseUrl"`
+	EnablePVC        bool   `yaml:"enablePvc"`
+	StorageClassName string `yaml:"storageClassName"`
+	StorageSize      string `yaml:"storageSize"`
+	MountPath        string `yaml:"mountPath"`
 }
 
 // validate validates the notebooks configuration.
 func (c *NotebooksConfig) validate() error {
-	if c.LLMOperatorBaseURL == "" {
-		return fmt.Errorf("llm operator base url must be set")
+	if c.LLMarinerBaseURL == "" {
+		return fmt.Errorf("llmariner base url must be set")
 	}
 	if c.EnablePVC {
 		if c.StorageClassName == "" {
