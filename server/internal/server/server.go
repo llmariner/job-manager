@@ -104,15 +104,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig, usa
 		if err != nil {
 			return err
 		}
-		authFn := ai.Unary()
-		healthSkip := func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-			if info.FullMethod == "/grpc.health.v1.Health/Check" {
-				// Skip authentication for health check
-				return handler(ctx, req)
-			}
-			return authFn(ctx, req, info, handler)
-		}
-		opt = grpc.ChainUnaryInterceptor(healthSkip, sender.Unary(usage))
+		opt = grpc.ChainUnaryInterceptor(ai.Unary("/grpc.health.v1.Health/Check"), sender.Unary(usage))
 	} else {
 		fakeAuth := func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 			if info.FullMethod == "/grpc.health.v1.Health/Check" {
