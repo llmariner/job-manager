@@ -45,7 +45,7 @@ func NewNotebookManager(
 	return &NotebookManager{
 		k8sClient:        k8sClient,
 		wsClient:         wsClient,
-		llmoBaseURL:      config.LLMOperatorBaseURL,
+		llmaBaseURL:      config.LLMarinerBaseURL,
 		enablePVC:        config.EnablePVC,
 		storageClassName: config.StorageClassName,
 		storageSize:      config.StorageSize,
@@ -59,7 +59,7 @@ type NotebookManager struct {
 	k8sClient client.Client
 	wsClient  v1.WorkspaceWorkerServiceClient
 
-	llmoBaseURL string
+	llmaBaseURL string
 
 	enablePVC        bool
 	storageClassName string
@@ -127,7 +127,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 
 	name := nb.Notebook.Id
 	labels := map[string]string{
-		"app.kubernetes.io/name":       "llmo-notebook",
+		"app.kubernetes.io/name":       "llma-notebook",
 		"app.kubernetes.io/instance":   name,
 		"app.kubernetes.io/created-by": nbManagerName,
 	}
@@ -136,7 +136,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	for k, v := range nb.Notebook.Envs {
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
-	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmoBaseURL))
+	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmaBaseURL))
 
 	req := corev1.ResourceList{}
 	limit := corev1.ResourceList{}

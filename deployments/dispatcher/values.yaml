@@ -34,7 +34,7 @@ job:
     key:
 
 notebook:
-  llmOperatorBaseUrl:
+  llmarinerBaseUrl:
   enablePvc: false
   storageClassName: "standard"
   storageSize: "100Gi"
