@@ -138,7 +138,9 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	}
 	var flags []string
 	for k, v := range presignRequest.Values {
-		flags = append(flags, fmt.Sprintf("-F '%s=%s'\n", k, v))
+		// Construct the form parameters. Wrap the value with single quotes to handle
+		// a special character (= keyPrefix/${filename}).
+		flags = append(flags, fmt.Sprintf("-F '%s=%s'", k, v))
 	}
 
 	return &PreProcessResult{

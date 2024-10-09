@@ -51,7 +51,7 @@ func TestPreProcess(t *testing.T) {
 		ValidationFileURL:       "presigned-validation-file-path",
 		OutputModelID:           "generated-model-id",
 		OutputModelURL:          "http://example.com",
-		OutputModelPresignFlags: "-F 'key0=value0'\n -F 'key1=value1'\n",
+		OutputModelPresignFlags: "-F 'key0=value0' -F 'key1=value1'",
 	}
 	assert.Equal(t, want, got)
 }
