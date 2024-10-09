@@ -8,9 +8,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	is3 "github.com/llmariner/job-manager/dispatcher/internal/s3"
-	fv1 "github.com/llmariner/file-manager/api/v1"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -47,10 +47,11 @@ func TestPreProcess(t *testing.T) {
 			"obj1":      "presigned-model-path/obj1",
 			"path/obj2": "presigned-model-path/path/obj2",
 		},
-		TrainingFileURL:   "presigned-training-file-path",
-		ValidationFileURL: "presigned-validation-file-path",
-		OutputModelID:     "generated-model-id",
-		OutputModelURL:    "presigned-generated-model-path",
+		TrainingFileURL:         "presigned-training-file-path",
+		ValidationFileURL:       "presigned-validation-file-path",
+		OutputModelID:           "generated-model-id",
+		OutputModelURL:          "http://example.com",
+		OutputModelPresignFlags: "-F 'key0=value0'\n -F 'key1=value1'\n",
 	}
 	assert.Equal(t, want, got)
 }
@@ -96,6 +97,16 @@ type fakeS3Client struct {
 
 func (c *fakeS3Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType is3.RequestType) (string, error) {
 	return fmt.Sprintf("presigned-%s", key), nil
+}
+
+func (c *fakeS3Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
+	return &s3.PresignedPostRequest{
+		URL: "http://example.com",
+		Values: map[string]string{
+			"key0": "value0",
+			"key1": "value1",
+		},
+	}, nil
 }
 
 func (c *fakeS3Client) ListObjectsPages(ctx context.Context, prefix string) (*s3.ListObjectsV2Output, error) {

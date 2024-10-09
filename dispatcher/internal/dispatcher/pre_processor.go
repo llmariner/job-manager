@@ -30,6 +30,7 @@ type modelClient interface {
 
 type s3Client interface {
 	GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType is3.RequestType) (string, error)
+	GeneratePresignedURLForPost(ctx context.Context, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error)
 	ListObjectsPages(ctx context.Context, prefix string) (*s3.ListObjectsV2Output, error)
 }
 
@@ -59,8 +60,12 @@ type PreProcessResult struct {
 	TrainingFileURL   string
 	ValidationFileURL string
 
-	OutputModelID  string
+	OutputModelID string
+
+	// OutputModelURL is the pre-signed URL for the output model.
 	OutputModelURL string
+
+	OutputModelPresignFlags string
 }
 
 // Process runs the pre-process.
@@ -127,17 +132,22 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	}
 	outputModelID := rresp.Id
 
-	outputModelURL, err := p.s3Client.GeneratePresignedURL(ctx, rresp.Path, preSignedURLExpire, is3.RequestTypePutObject)
+	presignRequest, err := p.s3Client.GeneratePresignedURLForPost(ctx, rresp.Path, preSignedURLExpire)
 	if err != nil {
-		return nil, fmt.Errorf("generate presigned url: %s", err)
+		return nil, fmt.Errorf("generate presigned post url: %s", err)
+	}
+	var flags []string
+	for k, v := range presignRequest.Values {
+		flags = append(flags, fmt.Sprintf("-F '%s=%s'\n", k, v))
 	}
 
 	return &PreProcessResult{
-		BaseModelURLs:     baseModelURLs,
-		TrainingFileURL:   trainingFileURL,
-		ValidationFileURL: validationFileURL,
-		OutputModelID:     outputModelID,
-		OutputModelURL:    outputModelURL,
+		BaseModelURLs:           baseModelURLs,
+		TrainingFileURL:         trainingFileURL,
+		ValidationFileURL:       validationFileURL,
+		OutputModelID:           outputModelID,
+		OutputModelURL:          presignRequest.URL,
+		OutputModelPresignFlags: strings.Join(flags, " "),
 	}, nil
 }
 
