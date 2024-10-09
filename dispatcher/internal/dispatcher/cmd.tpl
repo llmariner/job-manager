@@ -34,4 +34,4 @@ python ./convert-lora-to-ggml.py ./output
 rm -rf output/checkpoint-*
 
 # Upload all files under the "output" directory.
-find output -type f -exec curl --fail --silent --request PUT --upload-file {} "{{ .OutputModelURL }}" \;
+find output -type f -exec curl --fail --silent --request POST {{ .OutputModelPresignFlags }} -F file=@{} "{{ .OutputModelURL }}" \;

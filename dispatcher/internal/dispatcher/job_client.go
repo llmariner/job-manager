@@ -146,11 +146,12 @@ func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
 func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) {
 	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 	type Params struct {
-		BaseModelName     string
-		BaseModelURLs     map[string]string
-		TrainingFileURL   string
-		ValidationFileURL string
-		OutputModelURL    string
+		BaseModelName           string
+		BaseModelURLs           map[string]string
+		TrainingFileURL         string
+		ValidationFileURL       string
+		OutputModelURL          string
+		OutputModelPresignFlags string
 
 		NumProcessors     int
 		AdditionalSFTArgs string
@@ -165,11 +166,12 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 	}
 
 	params := Params{
-		BaseModelName:     job.Model,
-		BaseModelURLs:     presult.BaseModelURLs,
-		TrainingFileURL:   presult.TrainingFileURL,
-		ValidationFileURL: presult.ValidationFileURL,
-		OutputModelURL:    presult.OutputModelURL,
+		BaseModelName:           job.Model,
+		BaseModelURLs:           presult.BaseModelURLs,
+		TrainingFileURL:         presult.TrainingFileURL,
+		ValidationFileURL:       presult.ValidationFileURL,
+		OutputModelURL:          presult.OutputModelURL,
+		OutputModelPresignFlags: presult.OutputModelPresignFlags,
 
 		NumProcessors:     numProcessors,
 		AdditionalSFTArgs: additionalSFTArgs,
