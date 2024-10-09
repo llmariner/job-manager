@@ -3,12 +3,14 @@ package s3
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	laws "github.com/llmariner/common/pkg/aws"
+	"github.com/llmariner/job-manager/dispatcher/internal/config"
 )
 
 // NewClient returns a new S3 client.
@@ -53,7 +55,6 @@ const (
 func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType RequestType) (string, error) {
 	presigner := s3.NewPresignClient(c.svc)
 
-	//	var req *request.Request
 	switch requestType {
 	case RequestTypeGetObject:
 		req, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
@@ -80,6 +81,58 @@ func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire ti
 	default:
 		return "", fmt.Errorf("unknown request type: %s", requestType)
 	}
+}
+
+// GeneratePresignedURLForPost generates a pre-signed URL for a POST request. It allows uploading files
+// with given key prefix. For example, when a file 'myfile' is uploaded, the key will be keyPrefix/myfile.
+func (c *Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
+	presigner := s3.NewPresignClient(c.svc)
+	req, err := presigner.PresignPostObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(keyPrefix + "/${filename}"),
+	}, func(opts *s3.PresignPostOptions) {
+		opts.Expires = expire
+		var conditions []interface{}
+		conditions = append(conditions, []interface{}{
+			"starts-with",
+			"$key",
+			keyPrefix + "/",
+		})
+		opts.Conditions = []interface{}(conditions)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	req.URL, err = reconstructPresignURL(req.URL, c.bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// reconstructPresignURL reconstructs a pre-signed URL.
+// The URL returned by the SDK does not include the bucket name in the URL, which does not work with neither S3 or MinIO.
+// This function reconstructs the URL to include the bucket name.
+func reconstructPresignURL(origURL, bucket string) (string, error) {
+	// construct the URL.
+	// If the URL is for S3, the URL should be https://<bucket>.<endpoint>
+	// If the URL is fr MinIO, the URL should be http(s)://<endpoint>/<bucket>
+
+	u, err := url.Parse(origURL)
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasSuffix(u.Host, "amazonaws.com") {
+		// S3
+		u.Host = fmt.Sprintf("%s.%s", bucket, u.Host)
+		return u.String(), nil
+	}
+	// MinIO
+	u.Path = bucket
+	return u.String(), nil
 }
 
 // ListObjectsPages returns S3 objects with pagination.
