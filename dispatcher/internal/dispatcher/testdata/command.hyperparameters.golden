@@ -30,4 +30,8 @@ accelerate launch \
 
 python ./convert-lora-to-ggml.py ./output
 
-curl --fail --silent --request PUT --upload-file output/ggml-adapter-model.bin "https://example.com/output-model"
+# We don't need the checkpoint files.
+rm -rf output/checkpoint-*
+
+# Upload all files under the "output" directory.
+find output -type f -exec curl --fail --silent --request PUT --upload-file {} "https://example.com/output-model";
