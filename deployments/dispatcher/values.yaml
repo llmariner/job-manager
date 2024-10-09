@@ -25,7 +25,7 @@ global:
 pollingInterval: 10s
 
 job:
-  image: public.ecr.aws/cloudnatix/llmariner/fine-tuning
+  image: public.ecr.aws/cloudnatix/llm-operator/fine-tuning
   version: 0.130.0
   imagePullPolicy: IfNotPresent
   numGpus: 1
