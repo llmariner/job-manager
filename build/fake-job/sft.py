@@ -1,3 +1,8 @@
 import os
 
-os.rename("ggml-adapter-model.bin", "output/ggml-adapter-model.bin")
+# Move files in the current directory to the "output" directory.
+files = os.listdir()
+for fn in files:
+    if fn == "output" or fn.endswith(".py"):
+        continue
+    os.rename(fn, f"output/{fn}")
