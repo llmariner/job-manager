@@ -106,7 +106,7 @@ if __name__ == "__main__":
     train_dataset = raw_datasets["train"]
     eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
 
-    tokenizer = AutoTokenizer.from_pretrained("./base-model", use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
     tokenizer.pad_token = tokenizer.eos_token
 
     # TODO(kenji): Revisit these parameters.
