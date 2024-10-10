@@ -51,7 +51,7 @@ func TestPreProcess(t *testing.T) {
 		ValidationFileURL:       "presigned-validation-file-path",
 		OutputModelID:           "generated-model-id",
 		OutputModelURL:          "http://example.com",
-		OutputModelPresignFlags: "-F 'key0=value0' -F 'key1=value1'",
+		OutputModelPresignFlags: "-F 'key0=value0'",
 	}
 	assert.Equal(t, want, got)
 }
@@ -104,7 +104,6 @@ func (c *fakeS3Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefi
 		URL: "http://example.com",
 		Values: map[string]string{
 			"key0": "value0",
-			"key1": "value1",
 		},
 	}, nil
 }
