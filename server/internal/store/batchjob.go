@@ -54,10 +54,9 @@ type BatchJob struct {
 	// the state is BatchJobStateQueued, and processed by the dispatcher.
 	QueuedAction BatchJobQueuedAction
 
-	TenantID            string
-	OrganizationID      string
-	ProjectID           string
-	KubernetesNamespace string
+	TenantID       string
+	OrganizationID string
+	ProjectID      string
 
 	Version int
 }

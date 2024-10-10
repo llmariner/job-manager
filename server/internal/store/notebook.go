@@ -55,12 +55,9 @@ type Notebook struct {
 	// the state is NotebookStateQueued, and processed by the dispatcher.
 	QueuedAction NotebookQueuedAction
 
-	TenantID            string
-	OrganizationID      string
-	ProjectID           string `gorm:"index:idx_notebook_project_id_name"`
-	KubernetesNamespace string
-	// ClusterID is the ID of the cluster where the job runs.
-	ClusterID string
+	TenantID       string
+	OrganizationID string
+	ProjectID      string `gorm:"index:idx_notebook_project_id_name"`
 
 	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
 	Name string `gorm:"index:idx_notebook_project_id_name"`
