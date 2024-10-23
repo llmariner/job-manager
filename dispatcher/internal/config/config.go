@@ -72,12 +72,6 @@ func (c *KubernetesManagerConfig) validate() error {
 	if c.EnableLeaderElection && c.LeaderElectionID == "" {
 		return fmt.Errorf("leader election ID must be set")
 	}
-	if c.MetricsBindAddress == "" {
-		return fmt.Errorf("metrics bind address must be set")
-	}
-	if c.HealthBindAddress == "" {
-		return fmt.Errorf("health bind address must be set")
-	}
 	return nil
 }
 
