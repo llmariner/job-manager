@@ -68,6 +68,19 @@ type KubernetesManagerConfig struct {
 	PprofBindAddress   string `yaml:"pprofBindAddress"`
 }
 
+func (c *KubernetesManagerConfig) validate() error {
+	if c.EnableLeaderElection && c.LeaderElectionID == "" {
+		return fmt.Errorf("leader election ID must be set")
+	}
+	if c.MetricsBindAddress == "" {
+		return fmt.Errorf("metrics bind address must be set")
+	}
+	if c.HealthBindAddress == "" {
+		return fmt.Errorf("health bind address must be set")
+	}
+	return nil
+}
+
 // WandbAPIKeySecretConfig is the W&B API key secret configuration.
 type WandbAPIKeySecretConfig struct {
 	Name string `yaml:"name"`
@@ -215,6 +228,10 @@ func (c *Config) Validate() error {
 		if err := c.ObjectStore.validate(); err != nil {
 			return fmt.Errorf("object store: %s", err)
 		}
+	}
+
+	if err := c.KubernetesManager.validate(); err != nil {
+		return fmt.Errorf("kubernetes manager: %s", err)
 	}
 
 	if err := c.KueueIntegration.validate(); err != nil {
