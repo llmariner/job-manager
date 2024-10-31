@@ -36,8 +36,16 @@ spec:
         - name: config
           mountPath: /etc/config
           readOnly: true
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         ports:
-          {{- toYaml .Values.ports | nindent 12 }}
+        - name: metrics
+          containerPort: {{ include "job-manager-dispatcher.metricsPort" . }}
+          protocol: TCP
+        - name: health
+          containerPort: {{ include "job-manager-dispatcher.healthPort" . }}
+          protocol: TCP
         env:
         {{- with .Values.global.awsSecret }}
         {{- if .name }}
@@ -62,8 +70,18 @@ spec:
               key: {{ .key }}
         {{- end }}
         {{- end }}
+        {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
-          {{- toYaml .Values.livenessProbe | nindent 10 }}
+          httpGet:
+            path: /healthz
+            port: health
+            scheme: HTTP
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+        {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
@@ -82,3 +100,6 @@ spec:
       - name: config
         configMap:
           name: {{ include "job-manager-dispatcher.fullname" . }}
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}

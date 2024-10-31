@@ -7,7 +7,7 @@ include common.mk
 test: go-test-all
 
 .PHONY: lint
-lint: go-lint-all git-clean-check
+lint: go-lint-all helm-lint git-clean-check
 
 .PHONY: generate
 generate: buf-generate-all typescript-compile
@@ -35,3 +35,35 @@ build-docker-fine-tuning:
 .PHONY: build-docker-fake-job
 build-docker-fake-job:
 	docker build --build-arg TARGETARCH=amd64 -t llmariner/fake-job:latest -f build/fake-job/Dockerfile build/fake-job
+
+.PHONY: check-helm-tool
+check-helm-tool:
+	@command -v helm-tool >/dev/null 2>&1 || $(MAKE) install-helm-tool
+
+.PHONY: install-helm-tool
+install-helm-tool:
+	go install github.com/cert-manager/helm-tool@latest
+
+.PHONY: generate-chart-schema
+generate-chart-schema: generate-chart-schema-server generate-chart-schema-dispatcher
+
+.PHONY: generate-chart-schema-server
+generate-chart-schema-server: check-helm-tool
+	@cd ./deployments/server && helm-tool schema > values.schema.json
+
+.PHONY: generate-chart-schema-dispatcher
+generate-chart-schema-dispatcher: check-helm-tool
+	@cd ./deployments/dispatcher && helm-tool schema > values.schema.json
+
+.PHONY: helm-lint
+helm-lint: helm-lint-server helm-lint-dispatcher
+
+.PHONY: helm-lint-server
+helm-lint-server: generate-chart-schema-server
+	cd ./deployments/server && helm-tool lint
+	helm lint ./deployments/server
+
+.PHONY: helm-lint-dispatcher
+helm-lint-dispatcher: generate-chart-schema-dispatcher
+	cd ./deployments/dispatcher && helm-tool lint
+	helm lint ./deployments/dispatcher
