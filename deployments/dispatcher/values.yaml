@@ -109,9 +109,6 @@ notebook:
   # The base URL of the llmariner API endpoint.
   # This URL is used as a Jupyter Notebook base URL.
   llmarinerBaseUrl: http://kong-proxy.kong/v1
-  # Deprecated base URL. This is retained for backward-compatibility.
-  # +docs:hidden
-  llmOperatorBaseUrl: ""
 
   # Specify whether to attach a persistent volume to the Jupyter Notebook.
   enablePvc: false
