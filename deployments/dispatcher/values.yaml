@@ -61,7 +61,7 @@ global:
     # For more information, see [Install across Multiple Clusters](https://llmariner.ai/docs/setup/install/multi_cluster_production/).
     controlPlaneAddr: ""
 
-# +docs:section=Server
+# +docs:section=Dispatcher
 
 # The interval time to poll tasks from the job-manager-server. 
 pollingInterval: 10s
