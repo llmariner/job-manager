@@ -5,8 +5,8 @@
 # +docs:section=Global
 
 # Global settings are used to share the values among LLMariner components.
-# vector-store-manager-server is a dependency of LLMariner, so global
-# values are propagated at its installation.
+# job-manager-dispatcher is a dependency of LLMariner, so global values
+# are propagated at its installation.
 # Please see https://github.com/llmariner/llmariner/blob/main/deployments/llmariner.
 global:
   # Specify object store info to manage data.
@@ -122,11 +122,11 @@ notebook:
 kubernetesManager:
   # Specify whether to enable the leader election.
   enableLeaderElection: false
-  # The bind address for the metrics server.
+  # The bind address for the metrics serving.
   metricsBindAddress: :8080
-  # The bind address for the health probe server.
+  # The bind address for the health probe serving.
   healthBindAddress: :8081
-  # The bind address for the pprof server.
+  # The bind address for the pprof serving.
   # +docs:property
   # pprofBindAddress: ""
 
