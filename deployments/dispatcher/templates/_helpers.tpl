@@ -61,3 +61,17 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+metrics port
+*/}}
+{{- define "job-manager-dispatcher.metricsPort" -}}
+{{ mustRegexSplit ":" .Values.kubernetesManager.metricsBindAddress -1 | last }}
+{{- end -}}
+
+{{/*
+health port
+*/}}
+{{- define "job-manager-dispatcher.healthPort" -}}
+{{ mustRegexSplit ":" .Values.kubernetesManager.healthBindAddress -1 | last }}
+{{- end -}}

@@ -16,7 +16,7 @@ data:
         name: {{ .Values.job.wandbApiKeySecret.name }}
         key: {{ .Values.job.wandbApiKeySecret.key }}
     notebook:
-      llmarinerBaseUrl: {{ .Values.notebook.llmarinerBaseUrl | default .Values.notebook.llmOperatorBaseUrl }}
+      llmarinerBaseUrl: {{ .Values.notebook.llmarinerBaseUrl }}
       enablePvc: {{ .Values.notebook.enablePvc }}
       storageClassName: {{ .Values.notebook.storageClassName }}
       storageSize: {{ .Values.notebook.storageSize }}
