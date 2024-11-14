@@ -75,3 +75,8 @@ health port
 {{- define "job-manager-dispatcher.healthPort" -}}
 {{ mustRegexSplit ":" .Values.kubernetesManager.healthBindAddress -1 | last }}
 {{- end -}}
+
+{{/*
+Do nothing, just for validation.
+*/}}
+{{ .Values.enable }}
