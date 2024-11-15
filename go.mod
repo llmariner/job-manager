@@ -8,12 +8,12 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/stdr v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
-	github.com/llmariner/api-usage v0.8.0
+	github.com/llmariner/api-usage v1.2.0
 	github.com/llmariner/cluster-manager v0.24.0
 	github.com/llmariner/common v0.9.0
 	github.com/llmariner/file-manager v0.68.0
 	github.com/llmariner/model-manager v0.112.0
-	github.com/llmariner/rbac-manager v0.110.0
+	github.com/llmariner/rbac-manager v0.112.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.8.0

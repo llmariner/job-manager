@@ -116,15 +116,21 @@ func run(ctx context.Context, c *config.Config) error {
 
 	k8sClientFactory := k8s.NewClientFactory(c.SessionManagerServerEndpoint)
 
-	usage, err := sender.New(ctx, c.UsageSender, grpc.WithTransportCredentials(insecure.NewCredentials()), logger)
-	if err != nil {
-		return err
+	var usageSetter sender.UsageSetter
+	if c.UsageSender.Enable {
+		usage, err := sender.New(ctx, c.UsageSender, grpc.WithTransportCredentials(insecure.NewCredentials()), logger)
+		if err != nil {
+			return err
+		}
+		go func() { usage.Run(ctx) }()
+		usageSetter = usage
+	} else {
+		usageSetter = sender.NoopUsageSetter{}
 	}
-	go func() { usage.Run(ctx) }()
 
 	go func() {
 		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images, logger)
-		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig, usage)
+		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig, usageSetter)
 	}()
 
 	go func() {
