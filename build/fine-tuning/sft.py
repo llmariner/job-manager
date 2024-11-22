@@ -57,10 +57,7 @@ if __name__ == "__main__":
         attn_implementation=None,
         # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
         # the dtype will be automatically derived from the model's weights."
-
-        # torch_dtype='auto',
-        torch_dtype=torch.float16,  # CHANGED
-
+        torch_dtype='auto',
         # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
         use_cache=False,
         device_map=get_kbit_device_map(),
