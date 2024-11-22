@@ -160,7 +160,7 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 	if p.jobConfig.NumGPUs > 0 {
 		numProcessors = p.jobConfig.NumGPUs
 	}
-	additionalSFTArgs, err := toAddtionalSFTArgs(job)
+	additionalSFTArgs, err := toAddtionalSFTArgs(job, p.jobConfig)
 	if err != nil {
 		return "", err
 	}
@@ -202,7 +202,7 @@ func (p *JobClient) cancelJob(ctx context.Context, ijob *v1.InternalJob) error {
 	return p.k8sClient.Update(ctx, &kjob, client.FieldOwner(jobManagerName))
 }
 
-func toAddtionalSFTArgs(job *v1.Job) (string, error) {
+func toAddtionalSFTArgs(job *v1.Job, config config.JobConfig) (string, error) {
 	args := []string{}
 	if hp := job.Hyperparameters; hp != nil {
 
@@ -230,6 +230,10 @@ func toAddtionalSFTArgs(job *v1.Job) (string, error) {
 			return "", fmt.Errorf("wandb integration is not set")
 		}
 		args = append(args, "--report_to=wandb", fmt.Sprintf("--wandb_project=%s", w.Project))
+	}
+
+	if config.UseBitsAndBytesQuantization {
+		args = append(args, "--use_bnb_quantization=True")
 	}
 
 	return strings.Join(args, " "), nil

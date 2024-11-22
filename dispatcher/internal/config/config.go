@@ -89,6 +89,9 @@ type JobConfig struct {
 	NumGPUs         int               `yaml:"numGpus"`
 
 	WandbAPIKeySecret WandbAPIKeySecretConfig `yaml:"wandbApiKeySecret"`
+
+	// UseBitsAndBytesQuantization is a flag to enable bits and bytes quantization.
+	UseBitsAndBytesQuantization bool `yaml:"useBitsAndBytesQuantization"`
 }
 
 // validate validates the job configuration.
