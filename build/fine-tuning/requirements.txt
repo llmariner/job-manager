@@ -9,3 +9,4 @@ trl
 peft
 gguf
 wandb
+autoawq
