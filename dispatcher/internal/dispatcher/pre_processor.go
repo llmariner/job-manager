@@ -81,7 +81,8 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	// Find all files under the path and generate pre-signed URLs for all of them.
 	var paths []string
 	for {
-		result, err := p.s3Client.ListObjectsPages(ctx, mresp.Path)
+		// Append "/" to avoid listing models whose prefix is the same as the target model.
+		result, err := p.s3Client.ListObjectsPages(ctx, mresp.Path+"/")
 		if err != nil {
 			return nil, err
 		}
