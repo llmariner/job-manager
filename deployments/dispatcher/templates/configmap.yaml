@@ -15,6 +15,7 @@ data:
       wandbApiKeySecret:
         name: {{ .Values.job.wandbApiKeySecret.name }}
         key: {{ .Values.job.wandbApiKeySecret.key }}
+      useBitsAndBytesQuantization: {{ .Values.job.useBitsAndBytesQuantization }}
     notebook:
       llmarinerBaseUrl: {{ .Values.notebook.llmarinerBaseUrl }}
       enablePvc: {{ .Values.notebook.enablePvc }}

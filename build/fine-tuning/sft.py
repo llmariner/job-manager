@@ -31,6 +31,8 @@ if __name__ == "__main__":
     parser.add_argument("--report_to", help="The integration to report the results and logs to.", default="none", type=str)
     parser.add_argument("--wandb_project", help="Name of W&B project.", type=str)
 
+    parser.add_argument("--use_bnb_quantization", help="Use BitesAndBytes quantization", default=False, type=bool)
+
     # TODO(kenji): Revisit the default values.
     parser.add_argument("--learning_rate", help="Learning rate.", default=2e-4, type=float, nargs="?")
     parser.add_argument("--num_train_epochs", help="Number of training epocs.", default=3, type=int, nargs="?")
@@ -41,11 +43,13 @@ if __name__ == "__main__":
     if args.report_to == "wandb":
         os.environ["WANDB_PROJECT"] = args.wandb_project
 
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4"
-    )
+    quantization_config = None
+    if args.use_bnb_quantization:
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4"
+        )
 
     model_kwargs = dict(
         # Which attention implementation to use; you can run --attn_implementation=flash_attention_2,

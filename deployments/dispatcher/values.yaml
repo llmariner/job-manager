@@ -98,6 +98,10 @@ job:
     # The key name with a W&B API key set.
     key: key
 
+  # Specify whether the BitsAndBytes quantization is used by fine-tuning jobs.
+  # Set this to false when the quantization config is obtained from model files.
+  useBitsAndBytesQuantization: true
+
 # Configuration for the [Kueue](https://kueue.sigs.k8s.io/) integration.
 kueueIntegration:
   # Specify whether to enable this integration.

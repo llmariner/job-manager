@@ -120,7 +120,7 @@ func TestToAddtionalSFTArgs(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := toAddtionalSFTArgs(tc.job)
+			got, err := toAddtionalSFTArgs(tc.job, config.JobConfig{})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
