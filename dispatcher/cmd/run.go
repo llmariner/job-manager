@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
 	cv1 "github.com/llmariner/cluster-manager/api/v1"
+	"github.com/llmariner/cluster-manager/pkg/status"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
@@ -89,6 +90,18 @@ func run(ctx context.Context, c *config.Config) error {
 	)
 
 	option := grpcOption(c)
+
+	label := "app.kubernetes.io/name in (llma-notebook, llma-batch-job)"
+	pss, err := status.NewPodStatusSender(c.ComponentStatusSender, "", label, option, logger)
+	if err != nil {
+		return err
+	}
+	if c.ComponentStatusSender.Enable {
+		go func() {
+			pss.Run(logr.NewContext(ctx, logger))
+		}()
+	}
+
 	fconn, err := grpc.NewClient(c.FileManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return err
