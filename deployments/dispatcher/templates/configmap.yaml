@@ -7,6 +7,12 @@ metadata:
 data:
   config.yaml: |
     pollingInterval: {{ .Values.pollingInterval }}
+    componentStatusSender:
+      enable: {{ .Values.componentStatusSender.enable }}
+      name: {{ .Values.componentStatusSender.name }}
+      initialDelay: {{ .Values.componentStatusSender.initialDelay }}
+      interval: {{ .Values.componentStatusSender.interval }}
+      clusterManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.componentStatusSender.clusterManagerServerWorkerServiceAddr }}
     job:
       image: {{ .Values.job.image }}
       version: {{ .Values.job.version }}

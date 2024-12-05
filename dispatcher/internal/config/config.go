@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/llmariner/cluster-manager/pkg/status"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -194,6 +195,9 @@ type Config struct {
 	KueueIntegration KueueConfig `yaml:"kueueIntegration"`
 
 	Worker WorkerConfig `yaml:"worker"`
+
+	// ComponentStatusSender is the configuration for the component status sender.
+	ComponentStatusSender status.Config `yaml:"componentStatusSender"`
 }
 
 // Validate validates the configuration.
@@ -234,6 +238,11 @@ func (c *Config) Validate() error {
 	if err := c.KueueIntegration.validate(); err != nil {
 		return fmt.Errorf("kueue integration: %s", err)
 	}
+
+	if err := c.ComponentStatusSender.Validate(); err != nil {
+		return fmt.Errorf("componentStatusSender: %s", err)
+	}
+
 	return nil
 }
 

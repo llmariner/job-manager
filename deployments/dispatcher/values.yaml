@@ -77,6 +77,18 @@ fileManagerServerWorkerServiceAddr: file-manager-server-worker-service-grpc:8082
 # The address of the model-manager-server to call worker services.
 modelManagerServerWorkerServiceAddr: model-manager-server-worker-service-grpc:8082
 
+componentStatusSender:
+  # The flag to enable sending component status to the cluster-manager-server.
+  enable : true
+  # The name of the component.
+  name: job-manager-dispatcher
+  # initialDelay is the time to wait before starting the sender.
+  initialDelay: 1m
+  # The interval time to send the component status.
+  interval: 15m
+  # The address of the cluster-manager-server to call worker services.
+  clusterManagerServerWorkerServiceAddr: cluster-manager-server-worker-service-grpc:8082
+
 # A job configuration for fine-tuning and general-purpose training.
 job:
   # The container image name used for a fine-tuning Job.
