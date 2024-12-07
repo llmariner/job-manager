@@ -59,6 +59,7 @@ func (s *LifecycleManager) SetupWithManager(mgr ctrl.Manager) error {
 		return isManagedJob(object.GetAnnotations())
 	}))
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("ftjobs").
 		For(&batchv1.Job{}, builder.WithPredicates(filterByAnno)).
 		WithLogConstructor(func(r *reconcile.Request) logr.Logger {
 			if r != nil {
