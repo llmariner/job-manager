@@ -91,14 +91,13 @@ func run(ctx context.Context, c *config.Config) error {
 
 	option := grpcOption(c)
 
-	label := "app.kubernetes.io/name in (llma-notebook, llma-batch-job)"
-	pss, err := status.NewPodStatusSender(c.ComponentStatusSender, "", label, option, logger)
-	if err != nil {
-		return err
-	}
 	if c.ComponentStatusSender.Enable {
+		ss, err := status.NewBeaconSender(c.ComponentStatusSender, grpcOption(c), logger)
+		if err != nil {
+			return err
+		}
 		go func() {
-			pss.Run(logr.NewContext(ctx, logger))
+			ss.Run(logr.NewContext(ctx, logger))
 		}()
 	}
 
