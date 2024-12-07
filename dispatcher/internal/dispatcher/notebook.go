@@ -75,6 +75,7 @@ func (n *NotebookManager) SetupWithManager(mgr ctrl.Manager) error {
 		return isManagedNotebook(object.GetAnnotations())
 	}))
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("notebook").
 		For(&appsv1.Deployment{}, builder.WithPredicates(filterByAnno)).
 		WithLogConstructor(func(r *reconcile.Request) logr.Logger {
 			if r != nil {

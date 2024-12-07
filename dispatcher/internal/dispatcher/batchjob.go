@@ -106,6 +106,7 @@ func (m *BatchJobManager) SetupWithManager(mgr ctrl.Manager) error {
 		return isManagedBatchJob(object.GetAnnotations())
 	}))
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("batchjob").
 		For(&batchv1.Job{}, builder.WithPredicates(filterByAnno)).
 		WithLogConstructor(func(r *reconcile.Request) logr.Logger {
 			if r != nil {
