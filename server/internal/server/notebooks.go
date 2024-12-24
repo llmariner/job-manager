@@ -60,7 +60,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	}
 
 	if len(userInfo.AssignedKubernetesEnvs) == 0 {
-		return nil, status.Errorf(codes.Internal, "no kuberentes cluster/namespace for a notebook")
+		return nil, status.Errorf(codes.Internal, "no kuberentes cluster/namespace for a job")
 	}
 	// TODO(kenji): Revisit. We might want dispatcher to pick up a cluster/namespace.
 	kenv := userInfo.AssignedKubernetesEnvs[0]
@@ -101,22 +101,16 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "create secret: %s", err)
 	}
 
-	senv, err := marshalScheduableEnvs(userInfo.AssignedKubernetesEnvs)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "marshal scheduable envs: %s", err)
-	}
-
 	nb := &store.Notebook{
-		NotebookID:      nbID,
-		Image:           image,
-		Message:         msg,
-		State:           store.NotebookStateQueued,
-		QueuedAction:    store.NotebookQueuedActionStart,
-		TenantID:        userInfo.TenantID,
-		OrganizationID:  userInfo.OrganizationID,
-		ProjectID:       userInfo.ProjectID,
-		Name:            req.Name,
-		SchedulableEnvs: senv,
+		NotebookID:     nbID,
+		Image:          image,
+		Message:        msg,
+		State:          store.NotebookStateQueued,
+		QueuedAction:   store.NotebookQueuedActionStart,
+		TenantID:       userInfo.TenantID,
+		OrganizationID: userInfo.OrganizationID,
+		ProjectID:      userInfo.ProjectID,
+		Name:           req.Name,
 	}
 	if err := s.store.CreateNotebook(nb); err != nil {
 		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)

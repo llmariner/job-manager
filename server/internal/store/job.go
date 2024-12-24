@@ -60,10 +60,6 @@ type Job struct {
 	// OutputModelID is the ID of a generated model.
 	OutputModelID string
 
-	// SchedulableEnvs represents envrionments where the batch job can be scheduled.
-	// It is a marshaled message of v1.ScheduleEnvs.
-	SchedulableEnvs []byte
-
 	Version int
 }
 

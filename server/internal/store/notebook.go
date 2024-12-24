@@ -62,10 +62,6 @@ type Notebook struct {
 	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
 	Name string `gorm:"index:idx_notebook_project_id_name"`
 
-	// SchedulableEnvs represents envrionments where the batch job can be scheduled.
-	// It is a marshaled message of v1.ScheduleEnvs.
-	SchedulableEnvs []byte
-
 	Version int
 }
 
