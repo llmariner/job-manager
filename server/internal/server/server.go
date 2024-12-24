@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -160,4 +161,19 @@ func fakeAuthInto(ctx context.Context) context.Context {
 	})
 	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "Bearer token"))
 	return ctx
+}
+
+func marshalScheduableEnvs(envs []auth.AssignedKubernetesEnv) ([]byte, error) {
+	se := v1.SchedulableEnvs{}
+	for _, e := range envs {
+		se.Envs = append(se.Envs, &v1.SchedulableEnv{
+			ClusterId: e.ClusterID,
+			Namespace: e.Namespace,
+		})
+	}
+	b, err := proto.Marshal(&se)
+	if err != nil {
+		return nil, fmt.Errorf("marshal: %s", err)
+	}
+	return b, nil
 }
