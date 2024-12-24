@@ -106,15 +106,21 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		return nil, status.Errorf(codes.Internal, "create configmap for scripts: %s", err)
 	}
 
+	senv, err := marshalScheduableEnvs(userInfo.AssignedKubernetesEnvs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal scheduable envs: %s", err)
+	}
+
 	job := &store.BatchJob{
-		JobID:          jobID,
-		Image:          image,
-		Message:        msg,
-		State:          store.BatchJobStateQueued,
-		QueuedAction:   store.BatchJobQueuedActionCreate,
-		TenantID:       userInfo.TenantID,
-		OrganizationID: userInfo.OrganizationID,
-		ProjectID:      userInfo.ProjectID,
+		JobID:           jobID,
+		Image:           image,
+		Message:         msg,
+		State:           store.BatchJobStateQueued,
+		QueuedAction:    store.BatchJobQueuedActionCreate,
+		TenantID:        userInfo.TenantID,
+		OrganizationID:  userInfo.OrganizationID,
+		ProjectID:       userInfo.ProjectID,
+		SchedulableEnvs: senv,
 	}
 	if err := s.store.CreateBatchJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create batch job: %s", err)

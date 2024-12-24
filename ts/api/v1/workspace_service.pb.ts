@@ -32,6 +32,15 @@ export enum NotebookQueuedAction {
   DELETING = "DELETING",
 }
 
+export type SchedulableEnv = {
+  clusterId?: string
+  namespace?: string
+}
+
+export type SchedulableEnvs = {
+  envs?: SchedulableEnv[]
+}
+
 export type NotebookError = {
   code?: string
   message?: string

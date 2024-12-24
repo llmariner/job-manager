@@ -6,6 +6,18 @@ import "google/api/annotations.proto";
 
 option go_package = "github.com/llmariner/job-manager/api/v1";
 
+// SchedulableEnv is an environment where a workload can be scheduled.
+message SchedulableEnv {
+    string cluster_id = 1;
+    string namespace = 2;
+}
+
+// SchedulableEnvs is a list of environments where a workload can be scheduled.
+// This is used to marshal to store the data in a database.
+message SchedulableEnvs {
+  repeated SchedulableEnv envs = 1;
+}
+
 message Notebook {
   string id = 1;
   string name = 2;

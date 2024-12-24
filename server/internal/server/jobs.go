@@ -130,15 +130,21 @@ func (s *S) CreateJob(
 		return nil, status.Errorf(codes.Internal, "marshal job: %s", err)
 	}
 
+	senv, err := marshalScheduableEnvs(userInfo.AssignedKubernetesEnvs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal scheduable envs: %s", err)
+	}
+
 	job := &store.Job{
-		JobID:          jobID,
-		State:          store.JobStateQueued,
-		QueuedAction:   store.JobQueuedActionCreate,
-		Message:        msg,
-		Suffix:         req.Suffix,
-		TenantID:       userInfo.TenantID,
-		OrganizationID: userInfo.OrganizationID,
-		ProjectID:      userInfo.ProjectID,
+		JobID:           jobID,
+		State:           store.JobStateQueued,
+		QueuedAction:    store.JobQueuedActionCreate,
+		Message:         msg,
+		Suffix:          req.Suffix,
+		TenantID:        userInfo.TenantID,
+		OrganizationID:  userInfo.OrganizationID,
+		ProjectID:       userInfo.ProjectID,
+		SchedulableEnvs: senv,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)

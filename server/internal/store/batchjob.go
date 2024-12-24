@@ -58,6 +58,10 @@ type BatchJob struct {
 	OrganizationID string
 	ProjectID      string
 
+	// SchedulableEnvs represents envrionments where the batch job can be scheduled.
+	// It is a marshaled message of v1.ScheduleEnvs.
+	SchedulableEnvs []byte
+
 	Version int
 }
 
