@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -33,6 +34,7 @@ type WS struct {
 	v1.UnimplementedFineTuningWorkerServiceServer
 	v1.UnimplementedWorkspaceWorkerServiceServer
 	v1.UnimplementedBatchWorkerServiceServer
+	v1.UnimplementedJobWorkerServiceServer
 
 	srv    *grpc.Server
 	store  *store.S
@@ -62,6 +64,7 @@ func (ws *WS) Run(ctx context.Context, port int, authConfig config.AuthConfig) e
 	v1.RegisterFineTuningWorkerServiceServer(srv, ws)
 	v1.RegisterWorkspaceWorkerServiceServer(srv, ws)
 	v1.RegisterBatchWorkerServiceServer(srv, ws)
+	v1.RegisterJobWorkerServiceServer(srv, ws)
 	reflection.Register(srv)
 
 	ws.srv = srv
@@ -93,4 +96,36 @@ func (ws *WS) extractClusterInfoFromContext(ctx context.Context) (*auth.ClusterI
 		return nil, status.Error(codes.Unauthenticated, "cluster info not found")
 	}
 	return clusterInfo, nil
+}
+
+// UpdateClusterStatus updates the cluster status.
+func (ws *WS) UpdateClusterStatus(
+	ctx context.Context,
+	req *v1.UpdateClusterStatusRequest,
+) (*v1.UpdateClusterStatusResponse, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Status == nil {
+		return nil, status.Error(codes.InvalidArgument, "status is required")
+	}
+
+	b, err := proto.Marshal(req.Status)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal proto: %s", err)
+	}
+
+	c := &store.Cluster{
+		ClusterID: clusterInfo.ClusterID,
+		TenantID:  clusterInfo.TenantID,
+		Status:    b,
+	}
+
+	if err := ws.store.CreateOrUpdateCluster(c); err != nil {
+		return nil, status.Errorf(codes.Internal, "create or update cluster: %s", err)
+	}
+
+	return &v1.UpdateClusterStatusResponse{}, nil
 }
