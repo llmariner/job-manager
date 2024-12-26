@@ -1,0 +1,74 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/v1/job_manager_server_worker.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "JobWorkerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1ClusterStatus": {
+      "type": "object",
+      "properties": {
+        "provisionableResources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ProvisionableResource"
+          }
+        }
+      }
+    },
+    "v1ProvisionableResource": {
+      "type": "object",
+      "properties": {
+        "instanceFamily": {
+          "type": "string"
+        },
+        "instanceType": {
+          "type": "string"
+        }
+      },
+      "description": "ProvisionableResource represents GPU instances that a cluster can provision\n(e.g., Karpenter nodepool configuration)."
+    },
+    "v1UpdateClusterStatusResponse": {
+      "type": "object"
+    }
+  }
+}

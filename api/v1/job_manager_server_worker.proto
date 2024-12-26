@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package llmariner.jobs.server.v1;
+
+option go_package = "github.com/llmariner/job-manager/api/v1";
+
+// ProvisionableResource represents GPU instances that a cluster can provision
+// (e.g., Karpenter nodepool configuration).
+message ProvisionableResource {
+  string instance_family = 1;
+  string instance_type = 2;
+}
+
+message ClusterStatus {
+  repeated ProvisionableResource provisionable_resources = 1;
+}
+
+message UpdateClusterStatusRequest {
+  ClusterStatus status = 1;
+}
+
+message UpdateClusterStatusResponse {
+}
+
+// JobWorkerService is a gRPC service used for the communication between dispatcher and server.
+service JobWorkerService {
+  // UpdateClusterStatus updates the status of the cluster.
+  rpc UpdateClusterStatus(UpdateClusterStatusRequest) returns (UpdateClusterStatusResponse) {}
+}
