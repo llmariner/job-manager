@@ -66,7 +66,6 @@ type BatchJobManagerOptions struct {
 	BwClient   v1.BatchWorkerServiceClient
 
 	LlmaBaseURL string
-	ClusterID   string
 
 	WandbConfig config.WandbAPIKeySecretConfig
 	KueueConfig config.KueueConfig
@@ -80,7 +79,6 @@ func NewBatchJobManager(opts BatchJobManagerOptions) *BatchJobManager {
 		fileClient:  opts.FileClient,
 		bwClient:    opts.BwClient,
 		llmaBaseURL: opts.LlmaBaseURL,
-		clusterID:   opts.ClusterID,
 		wandbConfig: opts.WandbConfig,
 		kueueConfig: opts.KueueConfig,
 	}
@@ -94,7 +92,6 @@ type BatchJobManager struct {
 	bwClient   v1.BatchWorkerServiceClient
 
 	llmaBaseURL string
-	clusterID   string
 
 	wandbConfig config.WandbAPIKeySecretConfig
 	kueueConfig config.KueueConfig

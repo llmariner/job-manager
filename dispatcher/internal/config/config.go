@@ -181,10 +181,9 @@ type Config struct {
 	Job      JobConfig       `yaml:"job"`
 	Notebook NotebooksConfig `yaml:"notebook"`
 
-	ClusterManagerServerWorkerServiceAddr string `yaml:"clusterManagerServerWorkerServiceAddr"`
-	JobManagerServerWorkerServiceAddr     string `yaml:"jobManagerServerWorkerServiceAddr"`
-	FileManagerServerWorkerServiceAddr    string `yaml:"fileManagerServerWorkerServiceAddr"`
-	ModelManagerServerWorkerServiceAddr   string `yaml:"modelManagerServerWorkerServiceAddr"`
+	JobManagerServerWorkerServiceAddr   string `yaml:"jobManagerServerWorkerServiceAddr"`
+	FileManagerServerWorkerServiceAddr  string `yaml:"fileManagerServerWorkerServiceAddr"`
+	ModelManagerServerWorkerServiceAddr string `yaml:"modelManagerServerWorkerServiceAddr"`
 
 	ObjectStore ObjectStoreConfig `yaml:"objectStore"`
 
@@ -213,9 +212,6 @@ func (c *Config) Validate() error {
 	}
 
 	if !c.Debug.Standalone {
-		if c.ClusterManagerServerWorkerServiceAddr == "" {
-			return fmt.Errorf("cluster manager server worker service address must be set")
-		}
 		if c.JobManagerServerWorkerServiceAddr == "" {
 			return fmt.Errorf("job manager server worker service address must be set")
 		}

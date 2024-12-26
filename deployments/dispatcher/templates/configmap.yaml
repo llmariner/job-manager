@@ -28,7 +28,6 @@ data:
       storageClassName: {{ .Values.notebook.storageClassName }}
       storageSize: {{ .Values.notebook.storageSize }}
       mountPath: {{ .Values.notebook.mountPath }}
-    clusterManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.clusterManagerServerWorkerServiceAddr }}
     jobManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.jobManagerServerWorkerServiceAddr }}
     fileManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.fileManagerServerWorkerServiceAddr }}
     modelManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.modelManagerServerWorkerServiceAddr }}
