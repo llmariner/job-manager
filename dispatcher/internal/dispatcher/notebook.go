@@ -40,7 +40,6 @@ func NewNotebookManager(
 	k8sClient client.Client,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	config config.NotebooksConfig,
-	clusterID string,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
@@ -50,7 +49,6 @@ func NewNotebookManager(
 		storageClassName: config.StorageClassName,
 		storageSize:      config.StorageSize,
 		mountPath:        config.MountPath,
-		clusterID:        clusterID,
 	}
 }
 
@@ -65,8 +63,6 @@ type NotebookManager struct {
 	storageClassName string
 	storageSize      string
 	mountPath        string
-
-	clusterID string
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -175,7 +171,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		portName     = "jupyter-web-ui"
 		pvcMountName = "work"
 	)
-	baseURL := fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s/%s", n.clusterID, nb.Notebook.Id, nb.Notebook.KubernetesNamespace)
+	baseURL := fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s/%s", nb.Notebook.ClusterId, nb.Notebook.Id, nb.Notebook.KubernetesNamespace)
 
 	containerConf := corev1apply.Container().
 		WithName("jupyterlab").

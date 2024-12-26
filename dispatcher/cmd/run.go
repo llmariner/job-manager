@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/stdr"
-	cv1 "github.com/llmariner/cluster-manager/api/v1"
 	"github.com/llmariner/cluster-manager/pkg/status"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
@@ -15,7 +14,6 @@ import (
 	"github.com/llmariner/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llmariner/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llmariner/model-manager/api/v1"
-	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -78,11 +76,6 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	clusterID, err := getClusterID(ctx, c)
-	if err != nil {
-		return err
-	}
-
 	jc := dispatcher.NewJobClient(
 		mgr.GetClient(),
 		c.Job,
@@ -125,7 +118,7 @@ func run(ctx context.Context, c *config.Config) error {
 	wsClient := v1.NewWorkspaceWorkerServiceClient(jconn)
 	bwClient := v1.NewBatchWorkerServiceClient(jconn)
 
-	nbm := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook, clusterID)
+	nbm := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook)
 	if err := nbm.SetupWithManager(mgr); err != nil {
 		return err
 	}
@@ -136,7 +129,6 @@ func run(ctx context.Context, c *config.Config) error {
 		FileClient:  fclient,
 		BwClient:    bwClient,
 		LlmaBaseURL: c.Notebook.LLMarinerBaseURL,
-		ClusterID:   clusterID,
 		WandbConfig: c.Job.WandbAPIKeySecret,
 		KueueConfig: c.KueueIntegration,
 	})
@@ -168,22 +160,6 @@ func run(ctx context.Context, c *config.Config) error {
 	}
 
 	return mgr.Start(ctx)
-}
-
-func getClusterID(ctx context.Context, c *config.Config) (string, error) {
-	conn, err := grpc.NewClient(c.ClusterManagerServerWorkerServiceAddr, grpcOption(c))
-	if err != nil {
-		return "", err
-	}
-	clClient := cv1.NewClustersWorkerServiceClient(conn)
-
-	ctx = auth.AppendWorkerAuthorization(ctx)
-	cluster, err := clClient.GetSelfCluster(ctx, &cv1.GetSelfClusterRequest{})
-	if err != nil {
-		return "", err
-	}
-	ctrl.LoggerFrom(ctx).Info("Obtained the cluster ID", "clusterID", cluster.Id)
-	return cluster.Id, nil
 }
 
 func newRestConfig(log logr.Logger, kubeconfigPath string) (*rest.Config, error) {
