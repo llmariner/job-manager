@@ -22,7 +22,7 @@ func TestUpdateClusterStatus(t *testing.T) {
 
 	srv := NewWorkerServiceServer(st, testr.New(t))
 	req := &v1.UpdateClusterStatusRequest{
-		Status: &v1.ClusterStatus{},
+		ClusterStatus: &v1.ClusterStatus{},
 	}
 	_, err = srv.UpdateClusterStatus(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)

@@ -4,6 +4,12 @@ package llmariner.jobs.server.v1;
 
 option go_package = "github.com/llmariner/job-manager/api/v1";
 
+message GpuNode {
+  string resource_name = 1;
+  int32 allocatable_count = 2;
+  // TODO(kenji): Add more information such as Nvidia GPU architecture.
+}
+
 // ProvisionableResource represents GPU instances that a cluster can provision
 // (e.g., Karpenter nodepool configuration).
 message ProvisionableResource {
@@ -12,11 +18,12 @@ message ProvisionableResource {
 }
 
 message ClusterStatus {
-  repeated ProvisionableResource provisionable_resources = 1;
+  repeated GpuNode gpu_nodes = 1;
+  repeated ProvisionableResource provisionable_resources = 2;
 }
 
 message UpdateClusterStatusRequest {
-  ClusterStatus status = 1;
+  ClusterStatus cluster_status = 1;
 }
 
 message UpdateClusterStatusResponse {

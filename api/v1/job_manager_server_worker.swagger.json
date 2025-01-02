@@ -47,11 +47,29 @@
     "v1ClusterStatus": {
       "type": "object",
       "properties": {
+        "gpuNodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1GpuNode"
+          }
+        },
         "provisionableResources": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1ProvisionableResource"
           }
+        }
+      }
+    },
+    "v1GpuNode": {
+      "type": "object",
+      "properties": {
+        "resourceName": {
+          "type": "string"
+        },
+        "allocatableCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
