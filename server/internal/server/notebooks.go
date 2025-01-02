@@ -59,11 +59,10 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "generate notebook id: %s", err)
 	}
 
-	if len(userInfo.AssignedKubernetesEnvs) == 0 {
-		return nil, status.Errorf(codes.Internal, "no kuberentes cluster/namespace for a job")
+	sresult, err := s.scheduler.Schedule(userInfo)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
-	// TODO(kenji): Revisit. We might want dispatcher to pick up a cluster/namespace.
-	kenv := userInfo.AssignedKubernetesEnvs[0]
 
 	nbProto := &v1.Notebook{
 		Id:                  nbID,
@@ -74,8 +73,8 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		Envs:                req.Envs,
 		Status:              string(store.NotebookStateQueued),
 		ProjectId:           userInfo.ProjectID,
-		KubernetesNamespace: kenv.Namespace,
-		ClusterId:           kenv.ClusterID,
+		KubernetesNamespace: sresult.Namespace,
+		ClusterId:           sresult.ClusterID,
 	}
 	msg, err := proto.Marshal(nbProto)
 	if err != nil {
@@ -90,11 +89,11 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
 	}
-	kclient, err := s.k8sClientFactory.NewClient(kenv, apikey)
+	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, apikey)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create k8s client: %s", err)
 	}
-	if err := kclient.CreateSecret(ctx, nbID, kenv.Namespace, map[string][]byte{
+	if err := kclient.CreateSecret(ctx, nbID, sresult.Namespace, map[string][]byte{
 		"OPENAI_API_KEY": []byte(apikey),
 		"NOTEBOOK_TOKEN": []byte(nbToken),
 	}); err != nil {

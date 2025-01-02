@@ -14,6 +14,7 @@ import (
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
+	"github.com/llmariner/job-manager/server/internal/scheduler"
 	"github.com/llmariner/job-manager/server/internal/server"
 	"github.com/llmariner/job-manager/server/internal/store"
 	mv1 "github.com/llmariner/model-manager/api/v1"
@@ -129,7 +130,17 @@ func run(ctx context.Context, c *config.Config) error {
 	}
 
 	go func() {
-		s := server.New(st, fclient, mclient, k8sClientFactory, c.NotebookConfig.ImageTypes, c.BatchJobConfig.Images, logger)
+		sched := scheduler.New(st, logger.WithName("scheduler"))
+		s := server.New(
+			st,
+			fclient,
+			mclient,
+			k8sClientFactory,
+			sched,
+			c.NotebookConfig.ImageTypes,
+			c.BatchJobConfig.Images,
+			logger,
+		)
 		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig, usageSetter)
 	}()
 
