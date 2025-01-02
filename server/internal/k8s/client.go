@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/llmariner/rbac-manager/pkg/auth"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1apply "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +14,7 @@ const fieldManager = "job-manager-server"
 
 // ClientFactory is a factory to create a Client.
 type ClientFactory interface {
-	NewClient(env auth.AssignedKubernetesEnv, token string) (Client, error)
+	NewClient(clusterID string, token string) (Client, error)
 }
 
 // NewClientFactory creates a new ClientFactory.
@@ -28,9 +27,9 @@ type defaultClientFactory struct {
 }
 
 // NewK8sClient creates a new Client.
-func (f *defaultClientFactory) NewClient(env auth.AssignedKubernetesEnv, token string) (Client, error) {
+func (f *defaultClientFactory) NewClient(clusterID string, token string) (Client, error) {
 	client, err := kubernetes.NewForConfig(&rest.Config{
-		Host:        fmt.Sprintf("%s/sessions/%s", f.endpoint, env.ClusterID),
+		Host:        fmt.Sprintf("%s/sessions/%s", f.endpoint, clusterID),
 		BearerToken: token,
 	})
 	if err != nil {

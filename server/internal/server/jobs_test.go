@@ -9,6 +9,7 @@ import (
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/k8s"
+	"github.com/llmariner/job-manager/server/internal/scheduler"
 	"github.com/llmariner/job-manager/server/internal/store"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -99,6 +100,7 @@ func TestCreateJob(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 				testr.New(t))
 			resp, err := srv.CreateJob(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
@@ -134,7 +136,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListJobs(ctx, &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
@@ -179,7 +181,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
 	resp, err := srv.GetJob(fakeAuthInto(context.Background()), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
@@ -229,7 +231,7 @@ func TestJobCancel(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, nil, nil, testr.New(t))
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
 			resp, err := srv.CancelJob(fakeAuthInto(context.Background()), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -455,7 +457,7 @@ func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest,
 
 type noopK8sClientFactory struct{}
 
-func (f *noopK8sClientFactory) NewClient(env auth.AssignedKubernetesEnv, token string) (k8s.Client, error) {
+func (f *noopK8sClientFactory) NewClient(clusterID string, token string) (k8s.Client, error) {
 	return &noopK8sClient{}, nil
 }
 
@@ -467,4 +469,18 @@ func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string
 
 func (c *noopK8sClient) CreateConfigMap(ctx context.Context, name, namespace string, data map[string][]byte) error {
 	return nil
+}
+
+type fakeScheduler struct {
+}
+
+func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo) (scheduler.SchedulingResult, error) {
+	if len(userInfo.AssignedKubernetesEnvs) == 0 {
+		return scheduler.SchedulingResult{}, fmt.Errorf("no kuberentes cluster/namespace")
+	}
+	kenv := userInfo.AssignedKubernetesEnvs[0]
+	return scheduler.SchedulingResult{
+		ClusterID: kenv.ClusterID,
+		Namespace: kenv.Namespace,
+	}, nil
 }

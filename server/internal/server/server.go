@@ -12,6 +12,7 @@ import (
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
+	"github.com/llmariner/job-manager/server/internal/scheduler"
 	"github.com/llmariner/job-manager/server/internal/store"
 	mv1 "github.com/llmariner/model-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -38,12 +39,17 @@ type modelClient interface {
 	GetModel(ctx context.Context, in *mv1.GetModelRequest, opts ...grpc.CallOption) (*mv1.Model, error)
 }
 
+type schedulerI interface {
+	Schedule(userInfo *auth.UserInfo) (scheduler.SchedulingResult, error)
+}
+
 // New creates a server.
 func New(
 	store *store.S,
 	fileGetClient fileGetClient,
 	modelClient modelClient,
 	k8sClientFactory k8s.ClientFactory,
+	scheduler schedulerI,
 	nbImageTypes map[string]string,
 	batchJobImages map[string]string,
 	logger logr.Logger,
@@ -57,6 +63,7 @@ func New(
 		fileGetClient:    fileGetClient,
 		modelClient:      modelClient,
 		k8sClientFactory: k8sClientFactory,
+		scheduler:        scheduler,
 		nbImageTypes:     nbImageTypes,
 		nbImageTypeStr:   strings.Join(nbtypes, ", "),
 		batchJobImages:   batchJobImages,
@@ -76,6 +83,7 @@ type S struct {
 	fileGetClient    fileGetClient
 	modelClient      modelClient
 	k8sClientFactory k8s.ClientFactory
+	scheduler        schedulerI
 
 	nbImageTypes   map[string]string
 	nbImageTypeStr string
