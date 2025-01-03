@@ -108,11 +108,11 @@ func (ws *WS) UpdateClusterStatus(
 		return nil, err
 	}
 
-	if req.Status == nil {
-		return nil, status.Error(codes.InvalidArgument, "status is required")
+	if req.ClusterStatus == nil {
+		return nil, status.Error(codes.InvalidArgument, "cluster_status is required")
 	}
 
-	b, err := proto.Marshal(req.Status)
+	b, err := proto.Marshal(req.ClusterStatus)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "marshal proto: %s", err)
 	}
