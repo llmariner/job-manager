@@ -65,6 +65,13 @@ spec:
   rules:
   - http:
       paths:
+      - path: /llmariner.jobs.server.v1.JobWorkerService
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
+            port:
+              number: {{ .Values.workerServiceGrpcPort }}
       - path: /llmoperator.fine_tuning.server.v1.FineTuningWorkerService
         pathType: Prefix
         backend:
