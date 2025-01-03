@@ -59,3 +59,20 @@ rules:
   verbs:
   - get
   - list
+- apiGroups:
+  - karpenter.sh
+  resources:
+  - provisioners
+  - nodepools
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch

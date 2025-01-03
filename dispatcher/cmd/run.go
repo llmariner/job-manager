@@ -10,6 +10,7 @@ import (
 	"github.com/llmariner/cluster-manager/pkg/status"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/dispatcher/internal/clusterstatus"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	"github.com/llmariner/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llmariner/job-manager/dispatcher/internal/s3"
@@ -133,6 +134,11 @@ func run(ctx context.Context, c *config.Config) error {
 		KueueConfig: c.KueueIntegration,
 	})
 	if err := bjm.SetupWithManager(mgr); err != nil {
+		return err
+	}
+
+	csm := clusterstatus.NewManager(v1.NewJobWorkerServiceClient(jconn))
+	if err := csm.SetupWithManager(mgr); err != nil {
 		return err
 	}
 
