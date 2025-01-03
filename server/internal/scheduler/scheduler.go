@@ -3,12 +3,19 @@ package scheduler
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/protobuf/proto"
+)
+
+const (
+	// staleThreshold is the threshold for stale clusters. Clusters that have not been updated for longer than
+	// this threshold are considered are excluded from scheduling.
+	staleThreshold = 30 * time.Minute
 )
 
 // New creates a new scheduler.
@@ -57,6 +64,10 @@ func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
 		namespacesByCluster[env.ClusterID] = env.Namespace
 	}
 	for _, c := range clusters {
+		if time.Since(c.UpdatedAt) > staleThreshold {
+			continue
+		}
+
 		ns, ok := namespacesByCluster[c.ClusterID]
 		if !ok {
 			continue
