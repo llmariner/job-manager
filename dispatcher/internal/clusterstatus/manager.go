@@ -152,6 +152,11 @@ func toProvisionableResource(np krpv1.NodePool) *v1.ProvisionableResource {
 }
 
 func toGPUNode(node corev1.Node, logger logr.Logger) (*v1.GpuNode, bool) {
+	// Ignore cordoned nodes.
+	if node.Spec.Unschedulable {
+		return nil, false
+	}
+
 	// TODO(kenji): Support other accelerator types.
 	rs := map[corev1.ResourceName]bool{
 		nvidiaGPU: true,

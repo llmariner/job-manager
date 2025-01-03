@@ -80,6 +80,27 @@ func TestManager(t *testing.T) {
 			},
 		},
 		{
+			name: "cordoned gpu node",
+			objs: []runtime.Object{
+				&corev1.Node{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "node1",
+					},
+					Spec: corev1.NodeSpec{
+						Unschedulable: true,
+					},
+					Status: corev1.NodeStatus{
+						Allocatable: corev1.ResourceList{
+							nvidiaGPU: resource.MustParse("1"),
+						},
+					},
+				},
+			},
+			want: &v1.ClusterStatus{
+				GpuNodes: []*v1.GpuNode{},
+			},
+		},
+		{
 			name: "provisionable resources of instance type",
 			objs: []runtime.Object{
 				&krpv1.NodePool{
