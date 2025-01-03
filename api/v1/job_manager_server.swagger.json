@@ -1,0 +1,111 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/v1/job_manager_server.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "JobService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Cluster": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/v1ClusterStatus"
+        }
+      }
+    },
+    "v1ClusterStatus": {
+      "type": "object",
+      "properties": {
+        "gpuNodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1GpuNode"
+          }
+        },
+        "provisionableResources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ProvisionableResource"
+          }
+        }
+      }
+    },
+    "v1GpuNode": {
+      "type": "object",
+      "properties": {
+        "resourceName": {
+          "type": "string"
+        },
+        "allocatableCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1ListClustersResponse": {
+      "type": "object",
+      "properties": {
+        "clusters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Cluster"
+          }
+        }
+      }
+    },
+    "v1ProvisionableResource": {
+      "type": "object",
+      "properties": {
+        "instanceFamily": {
+          "type": "string"
+        },
+        "instanceType": {
+          "type": "string"
+        }
+      },
+      "description": "ProvisionableResource represents GPU instances that a cluster can provision\n(e.g., Karpenter nodepool configuration)."
+    }
+  }
+}
