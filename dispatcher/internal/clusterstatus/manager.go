@@ -15,8 +15,6 @@ import (
 )
 
 const (
-	updateInterval = 5 * time.Minute
-
 	nvidiaGPU corev1.ResourceName = "nvidia.com/gpu"
 )
 
@@ -27,17 +25,20 @@ type updater interface {
 // NewManager creates a new manager.
 func NewManager(
 	updater updater,
+	updateInterval time.Duration,
 ) *Manager {
 	return &Manager{
-		updater: updater,
+		updater:        updater,
+		updateInterval: updateInterval,
 	}
 }
 
 // Manager is a manager.
 type Manager struct {
-	k8sClient client.Client
-	updater   updater
-	logger    logr.Logger
+	k8sClient      client.Client
+	updater        updater
+	updateInterval time.Duration
+	logger         logr.Logger
 }
 
 // SetupWithManager sets up the updater with the manager.
@@ -59,7 +60,7 @@ func (m *Manager) Start(ctx context.Context) error {
 	}
 
 	for {
-		tick := time.NewTicker(updateInterval)
+		tick := time.NewTicker(m.updateInterval)
 		select {
 		case <-tick.C:
 			if err := m.updateClusterStaus(ctx); err != nil {

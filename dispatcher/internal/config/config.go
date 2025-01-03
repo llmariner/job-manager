@@ -197,6 +197,8 @@ type Config struct {
 
 	// ComponentStatusSender is the configuration for the component status sender.
 	ComponentStatusSender status.Config `yaml:"componentStatusSender"`
+
+	ClusterStatusUpdateInterval time.Duration `yaml:"clusterStatusUpdateInterval"`
 }
 
 // Validate validates the configuration.
@@ -237,6 +239,10 @@ func (c *Config) Validate() error {
 
 	if err := c.ComponentStatusSender.Validate(); err != nil {
 		return fmt.Errorf("componentStatusSender: %s", err)
+	}
+
+	if c.ClusterStatusUpdateInterval <= 0 {
+		return fmt.Errorf("cluster status update interval must be greater than 0")
 	}
 
 	return nil

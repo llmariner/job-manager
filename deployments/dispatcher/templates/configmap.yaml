@@ -46,6 +46,7 @@ data:
           externalId: {{ .externalId }}
         {{- end }}
         {{- end }}
+    clusterStatusUpdateInterval: {{ .Values.clusterStatusUpdateInterval }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-dispatcher.fullname" . }}
