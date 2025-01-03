@@ -50,3 +50,12 @@ func (s *S) GetClusterByID(clusterID string) (*Cluster, error) {
 	}
 	return &c, nil
 }
+
+// ListClustersByTenantID lists clusters by tenant ID.
+func (s *S) ListClustersByTenantID(tenantID string) ([]*Cluster, error) {
+	var clusters []*Cluster
+	if err := s.db.Where("tenant_id = ?", tenantID).Find(&clusters).Error; err != nil {
+		return nil, err
+	}
+	return clusters, nil
+}

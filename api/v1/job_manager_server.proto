@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package llmariner.jobs.server.v1;
+
+import "api/v1/job_manager_server_worker.proto";
+
+option go_package = "github.com/llmariner/job-manager/api/v1";
+
+message Cluster {
+  string id = 1;
+  ClusterStatus status = 2;
+}
+
+message ListClustersRequest {
+}
+
+message ListClustersResponse {
+  repeated Cluster clusters = 1;
+}
+
+// JobService is a generic service for fine-tuning jobs, batch jobs, and workspaces.
+// Currently this is mainly for debug.
+service JobService {
+  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse) {}
+}
