@@ -2,10 +2,13 @@ package scheduler
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
+	"google.golang.org/protobuf/proto"
 )
 
 // New creates a new scheduler.
@@ -35,14 +38,95 @@ type SchedulingResult struct {
 // Currently it simply picks up one of the clusters that can provision GPU resources.
 // The function returns an error if a workload is not schedulable.
 //
-// TODO(kenji): Implement.
+// TODO(kenji): Improve the algorithm.
 func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
-	if len(userInfo.AssignedKubernetesEnvs) == 0 {
-		return SchedulingResult{}, fmt.Errorf("no kuberentes cluster/namespace")
+	clusters, err := s.store.ListClustersByTenantID(userInfo.TenantID)
+	if err != nil {
+		return SchedulingResult{}, err
 	}
-	kenv := userInfo.AssignedKubernetesEnvs[0]
-	return SchedulingResult{
-		ClusterID: kenv.ClusterID,
-		Namespace: kenv.Namespace,
-	}, nil
+	if len(clusters) == 0 {
+		return SchedulingResult{}, fmt.Errorf("no clusters")
+	}
+
+	if len(userInfo.AssignedKubernetesEnvs) == 0 {
+		return SchedulingResult{}, fmt.Errorf("no assigned Kubernetes environments")
+	}
+
+	namespacesByCluster := map[string]string{}
+	for _, env := range userInfo.AssignedKubernetesEnvs {
+		namespacesByCluster[env.ClusterID] = env.Namespace
+	}
+	for _, c := range clusters {
+		ns, ok := namespacesByCluster[c.ClusterID]
+		if !ok {
+			continue
+		}
+
+		var status v1.ClusterStatus
+		if err := proto.Unmarshal(c.Status, &status); err != nil {
+			return SchedulingResult{}, err
+		}
+
+		// Just pick up the first cluster that can provision GPU resources.
+		if ok, err := canProvisionGPUs(&status); err != nil {
+			return SchedulingResult{}, err
+		} else if ok {
+			return SchedulingResult{
+				ClusterID: c.ClusterID,
+				Namespace: ns,
+			}, nil
+		}
+	}
+
+	return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
+}
+
+// canProvisionGPUs returns true if the cluster can provision GPUs.
+//
+// TODO(kenji): Support other cloud providers and non-Nvidia GPUs.
+func canProvisionGPUs(status *v1.ClusterStatus) (bool, error) {
+	// TODO(kenji): Revisit the logic since this just checks if the cluster has alloctable GPUs.
+	if len(status.GpuNodes) > 0 {
+		return true, nil
+	}
+
+	for _, pr := range status.ProvisionableResources {
+		if i := pr.InstanceType; i != "" {
+			if ok, err := isAWSInstanceTypeForNvidiaGPU(i); err != nil {
+				return false, err
+			} else if ok {
+				return true, nil
+			}
+		}
+
+		if i := pr.InstanceFamily; i != "" {
+			if ok, err := isAWSInstanceFamilyForNvidiaGPU(i); err != nil {
+				return false, err
+			} else if ok {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func isAWSInstanceTypeForNvidiaGPU(instType string) (bool, error) {
+	// Get the family from the instance type.
+	l := strings.Split(instType, ".")
+	if len(l) != 2 {
+		return false, fmt.Errorf("invalid instance type: %s", instType)
+	}
+
+	return isAWSInstanceFamilyForNvidiaGPU(l[0])
+}
+
+func isAWSInstanceFamilyForNvidiaGPU(instFamily string) (bool, error) {
+	gpuInsts := map[string]bool{
+		"g5":   true,
+		"p4d":  true,
+		"p4de": true,
+		"p5":   true,
+	}
+	return gpuInsts[instFamily], nil
 }
