@@ -137,7 +137,7 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
-	csm := clusterstatus.NewManager(v1.NewJobWorkerServiceClient(jconn))
+	csm := clusterstatus.NewManager(v1.NewJobWorkerServiceClient(jconn), c.ClusterStatusUpdateInterval)
 	if err := csm.SetupWithManager(mgr); err != nil {
 		return err
 	}

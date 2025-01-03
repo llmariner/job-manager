@@ -135,6 +135,9 @@ notebook:
   # The path where the notebook volume will be attached.
   mountPath: ""
 
+# Specify how frequently cluster status is updated.
+clusterStatusUpdateInterval: 5m
+
 kubernetesManager:
   # Specify whether to enable the leader election.
   enableLeaderElection: false
