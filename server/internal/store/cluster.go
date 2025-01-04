@@ -12,7 +12,7 @@ type Cluster struct {
 
 	ClusterID string `gorm:"uniqueIndex"`
 
-	TenantID string
+	TenantID string `gorm:"index"`
 
 	// Status is a marshalled proto message ClusterStatus.
 	Status []byte
