@@ -45,19 +45,18 @@ type BatchJob struct {
 
 	JobID string `gorm:"uniqueIndex"`
 
-	Image string
+	ProjectID string `gorm:"index:idx_batchjob_project_id_state"`
+
+	TenantID  string `gorm:"index:idx_batchjob_tenant_id_cluster_id_state"`
+	ClusterID string `gorm:"index:idx_batchjob_tenant_id_cluster_id_state"`
+
 	// Message is the marshaled message of the v1.BatchJob.
 	Message []byte
 
-	State BatchJobState
+	State BatchJobState `gorm:"index:idx_batchjob_project_id_state;index:idx_batchjob_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of the batch job. This field is only used when
 	// the state is BatchJobStateQueued, and processed by the dispatcher.
 	QueuedAction BatchJobQueuedAction
-
-	TenantID       string `gorm:"index:idx_batchjob_tenant_id_cluster_id"`
-	OrganizationID string
-	ProjectID      string
-	ClusterID      string `gorm:"index:idx_batchjob_tenant_id_cluster_id"`
 
 	Version int
 }

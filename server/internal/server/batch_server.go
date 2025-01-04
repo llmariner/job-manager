@@ -106,15 +106,13 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 	}
 
 	job := &store.BatchJob{
-		JobID:          jobID,
-		Image:          image,
-		Message:        msg,
-		State:          store.BatchJobStateQueued,
-		QueuedAction:   store.BatchJobQueuedActionCreate,
-		TenantID:       userInfo.TenantID,
-		OrganizationID: userInfo.OrganizationID,
-		ProjectID:      userInfo.ProjectID,
-		ClusterID:      sresult.ClusterID,
+		JobID:        jobID,
+		Message:      msg,
+		State:        store.BatchJobStateQueued,
+		QueuedAction: store.BatchJobQueuedActionCreate,
+		TenantID:     userInfo.TenantID,
+		ProjectID:    userInfo.ProjectID,
+		ClusterID:    sresult.ClusterID,
 	}
 	if err := s.store.CreateBatchJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create batch job: %s", err)

@@ -45,23 +45,21 @@ type Notebook struct {
 
 	NotebookID string `gorm:"uniqueIndex"`
 
-	Image string
+	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
+	Name string `gorm:"index"`
+
+	ProjectID string `gorm:"index:idx_notebook_project_id_state"`
+
+	TenantID  string `gorm:"index:idx_notebook_tenant_id_cluster_id_state"`
+	ClusterID string `gorm:"index:idx_notebook_tenant_id_cluster_id_state"`
 
 	// Message is the marshalled JSON of the v1.Notebook.
 	Message []byte
 
-	State NotebookState
+	State NotebookState `gorm:"index:idx_notebook_project_id_state;index:idx_notebook_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of the queued notebook. This field is only used when
 	// the state is NotebookStateQueued, and processed by the dispatcher.
 	QueuedAction NotebookQueuedAction
-
-	TenantID       string `gorm:"index:idx_notebook_tenant_id_cluster_id"`
-	OrganizationID string
-	ProjectID      string `gorm:"index:idx_notebook_project_id_name"`
-	ClusterID      string `gorm:"index:idx_notebook_tenant_id_cluster_id"`
-
-	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
-	Name string `gorm:"index:idx_notebook_project_id_name"`
 
 	Version int
 }
