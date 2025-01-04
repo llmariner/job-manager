@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -190,6 +191,9 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 			Status: &st,
 		})
 	}
+	sort.Slice(cs, func(i, j int) bool {
+		return cs[i].Id < cs[j].Id
+	})
 
 	return &v1.ListClustersResponse{
 		Clusters: cs,
