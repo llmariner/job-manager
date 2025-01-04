@@ -101,16 +101,14 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	}
 
 	nb := &store.Notebook{
-		NotebookID:     nbID,
-		Image:          image,
-		Message:        msg,
-		State:          store.NotebookStateQueued,
-		QueuedAction:   store.NotebookQueuedActionStart,
-		TenantID:       userInfo.TenantID,
-		OrganizationID: userInfo.OrganizationID,
-		ProjectID:      userInfo.ProjectID,
-		ClusterID:      sresult.ClusterID,
-		Name:           req.Name,
+		NotebookID:   nbID,
+		Message:      msg,
+		State:        store.NotebookStateQueued,
+		QueuedAction: store.NotebookQueuedActionStart,
+		TenantID:     userInfo.TenantID,
+		ProjectID:    userInfo.ProjectID,
+		ClusterID:    sresult.ClusterID,
+		Name:         req.Name,
 	}
 	if err := s.store.CreateNotebook(nb); err != nil {
 		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)

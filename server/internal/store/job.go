@@ -39,24 +39,23 @@ const (
 type Job struct {
 	gorm.Model
 
-	JobID string `gorm:"uniqueIndex:idx_job_job_id"`
+	JobID string `gorm:"uniqueIndex"`
+
+	ProjectID string `gorm:"index:idx_job_project_id_state"`
+
+	TenantID  string `gorm:"index:idx_job_tenant_id_cluster_id_state"`
+	ClusterID string `gorm:"index:idx_job_tenant_id_cluster_id_state"`
 
 	// Message is the marshaled proto message of v1.Job.
 	Message []byte
 
-	// Suffix is a string that will be added to a fine-tuned model name.
-	Suffix string
-
+	State JobState `gorm:"index:idx_job_project_id_state;index:idx_job_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of a queue job.
 	// This field is only used when the state is JobStateQueued.
 	QueuedAction JobQueuedAction
 
-	State    JobState `gorm:"index:idx_job_state_tenant_id,idx_job_tenant_id_cluster_id"`
-	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
-
-	OrganizationID string
-	ProjectID      string `gorm:"index"`
-	ClusterID      string `gorm:"index:idx_job_tenant_id_cluster_id"`
+	// Suffix is a string that will be added to a fine-tuned model name.
+	Suffix string
 
 	// OutputModelID is the ID of a generated model.
 	OutputModelID string

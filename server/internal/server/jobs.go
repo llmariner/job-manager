@@ -130,15 +130,14 @@ func (s *S) CreateJob(
 	}
 
 	job := &store.Job{
-		JobID:          jobID,
-		State:          store.JobStateQueued,
-		QueuedAction:   store.JobQueuedActionCreate,
-		Message:        msg,
-		Suffix:         req.Suffix,
-		TenantID:       userInfo.TenantID,
-		OrganizationID: userInfo.OrganizationID,
-		ProjectID:      userInfo.ProjectID,
-		ClusterID:      sresult.ClusterID,
+		JobID:        jobID,
+		State:        store.JobStateQueued,
+		QueuedAction: store.JobQueuedActionCreate,
+		Message:      msg,
+		Suffix:       req.Suffix,
+		TenantID:     userInfo.TenantID,
+		ProjectID:    userInfo.ProjectID,
+		ClusterID:    sresult.ClusterID,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
