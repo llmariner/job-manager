@@ -322,20 +322,24 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 
 	notebooks := []*store.Notebook{
 		{
-			State:    store.NotebookStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.NotebookStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.NotebookStateRunning,
-			TenantID: defaultTenantID,
+			State:     store.NotebookStateRunning,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.NotebookStateQueued,
-			TenantID: "different-tenant",
+			State:     store.NotebookStateQueued,
+			TenantID:  "different-tenant",
+			ClusterID: "different-cluster",
 		},
 		{
-			State:    store.NotebookStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.NotebookStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 	}
 	for i, notebook := range notebooks {
@@ -349,6 +353,7 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 			State:      notebook.State,
 			Message:    msg,
 			TenantID:   notebook.TenantID,
+			ClusterID:  notebook.ClusterID,
 		}))
 	}
 

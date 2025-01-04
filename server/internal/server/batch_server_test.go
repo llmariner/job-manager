@@ -217,24 +217,29 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 
 	jobs := []*store.BatchJob{
 		{
-			State:    store.BatchJobStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.BatchJobStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.BatchJobStateRunning,
-			TenantID: defaultTenantID,
+			State:     store.BatchJobStateRunning,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.BatchJobStateQueued,
-			TenantID: "different-tenant",
+			State:     store.BatchJobStateQueued,
+			TenantID:  "different-tenant",
+			ClusterID: "different-cluster",
 		},
 		{
-			State:    store.BatchJobStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.BatchJobStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.BatchJobStateDeleted,
-			TenantID: defaultTenantID,
+			State:     store.BatchJobStateDeleted,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 	}
 	for i, job := range jobs {
@@ -244,10 +249,11 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 		msg, err := proto.Marshal(jobProto)
 		assert.NoError(t, err)
 		assert.NoError(t, st.CreateBatchJob(&store.BatchJob{
-			JobID:    jobProto.Id,
-			State:    job.State,
-			Message:  msg,
-			TenantID: job.TenantID,
+			JobID:     jobProto.Id,
+			State:     job.State,
+			Message:   msg,
+			TenantID:  job.TenantID,
+			ClusterID: job.ClusterID,
 		}))
 	}
 

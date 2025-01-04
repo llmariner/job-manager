@@ -114,6 +114,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		TenantID:       userInfo.TenantID,
 		OrganizationID: userInfo.OrganizationID,
 		ProjectID:      userInfo.ProjectID,
+		ClusterID:      sresult.ClusterID,
 	}
 	if err := s.store.CreateBatchJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create batch job: %s", err)
@@ -292,18 +293,18 @@ func (ws *WS) ListQueuedInternalBatchJobs(ctx context.Context, req *v1.ListQueue
 		return nil, err
 	}
 
-	nbs, err := ws.store.ListQueuedBatchJobsByTenantID(clusterInfo.TenantID)
+	jobs, err := ws.store.ListQueuedBatchJobsByTenantIDAndClusterID(clusterInfo.TenantID, clusterInfo.ClusterID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list queued jobs: %s", err)
 	}
 
 	var ijobs []*v1.InternalBatchJob
-	for _, nb := range nbs {
-		inb, err := nb.V1InternalBatchJob()
+	for _, j := range jobs {
+		ij, err := j.V1InternalBatchJob()
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "convert job to proto: %s", err)
 		}
-		ijobs = append(ijobs, inb)
+		ijobs = append(ijobs, ij)
 	}
 
 	return &v1.ListQueuedInternalBatchJobsResponse{Jobs: ijobs}, nil

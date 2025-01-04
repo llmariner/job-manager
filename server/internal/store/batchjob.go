@@ -54,9 +54,10 @@ type BatchJob struct {
 	// the state is BatchJobStateQueued, and processed by the dispatcher.
 	QueuedAction BatchJobQueuedAction
 
-	TenantID       string
+	TenantID       string `gorm:"index:idx_batchjob_tenant_id_cluster_id"`
 	OrganizationID string
 	ProjectID      string
+	ClusterID      string `gorm:"index:idx_batchjob_tenant_id_cluster_id"`
 
 	Version int
 }
@@ -173,10 +174,10 @@ func (s *S) ListActiveBatchJobsByProjectIDWithPagination(projectID string, after
 	return jobs, hasMore, nil
 }
 
-// ListQueuedBatchJobsByTenantID finds queued batch jobs by tenant ID.
-func (s *S) ListQueuedBatchJobsByTenantID(tenantID string) ([]BatchJob, error) {
+// ListQueuedBatchJobsByTenantIDAndClusterID finds queued batch jobs by tenant ID and cluster ID.
+func (s *S) ListQueuedBatchJobsByTenantIDAndClusterID(tenantID, clusterID string) ([]BatchJob, error) {
 	var jobs []BatchJob
-	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, BatchJobStateQueued).Find(&jobs).Error; err != nil {
+	if err := s.db.Where("tenant_id = ? AND cluster_id = ? AND state = ?", tenantID, clusterID, BatchJobStateQueued).Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 	return jobs, nil
