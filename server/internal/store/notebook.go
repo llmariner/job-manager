@@ -55,9 +55,10 @@ type Notebook struct {
 	// the state is NotebookStateQueued, and processed by the dispatcher.
 	QueuedAction NotebookQueuedAction
 
-	TenantID       string
+	TenantID       string `gorm:"index:idx_notebook_tenant_id_cluster_id"`
 	OrganizationID string
 	ProjectID      string `gorm:"index:idx_notebook_project_id_name"`
+	ClusterID      string `gorm:"index:idx_notebook_tenant_id_cluster_id"`
 
 	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
 	Name string `gorm:"index:idx_notebook_project_id_name"`
@@ -186,10 +187,10 @@ func (s *S) ListActiveNotebooksByProjectIDWithPagination(projectID string, after
 	return nbs, hasMore, nil
 }
 
-// ListQueuedNotebooksByTenantID finds queued notebooks by tenant ID.
-func (s *S) ListQueuedNotebooksByTenantID(tenantID string) ([]*Notebook, error) {
+// ListQueuedNotebooksByTenantIDAndClusterID finds queued notebooks by tenant ID and cluster ID.
+func (s *S) ListQueuedNotebooksByTenantIDAndClusterID(tenantID, clusterID string) ([]*Notebook, error) {
 	var nbs []*Notebook
-	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, NotebookStateQueued).Find(&nbs).Error; err != nil {
+	if err := s.db.Where("tenant_id = ? AND cluster_id = ? AND state = ?", tenantID, clusterID, NotebookStateQueued).Find(&nbs).Error; err != nil {
 		return nil, err
 	}
 	return nbs, nil

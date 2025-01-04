@@ -98,7 +98,7 @@ func TestCreateJob(t *testing.T) {
 					id: modelID,
 				},
 				nil,
-				nil,
+				&fakeScheduler{},
 				nil,
 				nil,
 				testr.New(t))
@@ -245,20 +245,24 @@ func TestListQueuedInternalJobs(t *testing.T) {
 
 	jobs := []*store.Job{
 		{
-			State:    store.JobStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.JobStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.JobStateRunning,
-			TenantID: defaultTenantID,
+			State:     store.JobStateRunning,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 		{
-			State:    store.JobStateQueued,
-			TenantID: "different-tenant",
+			State:     store.JobStateQueued,
+			TenantID:  "different-tenant",
+			ClusterID: "different-cluster",
 		},
 		{
-			State:    store.JobStateQueued,
-			TenantID: defaultTenantID,
+			State:     store.JobStateQueued,
+			TenantID:  defaultTenantID,
+			ClusterID: defaultClusterID,
 		},
 	}
 	for i, job := range jobs {
@@ -268,10 +272,11 @@ func TestListQueuedInternalJobs(t *testing.T) {
 		msg, err := proto.Marshal(jobProto)
 		assert.NoError(t, err)
 		assert.NoError(t, st.CreateJob(&store.Job{
-			JobID:    jobProto.Id,
-			State:    job.State,
-			Message:  msg,
-			TenantID: job.TenantID,
+			JobID:     jobProto.Id,
+			State:     job.State,
+			Message:   msg,
+			TenantID:  job.TenantID,
+			ClusterID: job.ClusterID,
 		}))
 	}
 

@@ -109,6 +109,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		TenantID:       userInfo.TenantID,
 		OrganizationID: userInfo.OrganizationID,
 		ProjectID:      userInfo.ProjectID,
+		ClusterID:      sresult.ClusterID,
 		Name:           req.Name,
 	}
 	if err := s.store.CreateNotebook(nb); err != nil {
@@ -329,7 +330,7 @@ func (ws *WS) ListQueuedInternalNotebooks(ctx context.Context, req *v1.ListQueue
 		return nil, err
 	}
 
-	nbs, err := ws.store.ListQueuedNotebooksByTenantID(clusterInfo.TenantID)
+	nbs, err := ws.store.ListQueuedNotebooksByTenantIDAndClusterID(clusterInfo.TenantID, clusterInfo.ClusterID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list queued notebooks: %s", err)
 	}

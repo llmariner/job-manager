@@ -102,11 +102,10 @@ func (s *S) CreateJob(
 		}
 	}
 
-	if len(userInfo.AssignedKubernetesEnvs) == 0 {
-		return nil, status.Errorf(codes.Internal, "no kuberentes cluster/namespace for a job")
+	sresult, err := s.scheduler.Schedule(userInfo)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
-	// TODO(kenji): Revisit. We might want dispatcher to pick up a cluster/namespace.
-	kenv := userInfo.AssignedKubernetesEnvs[0]
 
 	jobProto := &v1.Job{
 		Id:              jobID,
@@ -122,8 +121,8 @@ func (s *S) CreateJob(
 		Seed:            req.Seed,
 
 		ProjectId:           userInfo.ProjectID,
-		KubernetesNamespace: kenv.Namespace,
-		ClusterId:           kenv.ClusterID,
+		KubernetesNamespace: sresult.Namespace,
+		ClusterId:           sresult.ClusterID,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {
@@ -139,6 +138,7 @@ func (s *S) CreateJob(
 		TenantID:       userInfo.TenantID,
 		OrganizationID: userInfo.OrganizationID,
 		ProjectID:      userInfo.ProjectID,
+		ClusterID:      sresult.ClusterID,
 	}
 	if err := s.store.CreateJob(job); err != nil {
 		return nil, status.Errorf(codes.Internal, "create job: %s", err)
@@ -307,7 +307,7 @@ func (ws *WS) ListQueuedInternalJobs(ctx context.Context, req *v1.ListQueuedInte
 		return nil, err
 	}
 
-	jobs, err := ws.store.ListQueuedJobsByTenantID(clusterInfo.TenantID)
+	jobs, err := ws.store.ListQueuedJobsByTenantIDAndClusterID(clusterInfo.TenantID, clusterInfo.ClusterID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list queued jobs: %s", err)
 	}

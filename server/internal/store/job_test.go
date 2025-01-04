@@ -45,19 +45,22 @@ func TestCreateAndListJobs(t *testing.T) {
 
 	jobs := []*Job{
 		{
-			JobID:    "job0",
-			State:    JobStateQueued,
-			TenantID: "tid0",
+			JobID:     "job0",
+			State:     JobStateQueued,
+			TenantID:  "tid0",
+			ClusterID: "cid0",
 		},
 		{
-			JobID:    "job1",
-			State:    JobStateRunning,
-			TenantID: "tid0",
+			JobID:     "job1",
+			State:     JobStateRunning,
+			TenantID:  "tid0",
+			ClusterID: "cid0",
 		},
 		{
-			JobID:    "job2",
-			State:    JobStateQueued,
-			TenantID: "tid1",
+			JobID:     "job2",
+			State:     JobStateQueued,
+			TenantID:  "tid1",
+			ClusterID: "cid1",
 		},
 	}
 	for _, job := range jobs {
@@ -71,12 +74,12 @@ func TestCreateAndListJobs(t *testing.T) {
 	assert.Equal(t, jobs[0].JobID, got[0].JobID)
 	assert.Equal(t, jobs[2].JobID, got[1].JobID)
 
-	got, err = st.ListQueuedJobsByTenantID("tid0")
+	got, err = st.ListQueuedJobsByTenantIDAndClusterID("tid0", "cid0")
 	assert.NoError(t, err)
 	assert.Len(t, got, 1)
 	assert.Equal(t, jobs[0].JobID, got[0].JobID)
 
-	got, err = st.ListQueuedJobsByTenantID("tid1")
+	got, err = st.ListQueuedJobsByTenantIDAndClusterID("tid1", "cid1")
 	assert.NoError(t, err)
 	assert.Len(t, got, 1)
 	assert.Equal(t, jobs[2].JobID, got[0].JobID)

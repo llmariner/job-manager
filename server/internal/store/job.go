@@ -51,11 +51,12 @@ type Job struct {
 	// This field is only used when the state is JobStateQueued.
 	QueuedAction JobQueuedAction
 
-	State    JobState `gorm:"index:idx_job_state_tenant_id"`
+	State    JobState `gorm:"index:idx_job_state_tenant_id,idx_job_tenant_id_cluster_id"`
 	TenantID string   `gorm:"index:idx_job_state_tenant_id"`
 
 	OrganizationID string
 	ProjectID      string `gorm:"index"`
+	ClusterID      string `gorm:"index:idx_job_tenant_id_cluster_id"`
 
 	// OutputModelID is the ID of a generated model.
 	OutputModelID string
@@ -171,10 +172,10 @@ func (s *S) ListQueuedJobs() ([]*Job, error) {
 	return jobs, nil
 }
 
-// ListQueuedJobsByTenantID finds queued jobs.
-func (s *S) ListQueuedJobsByTenantID(tenantID string) ([]*Job, error) {
+// ListQueuedJobsByTenantIDAndClusterID finds queued jobs.
+func (s *S) ListQueuedJobsByTenantIDAndClusterID(tenantID, clusterID string) ([]*Job, error) {
 	var jobs []*Job
-	if err := s.db.Where("tenant_id = ? AND state = ?", tenantID, JobStateQueued).Order("job_id").Find(&jobs).Error; err != nil {
+	if err := s.db.Where("tenant_id = ? AND cluster_id = ? AND state = ?", tenantID, clusterID, JobStateQueued).Order("job_id").Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 	return jobs, nil
