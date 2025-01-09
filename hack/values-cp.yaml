@@ -1,0 +1,28 @@
+global:
+  ingress:
+    controllerUrl: http://localhost
+  workerServiceGrpcService:
+    annotations:
+      konghq.com/protocol: grpc
+  workerServiceIngress:
+    create: true
+    ingressClassName: kong
+    annotations:
+      konghq.com/protocols: grpc,grpcs
+
+# TODO(aya): session-manager-server cannnot disable auth
+# session-manager-server:
+#   enable: true
+#   workerServiceHttpService:
+#     type: NodePort
+#     nodePort: 31234
+
+cluster-manager-server:
+  enable: true
+
+job-manager-server:
+  enable: true
+  version: latest
+  image:
+    repository: llmariner/job-manager-server
+    pullPolicy: Never
