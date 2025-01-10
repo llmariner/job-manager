@@ -7,7 +7,7 @@ base=$(readlink -f $(dirname $0))
 TENANT_CLUSTER_NAME=$1
 CONTROL_PLANE_NAME=$2
 WORKER_PLANE_NAME=$3
-WOKER_PLANE_NUM=${4:-1}
+WORKER_PLANE_NUM=${4:-1}
 
 if [ ! -z "${TENANT_CLUSTER_NAME}" ]; then
   kind get clusters | grep -q ${TENANT_CLUSTER_NAME} ||\
@@ -22,7 +22,7 @@ if [ ! -z "${CONTROL_PLANE_NAME}" ]; then
 fi
 
 if [ ! -z "${WORKER_PLANE_NAME}" ] && [ "${WORKER_PLANE_NAME}" != "${CONTROL_PLANE_NAME}" ]; then
-  for i in $(seq 1 "${WOKER_PLANE_NUM}"); do
+  for i in $(seq 1 "${WORKER_PLANE_NUM}"); do
     kind get clusters | grep -q ${WORKER_PLANE_NAME}-${i} ||\
       kind create cluster --name ${WORKER_PLANE_NAME}-${i} &&\
         echo "Cluster '${WORKER_PLANE_NAME}-${i}' created"
