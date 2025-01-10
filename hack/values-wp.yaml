@@ -1,0 +1,19 @@
+global:
+  worker:
+    controlPlaneAddr: control-plane:80
+    registrationKeySecret:
+      name: cluster-registration-key
+      key: regKey
+
+session-manager-agent:
+  sessionManagerServerWorkerServiceAddr: control-plane:81
+
+job-manager-dispatcher:
+  componentStatusSender:
+    enable: false
+  notebook:
+    llmarinerBaseUrl: http://control-plane/v1
+  version: latest
+  image:
+    repository: llmariner/job-manager-dispatcher
+    pullPolicy: Never

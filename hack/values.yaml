@@ -1,0 +1,9 @@
+tags:
+  control-plane: false
+  worker: false
+
+global:
+  auth:
+    enable: false
+  usageSender:
+    enable: false

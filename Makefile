@@ -1,3 +1,7 @@
+SERVER_IMAGE ?= llmariner/job-manager-server
+DISPATCHER_IMAGE ?= llmariner/job-manager-dispatcher
+TAG ?= latest
+
 .PHONY: default
 default: test
 
@@ -22,11 +26,11 @@ build-dispatcher:
 
 .PHONY: build-docker-server
 build-docker-server:
-	docker build --build-arg TARGETARCH=amd64 -t llmariner/job-manager-server:latest -f build/server/Dockerfile .
+	docker build --build-arg TARGETARCH=amd64 -t $(SERVER_IMAGE):$(TAG) -f build/server/Dockerfile .
 
 .PHONY: build-docker-dispatcher
 build-docker-dispatcher:
-	docker build --build-arg TARGETARCH=amd64 -t llmariner/job-manager-dispatcher:latest -f build/dispatcher/Dockerfile .
+	docker build --build-arg TARGETARCH=amd64 -t $(DISPATCHER_IMAGE):$(TAG) -f build/dispatcher/Dockerfile .
 
 .PHONY: build-docker-fine-tuning
 build-docker-fine-tuning:
@@ -67,3 +71,5 @@ helm-lint-server: generate-chart-schema-server
 helm-lint-dispatcher: generate-chart-schema-dispatcher
 	cd ./deployments/dispatcher && helm-tool lint
 	helm lint ./deployments/dispatcher
+
+include provision.mk
