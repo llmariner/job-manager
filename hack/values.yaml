@@ -7,3 +7,7 @@ global:
     enable: false
   usageSender:
     enable: false
+
+prepare:
+  redis:
+    createSecret: false
