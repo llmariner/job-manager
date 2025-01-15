@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SyncerServiceClient interface {
-	PutKubernetesObject(ctx context.Context, in *PutKubernetesObjectRequest, opts ...grpc.CallOption) (*PutKubernetesObjectResponse, error)
+	PatchKubernetesObject(ctx context.Context, in *PatchKubernetesObjectRequest, opts ...grpc.CallOption) (*PatchKubernetesObjectResponse, error)
 	DeleteKubernetesObject(ctx context.Context, in *DeleteKubernetesObjectRequest, opts ...grpc.CallOption) (*DeleteKubernetesObjectResponse, error)
 }
 
@@ -30,9 +30,9 @@ func NewSyncerServiceClient(cc grpc.ClientConnInterface) SyncerServiceClient {
 	return &syncerServiceClient{cc}
 }
 
-func (c *syncerServiceClient) PutKubernetesObject(ctx context.Context, in *PutKubernetesObjectRequest, opts ...grpc.CallOption) (*PutKubernetesObjectResponse, error) {
-	out := new(PutKubernetesObjectResponse)
-	err := c.cc.Invoke(ctx, "/llmariner.syncer.server.v1.SyncerService/PutKubernetesObject", in, out, opts...)
+func (c *syncerServiceClient) PatchKubernetesObject(ctx context.Context, in *PatchKubernetesObjectRequest, opts ...grpc.CallOption) (*PatchKubernetesObjectResponse, error) {
+	out := new(PatchKubernetesObjectResponse)
+	err := c.cc.Invoke(ctx, "/llmariner.syncer.server.v1.SyncerService/PatchKubernetesObject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *syncerServiceClient) DeleteKubernetesObject(ctx context.Context, in *De
 // All implementations must embed UnimplementedSyncerServiceServer
 // for forward compatibility
 type SyncerServiceServer interface {
-	PutKubernetesObject(context.Context, *PutKubernetesObjectRequest) (*PutKubernetesObjectResponse, error)
+	PatchKubernetesObject(context.Context, *PatchKubernetesObjectRequest) (*PatchKubernetesObjectResponse, error)
 	DeleteKubernetesObject(context.Context, *DeleteKubernetesObjectRequest) (*DeleteKubernetesObjectResponse, error)
 	mustEmbedUnimplementedSyncerServiceServer()
 }
@@ -61,8 +61,8 @@ type SyncerServiceServer interface {
 type UnimplementedSyncerServiceServer struct {
 }
 
-func (UnimplementedSyncerServiceServer) PutKubernetesObject(context.Context, *PutKubernetesObjectRequest) (*PutKubernetesObjectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PutKubernetesObject not implemented")
+func (UnimplementedSyncerServiceServer) PatchKubernetesObject(context.Context, *PatchKubernetesObjectRequest) (*PatchKubernetesObjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchKubernetesObject not implemented")
 }
 func (UnimplementedSyncerServiceServer) DeleteKubernetesObject(context.Context, *DeleteKubernetesObjectRequest) (*DeleteKubernetesObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteKubernetesObject not implemented")
@@ -80,20 +80,20 @@ func RegisterSyncerServiceServer(s grpc.ServiceRegistrar, srv SyncerServiceServe
 	s.RegisterService(&SyncerService_ServiceDesc, srv)
 }
 
-func _SyncerService_PutKubernetesObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutKubernetesObjectRequest)
+func _SyncerService_PatchKubernetesObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchKubernetesObjectRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SyncerServiceServer).PutKubernetesObject(ctx, in)
+		return srv.(SyncerServiceServer).PatchKubernetesObject(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/llmariner.syncer.server.v1.SyncerService/PutKubernetesObject",
+		FullMethod: "/llmariner.syncer.server.v1.SyncerService/PatchKubernetesObject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyncerServiceServer).PutKubernetesObject(ctx, req.(*PutKubernetesObjectRequest))
+		return srv.(SyncerServiceServer).PatchKubernetesObject(ctx, req.(*PatchKubernetesObjectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -124,8 +124,8 @@ var SyncerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SyncerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PutKubernetesObject",
-			Handler:    _SyncerService_PutKubernetesObject_Handler,
+			MethodName: "PatchKubernetesObject",
+			Handler:    _SyncerService_PatchKubernetesObject_Handler,
 		},
 		{
 			MethodName: "DeleteKubernetesObject",

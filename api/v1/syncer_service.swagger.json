@@ -47,7 +47,7 @@
     "v1DeleteKubernetesObjectResponse": {
       "type": "object"
     },
-    "v1PutKubernetesObjectRequestResources": {
+    "v1PatchKubernetesObjectRequestResources": {
       "type": "object",
       "properties": {
         "gpuLimit": {
@@ -56,7 +56,7 @@
         }
       }
     },
-    "v1PutKubernetesObjectResponse": {
+    "v1PatchKubernetesObjectResponse": {
       "type": "object",
       "properties": {
         "clusterId": {

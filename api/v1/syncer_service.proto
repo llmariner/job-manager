@@ -4,7 +4,7 @@ package llmariner.syncer.server.v1;
 
 option go_package = "github.com/llmariner/job-manager/api/v1";
 
-message PutKubernetesObjectRequest {
+message PatchKubernetesObjectRequest {
   string namespace = 1;
   string name = 2;
   // empty namespace means cluster-scope resource.
@@ -22,7 +22,7 @@ message PutKubernetesObjectRequest {
   bytes data = 7;
 }
 
-message PutKubernetesObjectResponse {
+message PatchKubernetesObjectResponse {
   string cluster_id = 1;
   string uid = 2;
 }
@@ -41,6 +41,6 @@ message DeleteKubernetesObjectRequest {
 message DeleteKubernetesObjectResponse {}
 
 service SyncerService {
-  rpc PutKubernetesObject(PutKubernetesObjectRequest) returns (PutKubernetesObjectResponse) {}
+  rpc PatchKubernetesObject(PatchKubernetesObjectRequest) returns (PatchKubernetesObjectResponse) {}
   rpc DeleteKubernetesObject(DeleteKubernetesObjectRequest) returns (DeleteKubernetesObjectResponse) {}
 }

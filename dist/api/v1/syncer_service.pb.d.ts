@@ -1,17 +1,17 @@
 import * as fm from "../../fetch.pb";
-export type PutKubernetesObjectRequestResources = {
+export type PatchKubernetesObjectRequestResources = {
     gpuLimit?: number;
 };
-export type PutKubernetesObjectRequest = {
+export type PatchKubernetesObjectRequest = {
     namespace?: string;
     name?: string;
     group?: string;
     version?: string;
     resource?: string;
-    resources?: PutKubernetesObjectRequestResources;
+    resources?: PatchKubernetesObjectRequestResources;
     data?: Uint8Array;
 };
-export type PutKubernetesObjectResponse = {
+export type PatchKubernetesObjectResponse = {
     clusterId?: string;
     uid?: string;
 };
@@ -25,6 +25,6 @@ export type DeleteKubernetesObjectRequest = {
 };
 export type DeleteKubernetesObjectResponse = {};
 export declare class SyncerService {
-    static PutKubernetesObject(req: PutKubernetesObjectRequest, initReq?: fm.InitReq): Promise<PutKubernetesObjectResponse>;
+    static PatchKubernetesObject(req: PatchKubernetesObjectRequest, initReq?: fm.InitReq): Promise<PatchKubernetesObjectResponse>;
     static DeleteKubernetesObject(req: DeleteKubernetesObjectRequest, initReq?: fm.InitReq): Promise<DeleteKubernetesObjectResponse>;
 }
