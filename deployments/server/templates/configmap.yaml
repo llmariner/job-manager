@@ -9,6 +9,7 @@ data:
     httpPort: {{ .Values.httpPort }}
     grpcPort: {{ .Values.grpcPort }}
     workerServiceGrpcPort: {{ .Values.workerServiceGrpcPort }}
+    syncerServiceGrpcPort: {{ .Values.syncerServiceGrpcPort }}
     fileManagerServerAddr: {{ .Values.fileManagerServerAddr }}
     modelManagerServerAddr: {{ .Values.modelManagerServerAddr }}
     sessionManagerServerEndpoint: {{ .Values.sessionManagerServerEndpoint }}

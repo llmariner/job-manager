@@ -13,6 +13,7 @@ import (
 type Config struct {
 	GRPCPort              int `yaml:"grpcPort"`
 	WorkerServiceGRPCPort int `yaml:"workerServiceGrpcPort"`
+	SyncerServiceGRPCPort int `yaml:"syncerServiceGrpcPort"`
 	HTTPPort              int `yaml:"httpPort"`
 
 	FileManagerServerAddr        string `yaml:"fileManagerServerAddr"`

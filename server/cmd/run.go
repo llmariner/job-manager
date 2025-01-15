@@ -129,8 +129,9 @@ func run(ctx context.Context, c *config.Config) error {
 		usageSetter = sender.NoopUsageSetter{}
 	}
 
+	sched := scheduler.New(st, logger.WithName("scheduler"))
+
 	go func() {
-		sched := scheduler.New(st, logger.WithName("scheduler"))
 		s := server.New(
 			st,
 			fclient,
@@ -147,6 +148,11 @@ func run(ctx context.Context, c *config.Config) error {
 	go func() {
 		s := server.NewWorkerServiceServer(st, logger)
 		errCh <- s.Run(ctx, c.WorkerServiceGRPCPort, c.AuthConfig)
+	}()
+
+	go func() {
+		s := server.NewSyncerServiceServer(logger, k8sClientFactory, sched)
+		errCh <- s.Run(ctx, c.SyncerServiceGRPCPort)
 	}()
 
 	return <-errCh

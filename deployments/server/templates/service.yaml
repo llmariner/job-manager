@@ -51,3 +51,23 @@ spec:
     targetPort: ws-grpc
   selector:
     {{- include "job-manager-server.selectorLabels" . | nindent 4 }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "job-manager-server.fullname" . }}-syncer-service-grpc
+  labels:
+    {{- include "job-manager-server.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.syncerServiceGrpcService.annotations | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: syncer-grpc
+    port: {{ .Values.syncerServiceGrpcPort }}
+    protocol: TCP
+    targetPort: syncer-grpc
+  selector:
+    {{- include "job-manager-server.selectorLabels" . | nindent 4 }}
