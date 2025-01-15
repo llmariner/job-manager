@@ -13,6 +13,7 @@ import (
 type Config struct {
 	GRPCPort              int `yaml:"grpcPort"`
 	WorkerServiceGRPCPort int `yaml:"workerServiceGrpcPort"`
+	SyncerServiceGRPCPort int `yaml:"syncerServiceGrpcPort"`
 	HTTPPort              int `yaml:"httpPort"`
 
 	FileManagerServerAddr        string `yaml:"fileManagerServerAddr"`
@@ -77,6 +78,9 @@ func (c *Config) Validate() error {
 	}
 	if c.WorkerServiceGRPCPort <= 0 {
 		return fmt.Errorf("workerServiceGRPCPort must be greater than 0")
+	}
+	if c.SyncerServiceGRPCPort <= 0 {
+		return fmt.Errorf("syncerServiceGRPCPort must be greater than 0")
 	}
 	if c.HTTPPort <= 0 {
 		return fmt.Errorf("httpPort must be greater than 0")

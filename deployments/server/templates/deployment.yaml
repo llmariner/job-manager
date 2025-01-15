@@ -41,6 +41,9 @@ spec:
         - name: ws-grpc
           containerPort: {{ .Values.workerServiceGrpcPort }}
           protocol: TCP
+        - name: syncer-grpc
+          containerPort: {{ .Values.syncerServiceGrpcPort }}
+          protocol: TCP
         volumeMounts:
         - name: config
           mountPath: /etc/config

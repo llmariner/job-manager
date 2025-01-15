@@ -22,6 +22,15 @@ cluster-manager-server:
 
 job-manager-server:
   enable: true
+
+  syncerServiceGrpcService:
+    annotations:
+      konghq.com/protocol: grpc
+  syncerServiceIngress:
+    create: true
+    annotations:
+      konghq.com/protocols: grpc,grpcs
+
   version: latest
   image:
     repository: llmariner/job-manager-server
