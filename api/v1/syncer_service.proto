@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package llmariner.syncer.server.v1;
+
+option go_package = "github.com/llmariner/job-manager/api/v1";
+
+message PutKubernetesObjectRequest {
+  string namespace = 1;
+  string name = 2;
+  // empty namespace means cluster-scope resource.
+
+  string Group = 3;
+  string Version = 4;
+  string Resource = 5;
+
+  message Resources {
+    int32 gpu_limit = 1;
+  }
+  Resources resources = 6;
+
+  // JSON encoded object data.
+  bytes data = 7;
+}
+
+message PutKubernetesObjectResponse {
+  string cluster_id = 1;
+  string uid = 2;
+}
+
+message DeleteKubernetesObjectRequest {
+  string cluster_id = 1;
+
+  string namespace = 2;
+  string name = 3;
+
+  string Group = 4;
+  string Version = 5;
+  string Resource = 6;
+}
+
+message DeleteKubernetesObjectResponse {}
+
+service SyncerService {
+  rpc PutKubernetesObject(PutKubernetesObjectRequest) returns (PutKubernetesObjectResponse) {}
+  rpc DeleteKubernetesObject(DeleteKubernetesObjectRequest) returns (DeleteKubernetesObjectResponse) {}
+}
