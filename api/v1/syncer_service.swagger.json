@@ -1,0 +1,71 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/v1/syncer_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "SyncerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1DeleteKubernetesObjectResponse": {
+      "type": "object"
+    },
+    "v1PatchKubernetesObjectRequestResources": {
+      "type": "object",
+      "properties": {
+        "gpuLimit": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1PatchKubernetesObjectResponse": {
+      "type": "object",
+      "properties": {
+        "clusterId": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
