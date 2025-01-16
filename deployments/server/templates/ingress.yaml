@@ -41,7 +41,7 @@ spec:
             port:
               number: {{ .Values.httpPort }}
 
-{{- if .Values.global.workerServiceIngress.create -}}
+{{- if .Values.global.workerServiceIngress.create }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -115,7 +115,7 @@ spec:
               number: {{ .Values.workerServiceGrpcPort }}
 {{- end -}}
 
-{{- if .Values.syncerServiceIngress.create -}}
+{{- if .Values.syncerServiceIngress.create }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
