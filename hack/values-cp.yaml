@@ -1,6 +1,6 @@
 global:
   ingress:
-    controllerUrl: http://localhost
+    controllerUrl: http://localhost:8080
   workerServiceGrpcService:
     annotations:
       konghq.com/protocol: grpc
@@ -10,19 +10,29 @@ global:
     annotations:
       konghq.com/protocols: grpc,grpcs
 
-# TODO(aya): session-manager-server cannnot disable auth
-# session-manager-server:
-#   enable: true
-#   workerServiceHttpService:
-#     type: NodePort
-#     nodePort: 31234
+session-manager-server:
+  enable: true
+  debugLog: true
+  workerServiceHttpService:
+    type: NodePort
+    nodePort: 31234
+  version: latest
+  image:
+    repository: llmariner/session-manager-server
+    pullPolicy: Never
 
+dex-server:
+  enable: true
+rbac-server:
+  enable: true
+user-manager-server:
+  enable: true
 cluster-manager-server:
   enable: true
 
 job-manager-server:
   enable: true
-
+  logLevel: 4
   syncerServiceGrpcService:
     annotations:
       konghq.com/protocol: grpc
@@ -30,7 +40,6 @@ job-manager-server:
     create: true
     annotations:
       konghq.com/protocols: grpc,grpcs
-
   version: latest
   image:
     repository: llmariner/job-manager-server

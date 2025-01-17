@@ -26,5 +26,6 @@ if [ ! -z "${WORKER_PLANE_NAME}" ] && [ "${WORKER_PLANE_NAME}" != "${CONTROL_PLA
     kind get clusters | grep -q ${WORKER_PLANE_NAME}-${i} ||\
       kind create cluster --name ${WORKER_PLANE_NAME}-${i} &&\
         echo "Cluster '${WORKER_PLANE_NAME}-${i}' created"
+    kubectl --context kind-${WORKER_PLANE_NAME}-${i} label nodes ingress-ready=true --all
   done
 fi
