@@ -6,6 +6,14 @@ CP_CLUSTER ?= job-cp
 WP_CLUSTER ?= job-wp
 WORKER_NUM ?= 1
 
+.PHONY: provision-all
+provision-all: pull-llma-chart configure-llma-chart create-kind-cluster helm-apply-cp-deps load-server-image helm-apply-cp-llma helm-apply-wp-deps load-dispatcher-image helm-apply-wp-llma
+
+.PHONY: reapply-job-server
+reapply-job-server: load-server-image helm-apply-cp-llma rollout-job-server
+.PHONY: reapply-job-dispatcher
+reapply-job-dispatcher: load-dispatcher-image helm-apply-cp-llma rollout-job-dispatcher
+
 # ------------------------------------------------------------------------------
 # chart repository
 # ------------------------------------------------------------------------------
@@ -33,12 +41,21 @@ configure-llma-chart:
 create-kind-cluster:
 	hack/create-kind-cluster.sh "$(TN_CLUSTER)" "$(CP_CLUSTER)" "$(WP_CLUSTER)" $(WORKER_NUM)
 
+.PHONY: delete-kind-cluster
+delete-kind-cluster:
+	-kind delete cluster --name $(TN_CLUSTER)
+	-kind delete cluster --name $(CP_CLUSTER)
+	for cluster in $(shell kind get clusters | grep $(WP_CLUSTER)); do \
+		rm $(CLONE_PATH)/.regkey-kind-$$cluster; \
+		kind delete cluster --name $$cluster; \
+	done
+
 # ------------------------------------------------------------------------------
 # deploy dependencies
 # ------------------------------------------------------------------------------
 
 CP_DEP_APPS ?= kong,postgres
-WP_DEP_APPS ?= kong
+WP_DEP_APPS ?= kong,fake-gpu-operator
 
 .PHONY: helm-apply-cp-deps
 helm-apply-cp-deps:
@@ -46,7 +63,11 @@ helm-apply-cp-deps:
 
 .PHONY: helm-apply-wp-deps
 helm-apply-wp-deps:
-	kind get clusters|grep $(WP_CLUSTER)|xargs -n1 -I{} $(MAKE) helm-apply-deps DEP_APPS=$(WP_DEP_APPS) KUBE_CTX=kind-{} HELM_ENV=worker
+	for cluster in $(shell kind get clusters | grep $(WP_CLUSTER)); do \
+		export REGISTRATION_KEY=$$(cat $(CLONE_PATH)/.regkey-kind-$$cluster||curl --request POST http://localhost:8080/v1/clusters -d "{\"name\":\"$$cluster\"}"|jq -r .registration_key); \
+		echo "$$REGISTRATION_KEY" > $(CLONE_PATH)/.regkey-kind-$$cluster; \
+		$(MAKE) helm-apply-deps DEP_APPS=$(WP_DEP_APPS) KUBE_CTX=kind-$$cluster HELM_ENV=worker; \
+	done
 
 .PHONY: helm-apply-deps
 helm-apply-deps:
@@ -66,8 +87,7 @@ helm-apply-cp-llma:
 .PHONY: helm-apply-wp-llma
 helm-apply-wp-llma:
 	for cluster in $(shell kind get clusters | grep $(WP_CLUSTER)); do \
-		export REGISTRATION_KEY=$$(cat $(CLONE_PATH)/.regkey-kind-$$cluster||curl --request POST http://localhost:8080/v1/clusters -d "{\"name\":\"$$cluster\"}"|jq -r .registration_key); \
-		echo "$$REGISTRATION_KEY" > $(CLONE_PATH)/.regkey-kind-$$cluster; \
+		export REGISTRATION_KEY=$$(cat $(CLONE_PATH)/.regkey-kind-$$cluster); \
 		$(MAKE) helm-apply-llma EXTRA_VALS=$(EXTRA_WP_VALS) KUBE_CTX=kind-$$cluster HELM_ENV=worker; \
 	done
 
@@ -97,4 +117,4 @@ rollout-job-server:
 
 .PHONY: rollout-job-dispatcher
 rollout-job-dispatcher:
-	@kind get clusters|grep $(WP_CLUSTER)|xargs -n1 -I{} kubectl --context kind-{} rollout restart deployment -n llmariner job-manager-dispatcher
+	@kind get clusters|grep $(WP_CLUSTER)|xargs -n1 -I{} kubectl --context kind-{} rollout restart deployment -n llmariner-wp job-manager-dispatcher
