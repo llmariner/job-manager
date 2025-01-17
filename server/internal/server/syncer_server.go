@@ -62,6 +62,19 @@ func (ss *SS) Run(ctx context.Context, port int) error {
 
 // PatchKubernetesObject applies a kubernetes object.
 func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetesObjectRequest) (*v1.PatchKubernetesObjectResponse, error) {
+	if req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "version is required")
+	}
+	if req.Resource == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "resource is required")
+	}
+	if len(req.Data) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "data is required")
+	}
+
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("failed to extract user info from context")
@@ -71,6 +84,7 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 		return nil, err
 	}
 
+	// TODO(aya): Schedule to the cluster where it was created If the resource is not newly created.
 	sresult, err := ss.scheduler.Schedule(userInfo)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
@@ -104,6 +118,19 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 
 // DeleteKubernetesObject deletes a kubernetes object.
 func (ss *SS) DeleteKubernetesObject(ctx context.Context, req *v1.DeleteKubernetesObjectRequest) (*v1.DeleteKubernetesObjectResponse, error) {
+	if req.ClusterId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "cluster ID is required")
+	}
+	if req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+	if req.Version == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "version is required")
+	}
+	if req.Resource == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "resource is required")
+	}
+
 	apikey, err := auth.ExtractTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
