@@ -160,6 +160,10 @@ batchJob:
   images:
     pytorch-2.1: pytorch/pytorch:2.1.1-cuda12.1-cudnn8-runtime
 
+# The log level of the inference-manager-engine container.
+# +docs:type=number
+logLevel: 0
+
 # Override the "job-manager-server.fullname" value. This value is used
 # as part of most of the names of the resources created by this Helm chart.
 # +docs:property
