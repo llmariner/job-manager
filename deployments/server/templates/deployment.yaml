@@ -31,6 +31,8 @@ spec:
         - run
         - --config
         - /etc/config/config.yaml
+        - --v
+        - "{{ .Values.logLevel }}"
         ports:
         - name: grpc
           containerPort: {{ .Values.grpcPort }}

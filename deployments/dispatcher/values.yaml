@@ -153,6 +153,10 @@ debug:
   # If specified, this path is used to load kubeconfig.
   kubeconfigPath: ""
 
+# The log level of the inference-manager-engine container.
+# +docs:type=number
+logLevel: 0
+
 # Override the "job-manager-dispatcher.fullname" value. This value is used
 # as part of most of the names of the resources created by this Helm chart.
 # +docs:property
