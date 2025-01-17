@@ -18,6 +18,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestCreateJob(t *testing.T) {
@@ -466,6 +468,10 @@ func (f *noopK8sClientFactory) NewClient(clusterID string, token string) (k8s.Cl
 	return &noopK8sClient{}, nil
 }
 
+func (f *noopK8sClientFactory) NewDynamicClient(clusterID, token string) (k8s.DynamicClient, error) {
+	return &noopDynClient{}, nil
+}
+
 type noopK8sClient struct{}
 
 func (c *noopK8sClient) CreateSecret(ctx context.Context, name, namespace string, data map[string][]byte) error {
@@ -476,8 +482,17 @@ func (c *noopK8sClient) CreateConfigMap(ctx context.Context, name, namespace str
 	return nil
 }
 
-type fakeScheduler struct {
+type noopDynClient struct{}
+
+func (c *noopDynClient) PatchResource(ctx context.Context, name, namespace string, gvr schema.GroupVersionResource, data []byte) (*unstructured.Unstructured, error) {
+	return nil, nil
 }
+
+func (c *noopDynClient) DeleteResource(ctx context.Context, name, namespace string, gvr schema.GroupVersionResource) error {
+	return nil
+}
+
+type fakeScheduler struct{}
 
 func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo) (scheduler.SchedulingResult, error) {
 	if len(userInfo.AssignedKubernetesEnvs) == 0 {
