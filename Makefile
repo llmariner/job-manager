@@ -1,5 +1,6 @@
 SERVER_IMAGE ?= llmariner/job-manager-server
 DISPATCHER_IMAGE ?= llmariner/job-manager-dispatcher
+SYNCER_IMAGE ?= llmariner/job-manager-syncer
 TAG ?= latest
 
 .PHONY: default
@@ -24,6 +25,10 @@ build-server:
 build-dispatcher:
 	go build -o ./bin/dispatcher ./dispatcher/cmd/
 
+.PHONY: build-syncer
+build-syncer:
+	go build -o ./bin/syncer ./syncer/cmd/
+
 .PHONY: build-docker-server
 build-docker-server:
 	docker build --build-arg TARGETARCH=amd64 -t $(SERVER_IMAGE):$(TAG) -f build/server/Dockerfile .
@@ -31,6 +36,10 @@ build-docker-server:
 .PHONY: build-docker-dispatcher
 build-docker-dispatcher:
 	docker build --build-arg TARGETARCH=amd64 -t $(DISPATCHER_IMAGE):$(TAG) -f build/dispatcher/Dockerfile .
+
+.PHONY: build-docker-syncer
+build-docker-syncer:
+	docker build --build-arg TARGETARCH=amd64 -t $(SYNCER_IMAGE):$(TAG) -f build/syncer/Dockerfile .
 
 .PHONY: build-docker-fine-tuning
 build-docker-fine-tuning:
