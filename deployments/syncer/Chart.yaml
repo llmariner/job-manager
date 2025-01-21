@@ -1,0 +1,15 @@
+apiVersion: v2
+name: job-manager-syncer
+description: The job-manager-syncer syncs local Kubernetes resources to the remote clusters.
+home: https://llmariner.ai/
+icon: https://raw.githubusercontent.com/llmariner/llmariner.github.io/refs/heads/main/assets/icons/logo.svg
+type: application
+version: 1.4.1
+appVersion: 1.4.1
+sources:
+  - https://github.com/llmariner/job-manager
+keywords:
+  - llmariner
+annotations:
+  "artifacthub.io/category": ai-machine-learning
+  "artifacthub.io/license": Apache-2.0
