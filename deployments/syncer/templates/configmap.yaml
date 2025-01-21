@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "job-manager-syncer.fullname" . }}
+  labels:
+    {{- include "job-manager-syncer.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    jobManagerServerSyncerServiceAddr: {{ .Values.jobManagerServerSyncerServiceAddr }}
+    kubernetesManager:
+      enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
+      leaderElectionID: {{ include "job-manager-syncer.fullname" . }}
+      metricsBindAddress: {{ .Values.kubernetesManager.metricsBindAddress }}
+      healthBindAddress: {{ .Values.kubernetesManager.healthBindAddress }}
+      pprofBindAddress: {{ .Values.kubernetesManager.pprofBindAddress }}

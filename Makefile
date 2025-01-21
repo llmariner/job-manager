@@ -58,7 +58,7 @@ install-helm-tool:
 	go install github.com/cert-manager/helm-tool@latest
 
 .PHONY: generate-chart-schema
-generate-chart-schema: generate-chart-schema-server generate-chart-schema-dispatcher
+generate-chart-schema: generate-chart-schema-server generate-chart-schema-dispatcher generate-chart-schema-syncer
 
 .PHONY: generate-chart-schema-server
 generate-chart-schema-server: check-helm-tool
@@ -68,8 +68,12 @@ generate-chart-schema-server: check-helm-tool
 generate-chart-schema-dispatcher: check-helm-tool
 	@cd ./deployments/dispatcher && helm-tool schema > values.schema.json
 
+.PHONY: generate-chart-schema-syncer
+generate-chart-schema-syncer: check-helm-tool
+	@cd ./deployments/syncer && helm-tool schema > values.schema.json
+
 .PHONY: helm-lint
-helm-lint: helm-lint-server helm-lint-dispatcher
+helm-lint: helm-lint-server helm-lint-dispatcher helm-lint-syncer
 
 .PHONY: helm-lint-server
 helm-lint-server: generate-chart-schema-server
@@ -80,5 +84,10 @@ helm-lint-server: generate-chart-schema-server
 helm-lint-dispatcher: generate-chart-schema-dispatcher
 	cd ./deployments/dispatcher && helm-tool lint
 	helm lint ./deployments/dispatcher
+
+.PHONY: helm-lint-syncer
+helm-lint-syncer: generate-chart-schema-syncer
+	cd ./deployments/syncer && helm-tool lint
+	helm lint ./deployments/syncer
 
 include provision.mk

@@ -9,6 +9,7 @@ import (
 	"github.com/llmariner/job-manager/syncer/internal/config"
 	"github.com/spf13/cobra"
 	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 func runCmd() *cobra.Command {
@@ -40,7 +41,15 @@ func run(ctx context.Context, c *config.Config) error {
 	ctx = ctrl.LoggerInto(ctx, log)
 	ctrl.SetLogger(logger)
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{})
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		LeaderElection:   c.KubernetesManager.EnableLeaderElection,
+		LeaderElectionID: c.KubernetesManager.LeaderElectionID,
+		Metrics: metricsserver.Options{
+			BindAddress: c.KubernetesManager.MetricsBindAddress,
+		},
+		HealthProbeBindAddress: c.KubernetesManager.HealthBindAddress,
+		PprofBindAddress:       c.KubernetesManager.PprofBindAddress,
+	})
 	if err != nil {
 		return fmt.Errorf("create manager: %s", err)
 	}

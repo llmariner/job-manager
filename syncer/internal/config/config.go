@@ -8,10 +8,37 @@ import (
 )
 
 // Config is the configuration.
-type Config struct{}
+type Config struct {
+	JobManagerServerSyncerServiceAddr string `yaml:"jobManagerServerSyncerServiceAddr"`
+
+	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
+}
+
+// KubernetesManagerConfig is the Kubernetes manager configuration.
+type KubernetesManagerConfig struct {
+	EnableLeaderElection bool   `yaml:"enableLeaderElection"`
+	LeaderElectionID     string `yaml:"leaderElectionID"`
+
+	MetricsBindAddress string `yaml:"metricsBindAddress"`
+	HealthBindAddress  string `yaml:"healthBindAddress"`
+	PprofBindAddress   string `yaml:"pprofBindAddress"`
+}
+
+func (c *KubernetesManagerConfig) validate() error {
+	if c.EnableLeaderElection && c.LeaderElectionID == "" {
+		return fmt.Errorf("leader election ID must be set")
+	}
+	return nil
+}
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
+	if c.JobManagerServerSyncerServiceAddr == "" {
+		return fmt.Errorf("jobManagerServerSyncerServiceAddr must be set")
+	}
+	if err := c.KubernetesManager.validate(); err != nil {
+		return fmt.Errorf("kubernetesManager: %s", err)
+	}
 	return nil
 }
 
