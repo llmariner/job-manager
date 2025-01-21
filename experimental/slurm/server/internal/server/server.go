@@ -1,18 +1,27 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	v40 "github.com/llmariner/job-manager/experimental/slurm/api/v0040"
 )
 
-// S is a server.
-type S struct{}
-
 // New returns S.
-func New() *S {
-	return &S{}
+func New(
+	proxy *Proxy,
+	logger logr.Logger,
+) *S {
+	return &S{
+		proxy:  proxy,
+		logger: logger,
+	}
+}
+
+// S is a server.
+type S struct {
+	proxy  *Proxy
+	logger logr.Logger
 }
 
 // SlurmV0040GetDiag implements the endpoint
@@ -41,6 +50,7 @@ func (s *S) SlurmV0040DeleteJobs(w http.ResponseWriter, r *http.Request) {
 
 // SlurmV0040GetJobs implements the endpoint
 func (s *S) SlurmV0040GetJobs(w http.ResponseWriter, r *http.Request, params v40.SlurmV0040GetJobsParams) {
+	s.proxy.forward(w, r, http.MethodGet, "/slurm/v0.0.41/jobs/")
 }
 
 // SlurmV0040GetJobsState implements the endpoint
@@ -177,10 +187,6 @@ func (s *S) SlurmdbV0040GetJob(w http.ResponseWriter, r *http.Request, jobID str
 
 // SlurmdbV0040GetJobs implements the endpoint
 func (s *S) SlurmdbV0040GetJobs(w http.ResponseWriter, r *http.Request, params v40.SlurmdbV0040GetJobsParams) {
-	// Implemented experimentally.
-	resp := &v40.SlurmdbV0040GetJobsResponse{}
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
 }
 
 // SlurmdbV0040GetQos implements the endpoint

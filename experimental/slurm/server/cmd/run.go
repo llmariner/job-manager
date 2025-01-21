@@ -7,10 +7,11 @@ import (
 	"net/http"
 
 	"github.com/go-logr/stdr"
+
+	v40 "github.com/llmariner/job-manager/experimental/slurm/api/v0040"
 	"github.com/llmariner/job-manager/experimental/slurm/server/internal/config"
 	"github.com/llmariner/job-manager/experimental/slurm/server/internal/server"
 	"github.com/spf13/cobra"
-	v40 "github.com/llmariner/job-manager/experimental/slurm/api/v0040"
 )
 
 func runCmd() *cobra.Command {
@@ -46,7 +47,9 @@ func run(ctx context.Context, c *config.Config) error {
 
 	log.Info("Starting the server", "port", c.HTTPPort)
 
-	s := server.New()
+	proxy := server.NewProxy(c.BaseURL, c.AuthToken)
+	s := server.New(proxy, logger.WithName("server"))
+
 	hs := &http.Server{
 		Handler: v40.HandlerFromMux(s, http.NewServeMux()),
 		Addr:    fmt.Sprintf("0.0.0.0:%d", c.HTTPPort),

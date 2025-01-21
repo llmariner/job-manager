@@ -2,6 +2,11 @@
 
 This directory contains experimental code related to Slurm.
 
+## Building a Slurm cluster
+
+Follow https://github.com/llmariner/llmariner/tree/main/hack/slurm to
+use Slinky to build a Slurm cluster on top of Kubernetes.
+
 ## Server
 
 This is a HTTP server that implements Slurm Rest endpoint. It uses the OpenAI spec in
