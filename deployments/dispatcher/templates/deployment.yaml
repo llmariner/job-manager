@@ -32,6 +32,8 @@ spec:
         - run
         - --config
         - /etc/config/config.yaml
+        - --v
+        - "{{ .Values.logLevel }}"
         volumeMounts:
         - name: config
           mountPath: /etc/config

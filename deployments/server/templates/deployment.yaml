@@ -31,6 +31,8 @@ spec:
         - run
         - --config
         - /etc/config/config.yaml
+        - --v
+        - "{{ .Values.logLevel }}"
         ports:
         - name: grpc
           containerPort: {{ .Values.grpcPort }}
@@ -40,6 +42,9 @@ spec:
           protocol: TCP
         - name: ws-grpc
           containerPort: {{ .Values.workerServiceGrpcPort }}
+          protocol: TCP
+        - name: syncer-grpc
+          containerPort: {{ .Values.syncerServiceGrpcPort }}
           protocol: TCP
         volumeMounts:
         - name: config

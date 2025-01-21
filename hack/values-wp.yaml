@@ -1,14 +1,19 @@
 global:
   worker:
-    controlPlaneAddr: control-plane:80
+    controlPlaneAddr: control-plane:8080
     registrationKeySecret:
       name: cluster-registration-key
       key: regKey
 
 session-manager-agent:
+  enable: true
+  componentStatusSender:
+    enable: false
   sessionManagerServerWorkerServiceAddr: control-plane:81
 
 job-manager-dispatcher:
+  enable: true
+  logLevel: 4
   componentStatusSender:
     enable: false
   notebook:

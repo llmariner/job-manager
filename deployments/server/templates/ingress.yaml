@@ -41,9 +41,8 @@ spec:
             port:
               number: {{ .Values.httpPort }}
 
+{{- if .Values.global.workerServiceIngress.create }}
 ---
-
-{{- if .Values.global.workerServiceIngress.create -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -114,4 +113,36 @@ spec:
             name: {{ include "job-manager-server.fullname" . }}-worker-service-grpc
             port:
               number: {{ .Values.workerServiceGrpcPort }}
+{{- end -}}
+
+{{- if .Values.syncerServiceIngress.create }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "job-manager-server.fullname" . }}-syncer-service-grpc
+  labels:
+    {{- include "job-manager-server.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.syncerServiceIngress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.global.ingress.ingressClassName }}
+  {{- with .Values.global.ingress.tls }}
+  tls:
+  - hosts:
+      {{- toYaml .hosts | nindent 6 }}
+    {{- if .secretName }}
+    secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+  - http:
+      paths:
+      - path:  /llmariner.syncer.server.v1.SyncerService
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-syncer-service-grpc
+            port:
+              number: {{ .Values.syncerServiceGrpcPort }}
 {{- end -}}

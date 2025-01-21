@@ -116,6 +116,9 @@ grpcPort: 8081
 # The GRPC port number for the worker service.
 # +docs:type=number
 workerServiceGrpcPort: 8082
+# The GRPC port number for the syncer service.
+# +docs:type=number
+syncerServiceGrpcPort: 8083
 
 # The address of the file-manager-server to call public file APIs.
 fileManagerServerAddr: file-manager-server-grpc:8081
@@ -123,6 +126,22 @@ fileManagerServerAddr: file-manager-server-grpc:8081
 modelManagerServerAddr: model-manager-server-grpc:8081
 # The endpoint of the session-manager-server to call the Kubernetes APIs of the worker.
 sessionManagerServerEndpoint: http://session-manager-server-http:8080/v1
+
+syncerServiceGrpcService:
+  # Optional additional annotations to add to Service of the
+  # job-manager-server syncer service.
+  annotations: {}
+
+# Specify the syncer Ingress configuration for syncer components to
+# connect to the job-manager-server's syncer service. This is only
+# necessary when installing LLMariner in a multi-cluster mode.
+# For more information, see [Install across Multiple Clusters](https://llmariner.ai/docs/setup/install/multi_cluster_production/).
+syncerServiceIngress:
+  # Specify whether to create an Ingress.
+  create: false
+  # Optional additional annotations to add to the syncer Ingress.
+  # +docs:property
+  # annotations: {}
 
 # TODO(aya): build own image and think the way to switch the driver version
 
@@ -140,6 +159,10 @@ batchJob:
   # +docs:property
   images:
     pytorch-2.1: pytorch/pytorch:2.1.1-cuda12.1-cudnn8-runtime
+
+# The log level of the inference-manager-engine container.
+# +docs:type=number
+logLevel: 0
 
 # Override the "job-manager-server.fullname" value. This value is used
 # as part of most of the names of the resources created by this Helm chart.
