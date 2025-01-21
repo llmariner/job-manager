@@ -9,13 +9,23 @@ import (
 
 // Config is the configuration.
 type Config struct {
-	HTTPPort              int `yaml:"httpPort"`
+	HTTPPort int `yaml:"httpPort"`
+
+	BaseURL string `yaml:"baseUrl"`
+
+	AuthToken string `yaml:"authToken"`
 }
 
 // Validate validates the configuration.
 func (c *Config) Validate() error {
 	if c.HTTPPort <= 0 {
 		return fmt.Errorf("httpPort must be greater than 0")
+	}
+	if c.BaseURL == "" {
+		return fmt.Errorf("baseUrl must not be empty")
+	}
+	if c.AuthToken == "" {
+		return fmt.Errorf("authToken must not be empty")
 	}
 
 	return nil
