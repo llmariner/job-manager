@@ -107,6 +107,10 @@ load-server-image: build-docker-server
 load-dispatcher-image: build-docker-dispatcher
 	@kind get clusters|grep $(WP_CLUSTER)|xargs -n1 kind load docker-image $(DISPATCHER_IMAGE):$(TAG) --name
 
+.PHONY: load-syncer-image
+load-syncer-image: build-docker-syncer
+	@kind load docker-image $(SYNCER_IMAGE):$(TAG) --name $(TN_CLUSTER)
+
 # ------------------------------------------------------------------------------
 # rollout pods
 # ------------------------------------------------------------------------------
