@@ -1,0 +1,8 @@
+job-manager-syncer:
+  enable: true
+  jobManagerServerSyncerServiceAddr: control-plane:8080
+  logLevel: 4
+  version: latest
+  image:
+    repository: llmariner/job-manager-syncer
+    pullPolicy: Never

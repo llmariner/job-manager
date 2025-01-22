@@ -7,7 +7,7 @@ WP_CLUSTER ?= job-wp
 WORKER_NUM ?= 1
 
 .PHONY: provision-all
-provision-all: pull-llma-chart configure-llma-chart create-kind-cluster helm-apply-cp-deps load-server-image helm-apply-cp-llma helm-apply-wp-deps load-dispatcher-image helm-apply-wp-llma
+provision-all: pull-llma-chart configure-llma-chart create-kind-cluster helm-apply-cp-deps load-server-image helm-apply-cp-llma helm-apply-wp-deps load-dispatcher-image helm-apply-wp-llma load-syncer-image helm-apply-tn-llma
 
 .PHONY: reapply-job-server
 reapply-job-server: load-server-image helm-apply-cp-llma rollout-job-server
@@ -79,6 +79,7 @@ helm-apply-deps:
 
 EXTRA_CP_VALS ?= values-cp.yaml
 EXTRA_WP_VALS ?= values-wp.yaml
+EXTRA_TN_VALS ?= values-tn.yaml
 
 .PHONY: helm-apply-cp-llma
 helm-apply-cp-llma:
@@ -90,6 +91,10 @@ helm-apply-wp-llma:
 		export REGISTRATION_KEY=$$(cat $(CLONE_PATH)/.regkey-kind-$$cluster); \
 		$(MAKE) helm-apply-llma EXTRA_VALS=$(EXTRA_WP_VALS) KUBE_CTX=kind-$$cluster HELM_ENV=worker; \
 	done
+
+.PHONY: helm-apply-tn-llma
+helm-apply-tn-llma:
+	$(MAKE) helm-apply-llma EXTRA_VALS=$(EXTRA_TN_VALS) KUBE_CTX=kind-$(TN_CLUSTER)
 
 .PHONY: helm-apply-llma
 helm-apply-llma:
@@ -122,3 +127,7 @@ rollout-job-server:
 .PHONY: rollout-job-dispatcher
 rollout-job-dispatcher:
 	@kind get clusters|grep $(WP_CLUSTER)|xargs -n1 -I{} kubectl --context kind-{} rollout restart deployment -n llmariner-wp job-manager-dispatcher
+
+.PHONY: rollout-job-syncer
+rollout-job-syncer:
+	@kubectl --context kind-$(TN_CLUSTER) rollout restart deployment -n llmariner job-manager-syncer
