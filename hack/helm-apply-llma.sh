@@ -23,7 +23,9 @@ fi
 echo "base: $base"
 
 cd ${LLMA_PATH}/provision/dev
+# TODO(aya): remove `--skip-schema-validation` flag after syncer is added to llmariner
 helmfile apply \
+         --args "--skip-schema-validation" \
          --skip-refresh \
          --skip-diff-on-install \
          --kube-context ${KUBE_CONTEXT} \

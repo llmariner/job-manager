@@ -29,10 +29,22 @@ if __name__ == "__main__":
     relative_paths = {
         "job-manager-server": f"file://{deployments_dir}/server/",
         "job-manager-dispatcher": f"file://{deployments_dir}/dispatcher/",
+        "job-manager-syncer": f"file://{deployments_dir}/syncer/",
     }
 
     with open(chart_yaml_path, "r") as f:
         conf = yaml.safe_load(f)
+
+    # TODO(aya): remove this after syncer is added to the chart
+    conf["dependencies"].append(
+        {
+            "name": "job-manager-syncer",
+            "condition": "job-manager-syncer.enable",
+            "version": "1.4.1",
+            "repository": "oci://public.ecr.aws/cloudnatix/llmariner-charts",
+            "tags": ["tenant-control-plane"],
+        }
+    )
 
     new_conf = replace_repository_paths(conf, relative_paths)
 
