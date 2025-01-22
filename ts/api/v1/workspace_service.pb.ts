@@ -50,6 +50,7 @@ export type Notebook = {
   status?: string
   token?: string
   projectId?: string
+  organizationId?: string
   kubernetesNamespace?: string
   clusterId?: string
 }

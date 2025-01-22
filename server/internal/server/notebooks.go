@@ -73,6 +73,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		Envs:                req.Envs,
 		Status:              string(store.NotebookStateQueued),
 		ProjectId:           userInfo.ProjectID,
+		OrganizationId:      userInfo.OrganizationID,
 		KubernetesNamespace: sresult.Namespace,
 		ClusterId:           sresult.ClusterID,
 	}
