@@ -59,6 +59,14 @@ jobs:
         platforms: linux/amd64,linux/arm64
         tags: |
           public.ecr.aws/cloudnatix/llmariner/job-manager-server:latest
+    - name: Build and publish syncer docker image
+      uses: docker/build-push-action@v5
+      with:
+        file: ./build/syncer/Dockerfile
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: |
+          public.ecr.aws/cloudnatix/llmariner/job-manager-syncer:latest
 
   release-image-and-chart:
     if: needs.re-test.outputs.release_commit == 'true'
@@ -102,6 +110,15 @@ jobs:
         tags: |
           public.ecr.aws/cloudnatix/llmariner/job-manager-server:${{ env.version }}
           public.ecr.aws/cloudnatix/llmariner/job-manager-server:latest
+    - name: Build and publish syncer docker image
+      uses: docker/build-push-action@v5
+      with:
+        file: ./build/syncer/Dockerfile
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: |
+          public.ecr.aws/cloudnatix/llmariner/job-manager-syncer:${{ env.version }}
+          public.ecr.aws/cloudnatix/llmariner/job-manager-syncer:latest
     - name: Set up Helm
       uses: Azure/setup-helm@v4
     - name: Build and publish dispatcher helm chart
@@ -112,6 +129,10 @@ jobs:
       run: |
         helm package --version ${{ env.version }} ./deployments/server
         helm push job-manager-server-${{ env.version }}.tgz oci://public.ecr.aws/cloudnatix/llmariner-charts
+    - name: Build and publish syncer helm chart
+      run: |
+        helm package --version ${{ env.version }} ./deployments/syncer
+        helm push job-manager-syncer-${{ env.version }}.tgz oci://public.ecr.aws/cloudnatix/llmariner-charts
     - name: Create release
       uses: softprops/action-gh-release@v2.0.8
       with:
