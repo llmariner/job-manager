@@ -387,6 +387,9 @@
         "projectId": {
           "type": "string"
         },
+        "organizationId": {
+          "type": "string"
+        },
         "kubernetesNamespace": {
           "type": "string"
         },
