@@ -23,6 +23,7 @@ export enum NotebookState {
   STOPPED = "STOPPED",
   FAILED = "FAILED",
   DELETED = "DELETED",
+  REQUEUED = "REQUEUED",
 }
 
 export enum NotebookQueuedAction {
@@ -30,6 +31,7 @@ export enum NotebookQueuedAction {
   STARTING = "STARTING",
   STOPPING = "STOPPING",
   DELETING = "DELETING",
+  REQUEUEING = "REQUEUEING",
 }
 
 export type NotebookError = {

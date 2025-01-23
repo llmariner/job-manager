@@ -13,6 +13,7 @@ export var NotebookState;
     NotebookState["STOPPED"] = "STOPPED";
     NotebookState["FAILED"] = "FAILED";
     NotebookState["DELETED"] = "DELETED";
+    NotebookState["REQUEUED"] = "REQUEUED";
 })(NotebookState || (NotebookState = {}));
 export var NotebookQueuedAction;
 (function (NotebookQueuedAction) {
@@ -20,6 +21,7 @@ export var NotebookQueuedAction;
     NotebookQueuedAction["STARTING"] = "STARTING";
     NotebookQueuedAction["STOPPING"] = "STOPPING";
     NotebookQueuedAction["DELETING"] = "DELETING";
+    NotebookQueuedAction["REQUEUEING"] = "REQUEUEING";
 })(NotebookQueuedAction || (NotebookQueuedAction = {}));
 export class WorkspaceService {
     static CreateNotebook(req, initReq) {
