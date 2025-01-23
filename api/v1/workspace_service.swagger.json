@@ -416,7 +416,8 @@
         "ACTION_UNSPECIFIED",
         "STARTING",
         "STOPPING",
-        "DELETING"
+        "DELETING",
+        "REQUEUEING"
       ],
       "default": "ACTION_UNSPECIFIED"
     },
@@ -429,7 +430,8 @@
         "RUNNING",
         "STOPPED",
         "FAILED",
-        "DELETED"
+        "DELETED",
+        "REQUEUED"
       ],
       "default": "STATE_UNSPECIFIED"
     },

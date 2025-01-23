@@ -14,13 +14,15 @@ export declare enum NotebookState {
     RUNNING = "RUNNING",
     STOPPED = "STOPPED",
     FAILED = "FAILED",
-    DELETED = "DELETED"
+    DELETED = "DELETED",
+    REQUEUED = "REQUEUED"
 }
 export declare enum NotebookQueuedAction {
     ACTION_UNSPECIFIED = "ACTION_UNSPECIFIED",
     STARTING = "STARTING",
     STOPPING = "STOPPING",
-    DELETING = "DELETING"
+    DELETING = "DELETING",
+    REQUEUEING = "REQUEUEING"
 }
 export type NotebookError = {
     code?: string;
@@ -41,6 +43,7 @@ export type Notebook = {
     status?: string;
     token?: string;
     projectId?: string;
+    organizationId?: string;
     kubernetesNamespace?: string;
     clusterId?: string;
 };

@@ -138,6 +138,7 @@ enum NotebookState {
   STOPPED = 4;
   FAILED = 5;
   DELETED = 6;
+  REQUEUED = 7;
 }
 
 enum NotebookQueuedAction {
@@ -145,6 +146,7 @@ enum NotebookQueuedAction {
   STARTING = 1;
   STOPPING = 2;
   DELETING = 3;
+  REQUEUEING = 4;
 }
 
 message InternalNotebook {
