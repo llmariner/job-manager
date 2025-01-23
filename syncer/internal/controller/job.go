@@ -56,7 +56,7 @@ func (c *JobController) SetupWithManager(mgr ctrl.Manager, ssClient v1.SyncerSer
 		Complete(c)
 }
 
-// Reconcile reconciles a local Job object and deploy it to the worker cluster.
+// Reconcile reconciles a local Job object and deploys it to the worker cluster.
 func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
