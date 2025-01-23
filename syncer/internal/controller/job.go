@@ -19,11 +19,13 @@ import (
 )
 
 const (
-	controllerName = "cloudnatix.com/job-controller"
+	domain             = "cloudnatix.com"
+	controllerName     = "job-controller"
+	fullControllerName = domain + "/" + controllerName
 
-	annoKeyClusterID  = "cloudnatix.com/cluster-id"
-	annoKeyUID        = "cloudnatix.com/uid"
-	annoKeyDeployedAt = "cloudnatix.com/deployed-at"
+	annoKeyClusterID  = domain + "/cluster-id"
+	annoKeyUID        = domain + "/uid"
+	annoKeyDeployedAt = domain + "/deployed-at"
 )
 
 var excludeLabelKeys = map[string]struct{}{
@@ -48,10 +50,11 @@ type JobController struct {
 
 // SetupWithManager sets up the controller with the Manager.
 func (c *JobController) SetupWithManager(mgr ctrl.Manager, ssClient v1.SyncerServiceClient) error {
-	c.recorder = mgr.GetEventRecorderFor(controllerName)
+	c.recorder = mgr.GetEventRecorderFor(fullControllerName)
 	c.k8sClient = mgr.GetClient()
 	c.ssClient = ssClient
 	return ctrl.NewControllerManagedBy(mgr).
+		Named(controllerName).
 		For(&batchv1.Job{}).
 		Complete(c)
 }
@@ -69,13 +72,13 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	if mgr := ptr.Deref(job.Spec.ManagedBy, ""); mgr != controllerName {
+	if mgr := ptr.Deref(job.Spec.ManagedBy, ""); mgr != fullControllerName {
 		log.V(4).Info("Skip job", "managedBy", mgr)
 		return ctrl.Result{}, nil
 	}
 
 	if !job.DeletionTimestamp.IsZero() {
-		if !controllerutil.ContainsFinalizer(&job, controllerName) {
+		if !controllerutil.ContainsFinalizer(&job, fullControllerName) {
 			return ctrl.Result{}, nil
 		}
 
@@ -96,7 +99,7 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			log.V(1).Info("Cluster ID not found, this job might not be deployed")
 		}
 
-		controllerutil.RemoveFinalizer(&job, controllerName)
+		controllerutil.RemoveFinalizer(&job, fullControllerName)
 		if err := c.k8sClient.Update(ctx, &job); err != nil {
 			log.Error(err, "Failed to remove finalizer")
 			return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -105,8 +108,8 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	if !controllerutil.ContainsFinalizer(&job, controllerName) {
-		controllerutil.AddFinalizer(&job, controllerName)
+	if !controllerutil.ContainsFinalizer(&job, fullControllerName) {
+		controllerutil.AddFinalizer(&job, fullControllerName)
 		if err := c.k8sClient.Update(ctx, &job); err != nil {
 			log.Error(err, "add finalizer")
 			return ctrl.Result{}, client.IgnoreNotFound(err)
