@@ -123,6 +123,10 @@ func (s *S) CreateJob(
 		ProjectId:           userInfo.ProjectID,
 		KubernetesNamespace: sresult.Namespace,
 		ClusterId:           sresult.ClusterID,
+
+		OrganizationTitle: userInfo.OrganizationTitle,
+		ProjectTitle:      userInfo.ProjectTitle,
+		ClusterName:       sresult.ClusterName,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {

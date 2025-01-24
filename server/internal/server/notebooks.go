@@ -77,6 +77,10 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		OrganizationId:      userInfo.OrganizationID,
 		KubernetesNamespace: sresult.Namespace,
 		ClusterId:           sresult.ClusterID,
+
+		OrganizationTitle: userInfo.OrganizationTitle,
+		ProjectTitle:      userInfo.ProjectTitle,
+		ClusterName:       sresult.ClusterName,
 	}
 	msg, err := proto.Marshal(nbProto)
 	if err != nil {

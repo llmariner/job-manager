@@ -387,6 +387,15 @@
         "clusterId": {
           "type": "string",
           "description": "cluster_id is the ID of the cluster where he job runs."
+        },
+        "organizationTitle": {
+          "type": "string"
+        },
+        "projectTitle": {
+          "type": "string"
+        },
+        "clusterName": {
+          "type": "string"
         }
       }
     },

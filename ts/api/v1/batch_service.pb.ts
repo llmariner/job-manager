@@ -63,6 +63,9 @@ export type BatchJob = {
   kubernetesNamespace?: string
   clusterId?: string
   kind?: BatchJobKind
+  organizationTitle?: string
+  projectTitle?: string
+  clusterName?: string
 }
 
 export type PyTorchJob = {

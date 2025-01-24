@@ -55,6 +55,9 @@ export type Notebook = {
   organizationId?: string
   kubernetesNamespace?: string
   clusterId?: string
+  organizationTitle?: string
+  projectTitle?: string
+  clusterName?: string
 }
 
 export type ResourcesQuantity = {

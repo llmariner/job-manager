@@ -37,8 +37,9 @@ type S struct {
 
 // SchedulingResult is the result of scheduling a workload.
 type SchedulingResult struct {
-	ClusterID string
-	Namespace string
+	ClusterID   string
+	ClusterName string
+	Namespace   string
 }
 
 // Schedule returns a Kubernetes cluster and a namespace where a workload can be scheduled.
@@ -60,8 +61,10 @@ func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
 	}
 
 	namespacesByCluster := map[string]string{}
+	clustersNamesByID := map[string]string{}
 	for _, env := range userInfo.AssignedKubernetesEnvs {
 		namespacesByCluster[env.ClusterID] = env.Namespace
+		clustersNamesByID[env.ClusterID] = env.ClusterName
 	}
 	for _, c := range clusters {
 		if time.Since(c.UpdatedAt) > staleThreshold {
@@ -83,8 +86,9 @@ func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
 			return SchedulingResult{}, err
 		} else if ok {
 			return SchedulingResult{
-				ClusterID: c.ClusterID,
-				Namespace: ns,
+				ClusterID:   c.ClusterID,
+				ClusterName: clustersNamesByID[c.ClusterID],
+				Namespace:   ns,
 			}, nil
 		}
 	}
