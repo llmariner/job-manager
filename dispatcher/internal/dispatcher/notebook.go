@@ -133,7 +133,12 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	for k, v := range nb.Notebook.Envs {
 		envs = append(envs, corev1apply.EnvVar().WithName(k).WithValue(v))
 	}
-	envs = append(envs, corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmaBaseURL))
+	// The following sets the configuration that the OpenAI Python library uses.
+	envs = append(envs,
+		corev1apply.EnvVar().WithName("OPENAI_BASE_URL").WithValue(n.llmaBaseURL),
+		corev1apply.EnvVar().WithName("OPENAI_ORG_ID").WithValue(nb.Notebook.OrganizationId),
+		corev1apply.EnvVar().WithName("OPENAI_PROJECT_ID").WithValue(nb.Notebook.ProjectId),
+	)
 
 	req := corev1.ResourceList{}
 	limit := corev1.ResourceList{}
