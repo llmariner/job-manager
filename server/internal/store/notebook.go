@@ -25,6 +25,8 @@ const (
 	NotebookStateFailed NotebookState = "failed"
 	// NotebookStateDeleted is the state of a notebook that has been deleted.
 	NotebookStateDeleted NotebookState = "deleted"
+	// NotebookStateRequeued is the state of a notebook that has been requeued from unavailable clusters.
+	NotebookStateRequeued NotebookState = "requeued"
 )
 
 // NotebookQueuedAction is the action of a queued notebook.
@@ -37,6 +39,8 @@ const (
 	NotebookQueuedActionStop NotebookQueuedAction = "stopping"
 	// NotebookQueuedActionDelete is the action to delete a notebook.
 	NotebookQueuedActionDelete NotebookQueuedAction = "deleting"
+	// NotebookQueuedActionRequeue is the action to requeue a notebook.
+	NotebookQueuedActionRequeue NotebookQueuedAction = "requeueing"
 )
 
 // Notebook is a model of notebook.
@@ -55,6 +59,8 @@ type Notebook struct {
 
 	// Message is the marshalled JSON of the v1.Notebook.
 	Message []byte
+	// ProjectMessage is the marshalled JSON of the rbac v1.Project.
+	ProjectMessage []byte
 
 	State NotebookState `gorm:"index:idx_notebook_project_id_state;index:idx_notebook_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of the queued notebook. This field is only used when

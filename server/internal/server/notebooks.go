@@ -10,6 +10,7 @@ import (
 	"github.com/llmariner/common/pkg/id"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
+	rbacv1 "github.com/llmariner/rbac-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -82,6 +83,22 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "marshal notebook: %s", err)
 	}
 
+	var akesProto []*rbacv1.Project_AssignedKubernetesEnv
+	for _, a := range userInfo.AssignedKubernetesEnvs {
+		akesProto = append(akesProto, &rbacv1.Project_AssignedKubernetesEnv{
+			ClusterId: a.ClusterID,
+			Namespace: a.Namespace,
+		})
+	}
+	pProto := &rbacv1.Project{
+		Id:                     userInfo.ProjectID,
+		AssignedKubernetesEnvs: akesProto,
+	}
+	proj, err := proto.Marshal(pProto)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal assigned kubernetes env: %s", err)
+	}
+
 	apikey, err := auth.ExtractTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -102,14 +119,15 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	}
 
 	nb := &store.Notebook{
-		NotebookID:   nbID,
-		Message:      msg,
-		State:        store.NotebookStateQueued,
-		QueuedAction: store.NotebookQueuedActionStart,
-		TenantID:     userInfo.TenantID,
-		ProjectID:    userInfo.ProjectID,
-		ClusterID:    sresult.ClusterID,
-		Name:         req.Name,
+		NotebookID:     nbID,
+		Message:        msg,
+		ProjectMessage: proj,
+		State:          store.NotebookStateQueued,
+		QueuedAction:   store.NotebookQueuedActionStart,
+		TenantID:       userInfo.TenantID,
+		ProjectID:      userInfo.ProjectID,
+		ClusterID:      sresult.ClusterID,
+		Name:           req.Name,
 	}
 	if err := s.store.CreateNotebook(nb); err != nil {
 		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)
