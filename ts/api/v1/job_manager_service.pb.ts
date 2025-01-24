@@ -75,6 +75,9 @@ export type Job = {
   projectId?: string
   kubernetesNamespace?: string
   clusterId?: string
+  organizationTitle?: string
+  projectTitle?: string
+  clusterName?: string
 }
 
 export type CreateJobRequestHyperparameters = {

@@ -82,6 +82,10 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		KubernetesNamespace: sresult.Namespace,
 		ClusterId:           sresult.ClusterID,
 		Kind:                req.Kind,
+
+		OrganizationTitle: userInfo.OrganizationTitle,
+		ProjectTitle:      userInfo.ProjectTitle,
+		ClusterName:       sresult.ClusterName,
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {

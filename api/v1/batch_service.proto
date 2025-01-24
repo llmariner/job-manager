@@ -40,6 +40,10 @@ message BatchJob {
     }
   }
   Kind kind = 15;
+
+  string organization_title = 16;
+  string project_title = 17;
+  string cluster_name = 18;
 }
 
 message PyTorchJob {
