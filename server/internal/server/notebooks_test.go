@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
+	rbacv1 "github.com/llmariner/rbac-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -63,8 +64,20 @@ func TestCreateNotebook(t *testing.T) {
 			}
 			assert.NoError(t, err)
 
-			_, err = st.GetNotebookByIDAndProjectID(resp.Id, defaultProjectID)
+			nb, err := st.GetNotebookByIDAndProjectID(resp.Id, defaultProjectID)
 			assert.NoError(t, err)
+			expProj := &rbacv1.Project{
+				Id: defaultProjectID,
+				AssignedKubernetesEnvs: []*rbacv1.Project_AssignedKubernetesEnv{
+					{
+						ClusterId: defaultClusterID,
+						Namespace: "default",
+					},
+				},
+			}
+			expMsg, err := proto.Marshal(expProj)
+			assert.NoError(t, err)
+			assert.Equal(t, expMsg, nb.ProjectMessage)
 		})
 	}
 }
