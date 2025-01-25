@@ -85,7 +85,12 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 	}
 
 	// TODO(aya): Schedule to the cluster where it was created If the resource is not newly created.
-	sresult, err := ss.scheduler.Schedule(userInfo)
+	// TODO(kenji): Fix the gpu count.
+	var gpuCount int
+	if r := req.Resources; r != nil {
+		gpuCount = int(r.GpuLimit)
+	}
+	sresult, err := ss.scheduler.Schedule(userInfo, gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}

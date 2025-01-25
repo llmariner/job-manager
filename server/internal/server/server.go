@@ -44,7 +44,7 @@ type modelClient interface {
 }
 
 type schedulerI interface {
-	Schedule(userInfo *auth.UserInfo) (scheduler.SchedulingResult, error)
+	Schedule(userInfo *auth.UserInfo, gpuCount int) (scheduler.SchedulingResult, error)
 }
 
 // New creates a server.

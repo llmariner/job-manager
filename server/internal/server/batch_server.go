@@ -64,7 +64,11 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 		return nil, status.Errorf(codes.Internal, "generate batch job id: %s", err)
 	}
 
-	sresult, err := s.scheduler.Schedule(userInfo)
+	var gpuCount int
+	if r := req.Resources; r != nil {
+		gpuCount = int(r.GpuCount)
+	}
+	sresult, err := s.scheduler.Schedule(userInfo, gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
