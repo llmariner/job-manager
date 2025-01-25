@@ -108,8 +108,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig, usa
 			RBACServerAddr: authConfig.RBACInternalServerAddr,
 			GetAccessResourceForGRPCRequest: func(fullMethod string) string {
 				switch {
-				case strings.HasPrefix(fullMethod, "/llmoperator.workspace."),
-					strings.HasPrefix(fullMethod, "/llmariner.workspace."):
+				case strings.HasPrefix(fullMethod, "/llmariner.workspace."):
 					return "api.workspaces.notebooks"
 				}
 				return "api.fine_tuning.jobs"
