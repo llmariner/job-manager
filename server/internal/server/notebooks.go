@@ -60,7 +60,11 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "generate notebook id: %s", err)
 	}
 
-	sresult, err := s.scheduler.Schedule(userInfo)
+	var gpuCount int
+	if r := req.Resources; r != nil {
+		gpuCount = int(r.GpuCount)
+	}
+	sresult, err := s.scheduler.Schedule(userInfo, gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}

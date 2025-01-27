@@ -20,6 +20,7 @@ func TestSchedule(t *testing.T) {
 		name     string
 		clusters []*store.Cluster
 		userInfo *auth.UserInfo
+		gpuCount int
 		want     SchedulingResult
 		wantErr  bool
 	}{
@@ -35,7 +36,8 @@ func TestSchedule(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			gpuCount: 1,
+			wantErr:  true,
 		},
 		{
 			name: "assigned gpu cluster",
@@ -62,6 +64,31 @@ func TestSchedule(t *testing.T) {
 					},
 				},
 			},
+			gpuCount: 1,
+			want: SchedulingResult{
+				ClusterID: "cluster0",
+				Namespace: "namespace0",
+			},
+		},
+		{
+			name: "assigned without gpu",
+			clusters: []*store.Cluster{
+				{
+					ClusterID: "cluster0",
+					TenantID:  tenantID,
+					Status:    marshalStatus(t, &v1.ClusterStatus{}),
+				},
+			},
+			userInfo: &auth.UserInfo{
+				TenantID: tenantID,
+				AssignedKubernetesEnvs: []auth.AssignedKubernetesEnv{
+					{
+						ClusterID: "cluster0",
+						Namespace: "namespace0",
+					},
+				},
+			},
+			gpuCount: 0,
 			want: SchedulingResult{
 				ClusterID: "cluster0",
 				Namespace: "namespace0",
@@ -92,7 +119,8 @@ func TestSchedule(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			gpuCount: 1,
+			wantErr:  true,
 		},
 	}
 
@@ -107,7 +135,7 @@ func TestSchedule(t *testing.T) {
 			}
 
 			sched := New(st, testr.New(t))
-			got, err := sched.Schedule(tc.userInfo)
+			got, err := sched.Schedule(tc.userInfo, tc.gpuCount)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return

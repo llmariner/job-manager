@@ -47,7 +47,7 @@ type SchedulingResult struct {
 // The function returns an error if a workload is not schedulable.
 //
 // TODO(kenji): Improve the algorithm.
-func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
+func (s *S) Schedule(userInfo *auth.UserInfo, gpuCount int) (SchedulingResult, error) {
 	clusters, err := s.store.ListClustersByTenantID(userInfo.TenantID)
 	if err != nil {
 		return SchedulingResult{}, err
@@ -76,21 +76,25 @@ func (s *S) Schedule(userInfo *auth.UserInfo) (SchedulingResult, error) {
 			continue
 		}
 
-		var status v1.ClusterStatus
-		if err := proto.Unmarshal(c.Status, &status); err != nil {
-			return SchedulingResult{}, err
-		}
+		// Just pick up the first cluster that can provision GPU resources if gpuCount is > 0.
+		// Otherwise just pick up the first cluster.
+		if gpuCount > 0 {
+			var status v1.ClusterStatus
+			if err := proto.Unmarshal(c.Status, &status); err != nil {
+				return SchedulingResult{}, err
+			}
 
-		// Just pick up the first cluster that can provision GPU resources.
-		if ok, err := canProvisionGPUs(&status); err != nil {
-			return SchedulingResult{}, err
-		} else if ok {
-			return SchedulingResult{
-				ClusterID:   c.ClusterID,
-				ClusterName: clustersNamesByID[c.ClusterID],
-				Namespace:   ns,
-			}, nil
+			if ok, err := canProvisionGPUs(&status); err != nil {
+				return SchedulingResult{}, err
+			} else if !ok {
+				continue
+			}
 		}
+		return SchedulingResult{
+			ClusterID:   c.ClusterID,
+			ClusterName: clustersNamesByID[c.ClusterID],
+			Namespace:   ns,
+		}, nil
 	}
 
 	return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
