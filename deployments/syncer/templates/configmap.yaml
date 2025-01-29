@@ -7,6 +7,7 @@ metadata:
 data:
   config.yaml: |
     jobManagerServerSyncerServiceAddr: {{ .Values.jobManagerServerSyncerServiceAddr }}
+    sessionManagerEndpoint: {{ .Values.sessionManagerEndpoint }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-syncer.fullname" . }}

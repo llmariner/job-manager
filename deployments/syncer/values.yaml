@@ -6,6 +6,8 @@
 
 # The address of the job-manager-server to call syncer services.
 jobManagerServerSyncerServiceAddr: job-manager-server-syncer-service-grpc:8082
+# The endpoint of the session-manager.
+sessionManagerEndpoint: http://session-manager-server-http:8080/v1
 
 kubernetesManager:
   # Specify whether to enable the leader election.

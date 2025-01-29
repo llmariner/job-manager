@@ -48,7 +48,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	conn, err := grpc.NewClient(c.JobManagerServerSyncerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return fmt.Errorf("failed to create grpc client: %s", err)
+		return fmt.Errorf("failed to create job grpc client: %s", err)
 	}
 	ssc := v1.NewSyncerServiceClient(conn)
 
@@ -67,6 +67,10 @@ func run(ctx context.Context, c *config.Config) error {
 
 	if err := (&controller.JobController{}).SetupWithManager(mgr, ssc); err != nil {
 		return fmt.Errorf("setup job controller: %s", err)
+	}
+
+	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, c.SessionManagerEndpoint); err != nil {
+		return fmt.Errorf("setup remote syncer manager: %s", err)
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

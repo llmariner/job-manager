@@ -10,6 +10,7 @@ import (
 // Config is the configuration.
 type Config struct {
 	JobManagerServerSyncerServiceAddr string `yaml:"jobManagerServerSyncerServiceAddr"`
+	SessionManagerEndpoint            string `yaml:"sessionManagerEndpoint"`
 
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 }
@@ -35,6 +36,9 @@ func (c *KubernetesManagerConfig) validate() error {
 func (c *Config) Validate() error {
 	if c.JobManagerServerSyncerServiceAddr == "" {
 		return fmt.Errorf("jobManagerServerSyncerServiceAddr must be set")
+	}
+	if c.SessionManagerEndpoint == "" {
+		return fmt.Errorf("sessionManagerEndpoint must be set")
 	}
 	if err := c.KubernetesManager.validate(); err != nil {
 		return fmt.Errorf("kubernetesManager: %s", err)
