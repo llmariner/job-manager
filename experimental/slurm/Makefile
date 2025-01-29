@@ -1,6 +1,7 @@
 .PHONY: generate
 generate:
-	go generate api/v0040
+	go generate api/v0040/api.go
+	go generate api/v0041/api.go
 
 
 .PHONY: build-server

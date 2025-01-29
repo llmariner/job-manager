@@ -1,0 +1,11 @@
+---
+package: v0041
+generate:
+  client: true
+  embedded-spec: true
+  std-http-server: true
+  models: true
+output: gen.go
+output-options:
+  skip-fmt: false
+  skip-prune: true
