@@ -9,19 +9,38 @@ import (
 
 // New returns S.
 func New(
-	proxy *Proxy,
+	proxies []*Proxy,
 	logger logr.Logger,
 ) *S {
 	return &S{
-		proxy:  proxy,
-		logger: logger,
+		proxies: proxies,
+		logger:  logger,
 	}
 }
 
 // S is a server.
 type S struct {
-	proxy  *Proxy
-	logger logr.Logger
+	proxies []*Proxy
+	logger  logr.Logger
+
+	jobSubmissionIndex int
+}
+
+// nextProxy returns the next proxy to use with simple round-robin.
+func (s *S) nextProxy() *Proxy {
+	p := s.proxies[s.jobSubmissionIndex]
+	s.jobSubmissionIndex = (s.jobSubmissionIndex + 1) % len(s.proxies)
+	return p
+}
+
+func (s *S) forwardResponse( w http.ResponseWriter resp *http.Response) {
+	w.WriteHeader(hresp.StatusCode)
+
+	respBody, err := io.ReadAll(hresp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // SlurmV0040GetDiag implements the endpoint.
@@ -30,7 +49,12 @@ func (s *S) SlurmV0040GetDiag(w http.ResponseWriter, r *http.Request) {
 
 // SlurmV0040PostJobSubmit implements the endpoint.
 func (s *S) SlurmV0040PostJobSubmit(w http.ResponseWriter, r *http.Request) {
-	s.proxy.forward(w, r, http.MethodPost, "/slurm/v0.0.41/job/submit")
+	p := s.nextProxy()
+	resp, err := p.forward(w, r, http.MethodPost, "/slurm/v0.0.41/job/submit")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	s.forwardResponse(w, resp)
 }
 
 // SlurmV0040DeleteJob implements the endpoint.
@@ -51,6 +75,15 @@ func (s *S) SlurmV0040DeleteJobs(w http.ResponseWriter, r *http.Request) {
 
 // SlurmV0040GetJobs implements the endpoint.
 func (s *S) SlurmV0040GetJobs(w http.ResponseWriter, r *http.Request, params v40.SlurmV0040GetJobsParams) {
+	// Obtain the result from all proxies and aggregate them.
+
+	for _, p := range s.proxies {
+		var pw http.ResponseWriter
+		p.forward(w, r, http.MethodGet, "/slurm/v0.0.41/jobs/")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+		if
+	}
+
 	s.proxy.forward(w, r, http.MethodGet, "/slurm/v0.0.41/jobs/")
 }
 

@@ -47,8 +47,14 @@ func run(ctx context.Context, c *config.Config) error {
 
 	log.Info("Starting the server", "port", c.HTTPPort)
 
-	proxy := server.NewProxy(c.BaseURL, c.AuthToken)
-	s := server.New(proxy, logger.WithName("server"))
+	var proxies []server.Proxy
+	for _, p := range c.Proxies {
+		s := server.New(proxies, server.NewProxy(
+			p.BaseURL,
+			p.AuthToken,
+			logger.WithName("proxy").WithName(p.Name),
+		))
+	}
 
 	hs := &http.Server{
 		Handler: v40.HandlerFromMux(s, http.NewServeMux()),
