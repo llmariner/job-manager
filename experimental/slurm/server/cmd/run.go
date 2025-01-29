@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-logr/stdr"
 
-	v40 "github.com/llmariner/job-manager/experimental/slurm/api/v0040"
+	v41 "github.com/llmariner/job-manager/experimental/slurm/api/v0041"
 	"github.com/llmariner/job-manager/experimental/slurm/server/internal/config"
 	"github.com/llmariner/job-manager/experimental/slurm/server/internal/server"
 	"github.com/spf13/cobra"
@@ -47,11 +47,20 @@ func run(ctx context.Context, c *config.Config) error {
 
 	log.Info("Starting the server", "port", c.HTTPPort)
 
-	proxy := server.NewProxy(c.BaseURL, c.AuthToken)
-	s := server.New(proxy, logger.WithName("server"))
+	var proxies []*server.Proxy
+	for _, p := range c.Proxies {
+		proxies = append(proxies, server.NewProxy(
+			p.Name,
+			p.BaseURL,
+			p.AuthToken,
+			logger.WithValues("proxy", p.Name),
+		))
+	}
+
+	s := server.New(proxies, logger.WithName("server"))
 
 	hs := &http.Server{
-		Handler: v40.HandlerFromMux(s, http.NewServeMux()),
+		Handler: v41.HandlerFromMux(s, http.NewServeMux()),
 		Addr:    fmt.Sprintf("0.0.0.0:%d", c.HTTPPort),
 	}
 	return hs.ListenAndServe()

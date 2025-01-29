@@ -1,4 +1,11 @@
 httpPort: 8080
-baseUrl: http://localhost:6820
-# Put the output of kubectl get secrets -n slurm slurm-token-slurm -o jsonpath='{.data.auth-token}' | base64 -d
-authToken: ""
+
+proxies:
+- name: cluster1
+  baseUrl: http://localhost:20001
+  # Put the output of kubectl get secrets -n slurm slurm-token-slurm -o jsonpath='{.data.auth-token}' | base64 -d
+  authToken: <dummy>
+- name: cluster2
+  baseUrl: http://localhost:20002
+  # Put the output of kubectl get secrets -n slurm slurm-token-slurm -o jsonpath='{.data.auth-token}' | base64 -d
+  authToken: <dummy>
