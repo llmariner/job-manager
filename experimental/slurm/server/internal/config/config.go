@@ -11,6 +11,13 @@ import (
 type Config struct {
 	HTTPPort int `yaml:"httpPort"`
 
+	Proxies []ProxyConfig `yaml:"proxies"`
+}
+
+// ProxyConfig is the configuration for a proxy.
+type ProxyConfig struct {
+	Name string `yaml:"name"`
+
 	BaseURL string `yaml:"baseUrl"`
 
 	AuthToken string `yaml:"authToken"`
@@ -21,13 +28,28 @@ func (c *Config) Validate() error {
 	if c.HTTPPort <= 0 {
 		return fmt.Errorf("httpPort must be greater than 0")
 	}
+	if len(c.Proxies) == 0 {
+		return fmt.Errorf("proxies must not be empty")
+	}
+	for i, p := range c.Proxies {
+		if err := p.Validate(); err != nil {
+			return fmt.Errorf("proxies[%d]: %s", i, err)
+		}
+	}
+	return nil
+}
+
+// Validate validates the configuration.
+func (c *ProxyConfig) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("name must not be empty")
+	}
 	if c.BaseURL == "" {
 		return fmt.Errorf("baseUrl must not be empty")
 	}
 	if c.AuthToken == "" {
 		return fmt.Errorf("authToken must not be empty")
 	}
-
 	return nil
 }
 
