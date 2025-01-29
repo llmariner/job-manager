@@ -26,6 +26,8 @@ const (
 	annoKeyClusterID  = domain + "/cluster-id"
 	annoKeyUID        = domain + "/uid"
 	annoKeyDeployedAt = domain + "/deployed-at"
+
+	jobLabelKey = domain + "/deployed-by"
 )
 
 var excludeLabelKeys = map[string]struct{}{
@@ -132,6 +134,7 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			delete(deployObj.Labels, k)
 		}
 	}
+	deployObj.Labels[jobLabelKey] = controllerName
 	deployObj.Spec.ManagedBy = nil
 	if deployObj.Spec.Selector != nil {
 		for k := range deployObj.Spec.Selector.MatchLabels {

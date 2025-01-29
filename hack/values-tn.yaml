@@ -1,6 +1,7 @@
 job-manager-syncer:
   enable: true
   jobManagerServerSyncerServiceAddr: control-plane:8080
+  sessionManagerEndpoint: http://control-plane:8080/v1
   logLevel: 4
   version: latest
   image:

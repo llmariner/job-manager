@@ -9,6 +9,7 @@ rules:
   - batch
   resources:
   - jobs
+  - jobs/status
   verbs:
   - create
   - delete
