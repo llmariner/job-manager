@@ -66,13 +66,16 @@ func (s *S) Schedule(userInfo *auth.UserInfo, gpuCount int) (SchedulingResult, e
 		namespacesByCluster[env.ClusterID] = env.Namespace
 		clustersNamesByID[env.ClusterID] = env.ClusterName
 	}
+	s.logger.V(1).Info("Scheduling a workload", "gpuCount", 1, "assignedClustersEnvs", userInfo.AssignedKubernetesEnvs)
 	for _, c := range clusters {
 		if time.Since(c.UpdatedAt) > staleThreshold {
+			s.logger.V(1).Info("Ignoring a stale cluster", "clusterID", c.ClusterID)
 			continue
 		}
 
 		ns, ok := namespacesByCluster[c.ClusterID]
 		if !ok {
+			s.logger.V(1).Info("Ignoring a cluster that is not assigned to the user", "clusterID", c.ClusterID)
 			continue
 		}
 
@@ -87,9 +90,11 @@ func (s *S) Schedule(userInfo *auth.UserInfo, gpuCount int) (SchedulingResult, e
 			if ok, err := canProvisionGPUs(&status); err != nil {
 				return SchedulingResult{}, err
 			} else if !ok {
+				s.logger.V(1).Info("Ignoring a cluster that cannot provision GPUs", "clusterID", c.ClusterID)
 				continue
 			}
 		}
+		s.logger.V(1).Info("Scheduled a workload", "clusterID", c.ClusterID, "namespace", ns)
 		return SchedulingResult{
 			ClusterID:   c.ClusterID,
 			ClusterName: clustersNamesByID[c.ClusterID],
