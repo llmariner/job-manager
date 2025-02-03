@@ -9,6 +9,7 @@ import * as LlmarinerJobsServerV1Job_manager_server_worker from "./job_manager_s
 export type Cluster = {
   id?: string
   status?: LlmarinerJobsServerV1Job_manager_server_worker.ClusterStatus
+  lastUpdatedAt?: string
 }
 
 export type ListClustersRequest = {

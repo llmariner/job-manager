@@ -186,8 +186,9 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 			return nil, status.Errorf(codes.Internal, "failed to marshal cluster status: %s", err)
 		}
 		cs = append(cs, &v1.Cluster{
-			Id:     c.ClusterID,
-			Status: &st,
+			Id:            c.ClusterID,
+			Status:        &st,
+			LastUpdatedAt: c.UpdatedAt.UnixNano(),
 		})
 	}
 	sort.Slice(cs, func(i, j int) bool {

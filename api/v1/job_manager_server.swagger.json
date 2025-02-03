@@ -52,6 +52,11 @@
         },
         "status": {
           "$ref": "#/definitions/v1ClusterStatus"
+        },
+        "lastUpdatedAt": {
+          "type": "string",
+          "format": "int64",
+          "description": "last_updated_at is the last time the cluster was updated in Unix nano seconds."
         }
       }
     },
