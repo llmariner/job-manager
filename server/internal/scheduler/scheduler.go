@@ -45,9 +45,10 @@ type SchedulingResult struct {
 // Schedule returns a Kubernetes cluster and a namespace where a workload can be scheduled.
 // Currently it simply picks up one of the clusters that can provision GPU resources.
 // The function returns an error if a workload is not schedulable.
-//
+// PrevScheduledClusterID is the cluster where the workload was previously scheduled. Schedule
+// will not reschedule the workload to the same cluster.
 // TODO(kenji): Improve the algorithm.
-func (s *S) Schedule(userInfo *auth.UserInfo, gpuCount int) (SchedulingResult, error) {
+func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpuCount int) (SchedulingResult, error) {
 	clusters, err := s.store.ListClustersByTenantID(userInfo.TenantID)
 	if err != nil {
 		return SchedulingResult{}, err
@@ -66,10 +67,14 @@ func (s *S) Schedule(userInfo *auth.UserInfo, gpuCount int) (SchedulingResult, e
 		namespacesByCluster[env.ClusterID] = env.Namespace
 		clustersNamesByID[env.ClusterID] = env.ClusterName
 	}
-	s.logger.V(1).Info("Scheduling a workload", "gpuCount", 1, "assignedClustersEnvs", userInfo.AssignedKubernetesEnvs)
+	s.logger.V(1).Info("Scheduling a workload", "gpuCount", gpuCount, "assignedClustersEnvs", userInfo.AssignedKubernetesEnvs)
 	for _, c := range clusters {
 		if time.Since(c.UpdatedAt) > staleThreshold {
 			s.logger.V(1).Info("Ignoring a stale cluster", "clusterID", c.ClusterID)
+			continue
+		}
+		if c.ClusterID == prevScheduledClusterID {
+			s.logger.V(1).Info("Skipping the previous cluster", "clusterID", c.ClusterID)
 			continue
 		}
 

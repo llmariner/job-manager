@@ -1,7 +1,7 @@
 # This script overwrite the Chart.yaml for testing purposes.
 # It replaces the repository field with the relative path to
 # the deployments directory. This is for testing local code
-# and char without publishing.
+# and chart without publishing.
 #
 # Usage:
 #   python overwrite-llma-chart-for-test.py <chart_yaml_path> <deployments_dir>

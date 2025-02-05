@@ -68,7 +68,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 	if r := req.Resources; r != nil {
 		gpuCount = int(r.GpuCount)
 	}
-	sresult, err := s.scheduler.Schedule(userInfo, gpuCount)
+	sresult, err := s.scheduler.Schedule(userInfo, "", gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}

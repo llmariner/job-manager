@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	v1 "github.com/llmariner/job-manager/api/v1"
+	rbacv1 "github.com/llmariner/rbac-manager/api/v1"
+	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
@@ -61,6 +63,9 @@ type Notebook struct {
 	Message []byte
 	// ProjectMessage is the marshalled JSON of the rbac v1.Project.
 	ProjectMessage []byte
+	// TODO(guangrui): Consider not to save APIKey and Token in the database.
+	APIKey string
+	Token  string
 
 	State NotebookState `gorm:"index:idx_notebook_project_id_state;index:idx_notebook_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of the queued notebook. This field is only used when
@@ -118,6 +123,28 @@ func (n *Notebook) MutateMessage(mutateFn func(nb *v1.Notebook)) error {
 	}
 	n.Message = msg
 	return nil
+}
+
+// RebuildUserInfo rebuilds the user info from the project message.
+func (n *Notebook) RebuildUserInfo() (*auth.UserInfo, error) {
+	var pProto rbacv1.Project
+	err := proto.Unmarshal(n.ProjectMessage, &pProto)
+	if err != nil {
+		return nil, err
+	}
+	var akes []auth.AssignedKubernetesEnv
+	for _, a := range pProto.AssignedKubernetesEnvs {
+		akes = append(akes, auth.AssignedKubernetesEnv{
+			ClusterID:   a.ClusterId,
+			ClusterName: a.ClusterName,
+			Namespace:   a.Namespace,
+		})
+	}
+	return &auth.UserInfo{
+		AssignedKubernetesEnvs: akes,
+		TenantID:               n.TenantID,
+		ProjectID:              n.ProjectID,
+	}, nil
 }
 
 func convertToV1NotebookState(state NotebookState) (v1.NotebookState, error) {
@@ -194,7 +221,17 @@ func (s *S) ListActiveNotebooksByProjectIDWithPagination(projectID string, after
 // ListQueuedNotebooksByTenantIDAndClusterID finds queued notebooks by tenant ID and cluster ID.
 func (s *S) ListQueuedNotebooksByTenantIDAndClusterID(tenantID, clusterID string) ([]*Notebook, error) {
 	var nbs []*Notebook
-	if err := s.db.Where("tenant_id = ? AND cluster_id = ? AND state = ?", tenantID, clusterID, NotebookStateQueued).Find(&nbs).Error; err != nil {
+	if err := s.db.Where("tenant_id = ? AND cluster_id = ? AND state = ?", tenantID, clusterID, NotebookStateQueued).
+		Find(&nbs).Error; err != nil {
+		return nil, err
+	}
+	return nbs, nil
+}
+
+// ListNotebooksByState finds all notebooks with the specified state.
+func (s *S) ListNotebooksByState(state NotebookState) ([]*Notebook, error) {
+	var nbs []*Notebook
+	if err := s.db.Where("state = ?", state).Find(&nbs).Error; err != nil {
 		return nil, err
 	}
 	return nbs, nil
@@ -248,6 +285,27 @@ func (s *S) SetNonQueuedStateAndMessage(id string, currentVersion int, newState 
 			"queued_action": "",
 			"message":       message,
 			"version":       currentVersion + 1,
+		})
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("update notebook: %w", ErrConcurrentUpdate)
+	}
+	return nil
+}
+
+// UpdateNotebookForRescheduling updates the notebook.
+func (s *S) UpdateNotebookForRescheduling(nb *Notebook) error {
+	result := s.db.Model(&Notebook{}).
+		Where("notebook_id = ?", nb.NotebookID).
+		Where("version = ?", nb.Version).
+		Updates(map[string]interface{}{
+			"cluster_id":    nb.ClusterID,
+			"state":         nb.State,
+			"queued_action": nb.QueuedAction,
+			"message":       nb.Message,
+			"version":       nb.Version + 1,
 		})
 	if err := result.Error; err != nil {
 		return err

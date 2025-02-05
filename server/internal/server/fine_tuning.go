@@ -103,7 +103,7 @@ func (s *S) CreateJob(
 	}
 
 	// TODO(kenji): Fix the gpuCount. Currently it is set in the dispatcher.
-	sresult, err := s.scheduler.Schedule(userInfo, 1)
+	sresult, err := s.scheduler.Schedule(userInfo, "", 1)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}

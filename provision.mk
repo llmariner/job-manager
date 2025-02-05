@@ -12,7 +12,7 @@ provision-all: pull-llma-chart configure-llma-chart create-kind-cluster helm-app
 .PHONY: reapply-job-server
 reapply-job-server: load-server-image helm-apply-cp-llma rollout-job-server
 .PHONY: reapply-job-dispatcher
-reapply-job-dispatcher: load-dispatcher-image helm-apply-cp-llma rollout-job-dispatcher
+reapply-job-dispatcher: load-dispatcher-image helm-apply-wp-llma rollout-job-dispatcher
 .PHONY: reapply-job-syncer
 reapply-job-syncer: load-syncer-image helm-apply-tn-llma rollout-job-syncer
 

@@ -5,7 +5,7 @@ tags:
 
 global:
   auth:
-    enable: false
+    enable: true
   usageSender:
     enable: false
 

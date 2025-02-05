@@ -9,6 +9,7 @@ import (
 
 	"github.com/llmariner/common/pkg/id"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/scheduler"
 	"github.com/llmariner/job-manager/server/internal/store"
 	rbacv1 "github.com/llmariner/rbac-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -20,6 +21,7 @@ import (
 
 // CreateNotebook creates a notebook.
 func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (*v1.Notebook, error) {
+	s.logger.Info("Receive CreateNotebook request", "req", req)
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("failed to extract user info from context")
@@ -64,10 +66,38 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if r := req.Resources; r != nil {
 		gpuCount = int(r.GpuCount)
 	}
-	sresult, err := s.scheduler.Schedule(userInfo, gpuCount)
+
+	proj, err := toProjectMessage(userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	apikey, err := auth.ExtractTokenFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	nbToken, err := id.GenerateID("", 48)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
+	}
+
+	nb := &store.Notebook{
+		NotebookID:     nbID,
+		ProjectMessage: proj,
+		APIKey:         apikey,
+		Token:          nbToken,
+		State:          store.NotebookStateQueued,
+		QueuedAction:   store.NotebookQueuedActionStart,
+		TenantID:       userInfo.TenantID,
+		ProjectID:      userInfo.ProjectID,
+		Name:           req.Name,
+	}
+
+	sresult, err := s.scheduleNotebook(ctx, nb, gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
+	nb.ClusterID = sresult.ClusterID
 
 	nbProto := &v1.Notebook{
 		Id:                  nbID,
@@ -90,7 +120,18 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "marshal notebook: %s", err)
 	}
+	nb.Message = msg
 
+	if err := s.store.CreateNotebook(nb); err != nil {
+		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)
+	}
+
+	// not stored, and set token only for the response
+	nbProto.Token = nbToken
+	return nbProto, nil
+}
+
+func toProjectMessage(userInfo *auth.UserInfo) ([]byte, error) {
 	var akesProto []*rbacv1.Project_AssignedKubernetesEnv
 	for _, a := range userInfo.AssignedKubernetesEnvs {
 		akesProto = append(akesProto, &rbacv1.Project_AssignedKubernetesEnv{
@@ -106,44 +147,31 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "marshal assigned kubernetes env: %s", err)
 	}
+	return proj, nil
+}
 
-	apikey, err := auth.ExtractTokenFromContext(ctx)
+func (s *S) scheduleNotebook(ctx context.Context, nb *store.Notebook, gpuCount int) (scheduler.SchedulingResult, error) {
+	userInfo, err := nb.RebuildUserInfo()
 	if err != nil {
-		return nil, err
+		return scheduler.SchedulingResult{}, status.Errorf(codes.Internal, "rebuild user info: %s", err)
 	}
-	nbToken, err := id.GenerateID("", 48)
+
+	sresult, err := s.scheduler.Schedule(userInfo, nb.ClusterID, gpuCount)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "generate notebook token: %s", err)
+		return sresult, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
-	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, apikey)
+
+	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, nb.APIKey)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "create k8s client: %s", err)
+		return sresult, status.Errorf(codes.Internal, "create k8s client: %s", err)
 	}
-	if err := kclient.CreateSecret(ctx, nbID, sresult.Namespace, map[string][]byte{
-		"OPENAI_API_KEY": []byte(apikey),
-		"NOTEBOOK_TOKEN": []byte(nbToken),
+	if err := kclient.CreateSecret(ctx, nb.NotebookID, sresult.Namespace, map[string][]byte{
+		"OPENAI_API_KEY": []byte(nb.APIKey),
+		"NOTEBOOK_TOKEN": []byte(nb.Token),
 	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "create secret: %s", err)
+		return sresult, status.Errorf(codes.Internal, "create secret: %s", err)
 	}
-
-	nb := &store.Notebook{
-		NotebookID:     nbID,
-		Message:        msg,
-		ProjectMessage: proj,
-		State:          store.NotebookStateQueued,
-		QueuedAction:   store.NotebookQueuedActionStart,
-		TenantID:       userInfo.TenantID,
-		ProjectID:      userInfo.ProjectID,
-		ClusterID:      sresult.ClusterID,
-		Name:           req.Name,
-	}
-	if err := s.store.CreateNotebook(nb); err != nil {
-		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)
-	}
-
-	// not stored, and set token only for the response
-	nbProto.Token = nbToken
-	return nbProto, nil
+	return sresult, nil
 }
 
 // ListNotebooks lists notebooks.
@@ -250,7 +278,8 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 		store.NotebookStateStopped:
 		return nbProto, nil
 	case store.NotebookStateInitializing,
-		store.NotebookStateRunning:
+		store.NotebookStateRunning,
+		store.NotebookStateRequeued:
 	case store.NotebookStateQueued:
 		if nb.QueuedAction == store.NotebookQueuedActionStop ||
 			nb.QueuedAction == store.NotebookQueuedActionDelete {
@@ -298,7 +327,8 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 	switch nb.State {
 	case store.NotebookStateFailed,
 		store.NotebookStateInitializing,
-		store.NotebookStateRunning:
+		store.NotebookStateRunning,
+		store.NotebookStateRequeued:
 		return nbProto, nil
 	case store.NotebookStateStopped:
 	case store.NotebookStateQueued:
@@ -419,6 +449,11 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
 	case v1.NotebookState_RUNNING:
+		// Rescheduler and dispatcher may update the job state at the same time, e.g. rescheduler requeues the job and
+		// dispatcher updates the job state to be running. When such race condition happens, ignore the updates from dispatcher.
+		if nb.State == store.NotebookStateQueued && nb.QueuedAction == store.NotebookQueuedActionRequeue {
+			return &v1.UpdateNotebookStateResponse{}, nil
+		}
 		if nb.State != store.NotebookStateInitializing {
 			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not initializing state: %s", nb.State)
 		}
@@ -458,6 +493,20 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		}
 		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateDeleted, nb.Message); err != nil {
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
+		}
+	case v1.NotebookState_REQUEUED:
+		if nb.State != store.NotebookStateQueued {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not queued: %s", nb.State)
+		}
+		if nb.QueuedAction != store.NotebookQueuedActionRequeue {
+			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not requeueing: %s", nb.QueuedAction)
+		}
+		if err := nb.MutateMessage(func(nbProto *v1.Notebook) {}); err != nil {
+			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
+		}
+		nb.State = store.NotebookStateRequeued
+		if err := ws.store.UpdateNotebookForRescheduling(nb); err != nil {
+			return nil, status.Errorf(codes.Internal, "update notebook: %s", err)
 		}
 	case v1.NotebookState_QUEUED,
 		v1.NotebookState_FAILED:

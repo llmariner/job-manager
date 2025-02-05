@@ -494,7 +494,7 @@ func (c *noopDynClient) DeleteResource(ctx context.Context, name, namespace stri
 
 type fakeScheduler struct{}
 
-func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo, gpuCount int) (scheduler.SchedulingResult, error) {
+func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo, clusterID string, gpuCount int) (scheduler.SchedulingResult, error) {
 	if len(userInfo.AssignedKubernetesEnvs) == 0 {
 		return scheduler.SchedulingResult{}, fmt.Errorf("no kuberentes cluster/namespace")
 	}

@@ -107,7 +107,7 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 	if r := req.Resources; r != nil {
 		gpuCount = int(r.GpuLimit)
 	}
-	sresult, err := ss.scheduler.Schedule(userInfo, gpuCount)
+	sresult, err := ss.scheduler.Schedule(userInfo, "", gpuCount)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
