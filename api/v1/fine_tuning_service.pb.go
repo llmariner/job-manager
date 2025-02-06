@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.34.1
 // 	protoc        (unknown)
-// source: api/v1/job_manager_service.proto
+// source: api/v1/fine_tuning_service.proto
 
 package v1
 
@@ -63,11 +63,11 @@ func (x InternalJob_State) String() string {
 }
 
 func (InternalJob_State) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_v1_job_manager_service_proto_enumTypes[0].Descriptor()
+	return file_api_v1_fine_tuning_service_proto_enumTypes[0].Descriptor()
 }
 
 func (InternalJob_State) Type() protoreflect.EnumType {
-	return &file_api_v1_job_manager_service_proto_enumTypes[0]
+	return &file_api_v1_fine_tuning_service_proto_enumTypes[0]
 }
 
 func (x InternalJob_State) Number() protoreflect.EnumNumber {
@@ -76,7 +76,7 @@ func (x InternalJob_State) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use InternalJob_State.Descriptor instead.
 func (InternalJob_State) EnumDescriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{7, 0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{7, 0}
 }
 
 type InternalJob_Action int32
@@ -112,11 +112,11 @@ func (x InternalJob_Action) String() string {
 }
 
 func (InternalJob_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_v1_job_manager_service_proto_enumTypes[1].Descriptor()
+	return file_api_v1_fine_tuning_service_proto_enumTypes[1].Descriptor()
 }
 
 func (InternalJob_Action) Type() protoreflect.EnumType {
-	return &file_api_v1_job_manager_service_proto_enumTypes[1]
+	return &file_api_v1_fine_tuning_service_proto_enumTypes[1]
 }
 
 func (x InternalJob_Action) Number() protoreflect.EnumNumber {
@@ -125,7 +125,7 @@ func (x InternalJob_Action) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use InternalJob_Action.Descriptor instead.
 func (InternalJob_Action) EnumDescriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{7, 1}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{7, 1}
 }
 
 type UpdateJobPhaseRequest_Phase int32
@@ -173,11 +173,11 @@ func (x UpdateJobPhaseRequest_Phase) String() string {
 }
 
 func (UpdateJobPhaseRequest_Phase) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_v1_job_manager_service_proto_enumTypes[2].Descriptor()
+	return file_api_v1_fine_tuning_service_proto_enumTypes[2].Descriptor()
 }
 
 func (UpdateJobPhaseRequest_Phase) Type() protoreflect.EnumType {
-	return &file_api_v1_job_manager_service_proto_enumTypes[2]
+	return &file_api_v1_fine_tuning_service_proto_enumTypes[2]
 }
 
 func (x UpdateJobPhaseRequest_Phase) Number() protoreflect.EnumNumber {
@@ -186,7 +186,7 @@ func (x UpdateJobPhaseRequest_Phase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use UpdateJobPhaseRequest_Phase.Descriptor instead.
 func (UpdateJobPhaseRequest_Phase) EnumDescriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{11, 0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{11, 0}
 }
 
 type Integration struct {
@@ -201,7 +201,7 @@ type Integration struct {
 func (x *Integration) Reset() {
 	*x = Integration{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[0]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -214,7 +214,7 @@ func (x *Integration) String() string {
 func (*Integration) ProtoMessage() {}
 
 func (x *Integration) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[0]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,7 +227,7 @@ func (x *Integration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Integration.ProtoReflect.Descriptor instead.
 func (*Integration) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Integration) GetType() string {
@@ -280,7 +280,7 @@ type Job struct {
 func (x *Job) Reset() {
 	*x = Job{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[1]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -293,7 +293,7 @@ func (x *Job) String() string {
 func (*Job) ProtoMessage() {}
 
 func (x *Job) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[1]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -306,7 +306,7 @@ func (x *Job) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Job.ProtoReflect.Descriptor instead.
 func (*Job) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{1}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Job) GetId() string {
@@ -485,7 +485,7 @@ type CreateJobRequest struct {
 func (x *CreateJobRequest) Reset() {
 	*x = CreateJobRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[2]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -498,7 +498,7 @@ func (x *CreateJobRequest) String() string {
 func (*CreateJobRequest) ProtoMessage() {}
 
 func (x *CreateJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[2]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +511,7 @@ func (x *CreateJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateJobRequest.ProtoReflect.Descriptor instead.
 func (*CreateJobRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{2}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateJobRequest) GetModel() string {
@@ -577,7 +577,7 @@ type ListJobsRequest struct {
 func (x *ListJobsRequest) Reset() {
 	*x = ListJobsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[3]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -590,7 +590,7 @@ func (x *ListJobsRequest) String() string {
 func (*ListJobsRequest) ProtoMessage() {}
 
 func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[3]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -603,7 +603,7 @@ func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListJobsRequest.ProtoReflect.Descriptor instead.
 func (*ListJobsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{3}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListJobsRequest) GetAfter() string {
@@ -633,7 +633,7 @@ type ListJobsResponse struct {
 func (x *ListJobsResponse) Reset() {
 	*x = ListJobsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[4]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -646,7 +646,7 @@ func (x *ListJobsResponse) String() string {
 func (*ListJobsResponse) ProtoMessage() {}
 
 func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[4]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -659,7 +659,7 @@ func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListJobsResponse.ProtoReflect.Descriptor instead.
 func (*ListJobsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{4}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListJobsResponse) GetObject() string {
@@ -694,7 +694,7 @@ type GetJobRequest struct {
 func (x *GetJobRequest) Reset() {
 	*x = GetJobRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[5]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -707,7 +707,7 @@ func (x *GetJobRequest) String() string {
 func (*GetJobRequest) ProtoMessage() {}
 
 func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[5]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +720,7 @@ func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetJobRequest.ProtoReflect.Descriptor instead.
 func (*GetJobRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{5}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetJobRequest) GetId() string {
@@ -741,7 +741,7 @@ type CancelJobRequest struct {
 func (x *CancelJobRequest) Reset() {
 	*x = CancelJobRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[6]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -754,7 +754,7 @@ func (x *CancelJobRequest) String() string {
 func (*CancelJobRequest) ProtoMessage() {}
 
 func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[6]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -767,7 +767,7 @@ func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelJobRequest.ProtoReflect.Descriptor instead.
 func (*CancelJobRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{6}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CancelJobRequest) GetId() string {
@@ -793,7 +793,7 @@ type InternalJob struct {
 func (x *InternalJob) Reset() {
 	*x = InternalJob{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[7]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -806,7 +806,7 @@ func (x *InternalJob) String() string {
 func (*InternalJob) ProtoMessage() {}
 
 func (x *InternalJob) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[7]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +819,7 @@ func (x *InternalJob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InternalJob.ProtoReflect.Descriptor instead.
 func (*InternalJob) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{7}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *InternalJob) GetJob() *Job {
@@ -866,7 +866,7 @@ type ListQueuedInternalJobsRequest struct {
 func (x *ListQueuedInternalJobsRequest) Reset() {
 	*x = ListQueuedInternalJobsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[8]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -879,7 +879,7 @@ func (x *ListQueuedInternalJobsRequest) String() string {
 func (*ListQueuedInternalJobsRequest) ProtoMessage() {}
 
 func (x *ListQueuedInternalJobsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[8]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -892,7 +892,7 @@ func (x *ListQueuedInternalJobsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQueuedInternalJobsRequest.ProtoReflect.Descriptor instead.
 func (*ListQueuedInternalJobsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{8}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{8}
 }
 
 type ListQueuedInternalJobsResponse struct {
@@ -906,7 +906,7 @@ type ListQueuedInternalJobsResponse struct {
 func (x *ListQueuedInternalJobsResponse) Reset() {
 	*x = ListQueuedInternalJobsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[9]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -919,7 +919,7 @@ func (x *ListQueuedInternalJobsResponse) String() string {
 func (*ListQueuedInternalJobsResponse) ProtoMessage() {}
 
 func (x *ListQueuedInternalJobsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[9]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +932,7 @@ func (x *ListQueuedInternalJobsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQueuedInternalJobsResponse.ProtoReflect.Descriptor instead.
 func (*ListQueuedInternalJobsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{9}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListQueuedInternalJobsResponse) GetJobs() []*InternalJob {
@@ -953,7 +953,7 @@ type GetInternalJobRequest struct {
 func (x *GetInternalJobRequest) Reset() {
 	*x = GetInternalJobRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[10]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -966,7 +966,7 @@ func (x *GetInternalJobRequest) String() string {
 func (*GetInternalJobRequest) ProtoMessage() {}
 
 func (x *GetInternalJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[10]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +979,7 @@ func (x *GetInternalJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInternalJobRequest.ProtoReflect.Descriptor instead.
 func (*GetInternalJobRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{10}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetInternalJobRequest) GetId() string {
@@ -1005,7 +1005,7 @@ type UpdateJobPhaseRequest struct {
 func (x *UpdateJobPhaseRequest) Reset() {
 	*x = UpdateJobPhaseRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[11]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1018,7 +1018,7 @@ func (x *UpdateJobPhaseRequest) String() string {
 func (*UpdateJobPhaseRequest) ProtoMessage() {}
 
 func (x *UpdateJobPhaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[11]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1031,7 +1031,7 @@ func (x *UpdateJobPhaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateJobPhaseRequest.ProtoReflect.Descriptor instead.
 func (*UpdateJobPhaseRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{11}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateJobPhaseRequest) GetId() string {
@@ -1071,7 +1071,7 @@ type UpdateJobPhaseResponse struct {
 func (x *UpdateJobPhaseResponse) Reset() {
 	*x = UpdateJobPhaseResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[12]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1084,7 +1084,7 @@ func (x *UpdateJobPhaseResponse) String() string {
 func (*UpdateJobPhaseResponse) ProtoMessage() {}
 
 func (x *UpdateJobPhaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[12]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1097,7 +1097,7 @@ func (x *UpdateJobPhaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateJobPhaseResponse.ProtoReflect.Descriptor instead.
 func (*UpdateJobPhaseResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{12}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{12}
 }
 
 type Integration_Wandb struct {
@@ -1114,7 +1114,7 @@ type Integration_Wandb struct {
 func (x *Integration_Wandb) Reset() {
 	*x = Integration_Wandb{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[13]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1127,7 +1127,7 @@ func (x *Integration_Wandb) String() string {
 func (*Integration_Wandb) ProtoMessage() {}
 
 func (x *Integration_Wandb) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[13]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1140,7 +1140,7 @@ func (x *Integration_Wandb) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Integration_Wandb.ProtoReflect.Descriptor instead.
 func (*Integration_Wandb) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{0, 0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Integration_Wandb) GetProject() string {
@@ -1184,7 +1184,7 @@ type Job_Error struct {
 func (x *Job_Error) Reset() {
 	*x = Job_Error{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[14]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1197,7 +1197,7 @@ func (x *Job_Error) String() string {
 func (*Job_Error) ProtoMessage() {}
 
 func (x *Job_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[14]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1210,7 +1210,7 @@ func (x *Job_Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Job_Error.ProtoReflect.Descriptor instead.
 func (*Job_Error) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{1, 0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *Job_Error) GetCode() string {
@@ -1250,7 +1250,7 @@ type Job_Hyperparameters struct {
 func (x *Job_Hyperparameters) Reset() {
 	*x = Job_Hyperparameters{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[15]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1263,7 +1263,7 @@ func (x *Job_Hyperparameters) String() string {
 func (*Job_Hyperparameters) ProtoMessage() {}
 
 func (x *Job_Hyperparameters) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[15]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1276,7 +1276,7 @@ func (x *Job_Hyperparameters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Job_Hyperparameters.ProtoReflect.Descriptor instead.
 func (*Job_Hyperparameters) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{1, 1}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *Job_Hyperparameters) GetBatchSize() int32 {
@@ -1316,7 +1316,7 @@ type CreateJobRequest_Hyperparameters struct {
 func (x *CreateJobRequest_Hyperparameters) Reset() {
 	*x = CreateJobRequest_Hyperparameters{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_api_v1_job_manager_service_proto_msgTypes[16]
+		mi := &file_api_v1_fine_tuning_service_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1329,7 +1329,7 @@ func (x *CreateJobRequest_Hyperparameters) String() string {
 func (*CreateJobRequest_Hyperparameters) ProtoMessage() {}
 
 func (x *CreateJobRequest_Hyperparameters) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_job_manager_service_proto_msgTypes[16]
+	mi := &file_api_v1_fine_tuning_service_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1342,7 +1342,7 @@ func (x *CreateJobRequest_Hyperparameters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateJobRequest_Hyperparameters.ProtoReflect.Descriptor instead.
 func (*CreateJobRequest_Hyperparameters) Descriptor() ([]byte, []int) {
-	return file_api_v1_job_manager_service_proto_rawDescGZIP(), []int{2, 0}
+	return file_api_v1_fine_tuning_service_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *CreateJobRequest_Hyperparameters) GetBatchSize() int32 {
@@ -1366,11 +1366,11 @@ func (x *CreateJobRequest_Hyperparameters) GetNEpochs() int32 {
 	return 0
 }
 
-var File_api_v1_job_manager_service_proto protoreflect.FileDescriptor
+var File_api_v1_fine_tuning_service_proto protoreflect.FileDescriptor
 
-var file_api_v1_job_manager_service_proto_rawDesc = []byte{
-	0x0a, 0x20, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x6a, 0x6f, 0x62, 0x5f, 0x6d, 0x61, 0x6e,
-	0x61, 0x67, 0x65, 0x72, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f,
+var file_api_v1_fine_tuning_service_proto_rawDesc = []byte{
+	0x0a, 0x20, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x66, 0x69, 0x6e, 0x65, 0x5f, 0x74, 0x75,
+	0x6e, 0x69, 0x6e, 0x67, 0x5f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x12, 0x1f, 0x6c, 0x6c, 0x6d, 0x61, 0x72, 0x69, 0x6e, 0x65, 0x72, 0x2e, 0x66, 0x69,
 	0x6e, 0x65, 0x5f, 0x74, 0x75, 0x6e, 0x69, 0x6e, 0x67, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
 	0x2e, 0x76, 0x31, 0x1a, 0x1c, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x61, 0x70, 0x69, 0x2f,
@@ -1634,20 +1634,20 @@ var file_api_v1_job_manager_service_proto_rawDesc = []byte{
 }
 
 var (
-	file_api_v1_job_manager_service_proto_rawDescOnce sync.Once
-	file_api_v1_job_manager_service_proto_rawDescData = file_api_v1_job_manager_service_proto_rawDesc
+	file_api_v1_fine_tuning_service_proto_rawDescOnce sync.Once
+	file_api_v1_fine_tuning_service_proto_rawDescData = file_api_v1_fine_tuning_service_proto_rawDesc
 )
 
-func file_api_v1_job_manager_service_proto_rawDescGZIP() []byte {
-	file_api_v1_job_manager_service_proto_rawDescOnce.Do(func() {
-		file_api_v1_job_manager_service_proto_rawDescData = protoimpl.X.CompressGZIP(file_api_v1_job_manager_service_proto_rawDescData)
+func file_api_v1_fine_tuning_service_proto_rawDescGZIP() []byte {
+	file_api_v1_fine_tuning_service_proto_rawDescOnce.Do(func() {
+		file_api_v1_fine_tuning_service_proto_rawDescData = protoimpl.X.CompressGZIP(file_api_v1_fine_tuning_service_proto_rawDescData)
 	})
-	return file_api_v1_job_manager_service_proto_rawDescData
+	return file_api_v1_fine_tuning_service_proto_rawDescData
 }
 
-var file_api_v1_job_manager_service_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_api_v1_job_manager_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
-var file_api_v1_job_manager_service_proto_goTypes = []interface{}{
+var file_api_v1_fine_tuning_service_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_api_v1_fine_tuning_service_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_api_v1_fine_tuning_service_proto_goTypes = []interface{}{
 	(InternalJob_State)(0),                   // 0: llmariner.fine_tuning.server.v1.InternalJob.State
 	(InternalJob_Action)(0),                  // 1: llmariner.fine_tuning.server.v1.InternalJob.Action
 	(UpdateJobPhaseRequest_Phase)(0),         // 2: llmariner.fine_tuning.server.v1.UpdateJobPhaseRequest.Phase
@@ -1669,7 +1669,7 @@ var file_api_v1_job_manager_service_proto_goTypes = []interface{}{
 	(*Job_Hyperparameters)(nil),              // 18: llmariner.fine_tuning.server.v1.Job.Hyperparameters
 	(*CreateJobRequest_Hyperparameters)(nil), // 19: llmariner.fine_tuning.server.v1.CreateJobRequest.Hyperparameters
 }
-var file_api_v1_job_manager_service_proto_depIdxs = []int32{
+var file_api_v1_fine_tuning_service_proto_depIdxs = []int32{
 	16, // 0: llmariner.fine_tuning.server.v1.Integration.wandb:type_name -> llmariner.fine_tuning.server.v1.Integration.Wandb
 	17, // 1: llmariner.fine_tuning.server.v1.Job.error:type_name -> llmariner.fine_tuning.server.v1.Job.Error
 	18, // 2: llmariner.fine_tuning.server.v1.Job.hyperparameters:type_name -> llmariner.fine_tuning.server.v1.Job.Hyperparameters
@@ -1703,13 +1703,13 @@ var file_api_v1_job_manager_service_proto_depIdxs = []int32{
 	0,  // [0:12] is the sub-list for field type_name
 }
 
-func init() { file_api_v1_job_manager_service_proto_init() }
-func file_api_v1_job_manager_service_proto_init() {
-	if File_api_v1_job_manager_service_proto != nil {
+func init() { file_api_v1_fine_tuning_service_proto_init() }
+func file_api_v1_fine_tuning_service_proto_init() {
+	if File_api_v1_fine_tuning_service_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_api_v1_job_manager_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Integration); i {
 			case 0:
 				return &v.state
@@ -1721,7 +1721,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Job); i {
 			case 0:
 				return &v.state
@@ -1733,7 +1733,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateJobRequest); i {
 			case 0:
 				return &v.state
@@ -1745,7 +1745,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListJobsRequest); i {
 			case 0:
 				return &v.state
@@ -1757,7 +1757,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListJobsResponse); i {
 			case 0:
 				return &v.state
@@ -1769,7 +1769,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetJobRequest); i {
 			case 0:
 				return &v.state
@@ -1781,7 +1781,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CancelJobRequest); i {
 			case 0:
 				return &v.state
@@ -1793,7 +1793,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*InternalJob); i {
 			case 0:
 				return &v.state
@@ -1805,7 +1805,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListQueuedInternalJobsRequest); i {
 			case 0:
 				return &v.state
@@ -1817,7 +1817,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListQueuedInternalJobsResponse); i {
 			case 0:
 				return &v.state
@@ -1829,7 +1829,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetInternalJobRequest); i {
 			case 0:
 				return &v.state
@@ -1841,7 +1841,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateJobPhaseRequest); i {
 			case 0:
 				return &v.state
@@ -1853,7 +1853,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateJobPhaseResponse); i {
 			case 0:
 				return &v.state
@@ -1865,7 +1865,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Integration_Wandb); i {
 			case 0:
 				return &v.state
@@ -1877,7 +1877,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Job_Error); i {
 			case 0:
 				return &v.state
@@ -1889,7 +1889,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Job_Hyperparameters); i {
 			case 0:
 				return &v.state
@@ -1901,7 +1901,7 @@ func file_api_v1_job_manager_service_proto_init() {
 				return nil
 			}
 		}
-		file_api_v1_job_manager_service_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_api_v1_fine_tuning_service_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateJobRequest_Hyperparameters); i {
 			case 0:
 				return &v.state
@@ -1918,19 +1918,19 @@ func file_api_v1_job_manager_service_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_api_v1_job_manager_service_proto_rawDesc,
+			RawDescriptor: file_api_v1_fine_tuning_service_proto_rawDesc,
 			NumEnums:      3,
 			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_api_v1_job_manager_service_proto_goTypes,
-		DependencyIndexes: file_api_v1_job_manager_service_proto_depIdxs,
-		EnumInfos:         file_api_v1_job_manager_service_proto_enumTypes,
-		MessageInfos:      file_api_v1_job_manager_service_proto_msgTypes,
+		GoTypes:           file_api_v1_fine_tuning_service_proto_goTypes,
+		DependencyIndexes: file_api_v1_fine_tuning_service_proto_depIdxs,
+		EnumInfos:         file_api_v1_fine_tuning_service_proto_enumTypes,
+		MessageInfos:      file_api_v1_fine_tuning_service_proto_msgTypes,
 	}.Build()
-	File_api_v1_job_manager_service_proto = out.File
-	file_api_v1_job_manager_service_proto_rawDesc = nil
-	file_api_v1_job_manager_service_proto_goTypes = nil
-	file_api_v1_job_manager_service_proto_depIdxs = nil
+	File_api_v1_fine_tuning_service_proto = out.File
+	file_api_v1_fine_tuning_service_proto_rawDesc = nil
+	file_api_v1_fine_tuning_service_proto_goTypes = nil
+	file_api_v1_fine_tuning_service_proto_depIdxs = nil
 }

@@ -205,7 +205,7 @@ var FineTuningService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/v1/job_manager_service.proto",
+	Metadata: "api/v1/fine_tuning_service.proto",
 }
 
 // FineTuningWorkerServiceClient is the client API for FineTuningWorkerService service.
@@ -366,5 +366,5 @@ var FineTuningWorkerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/v1/job_manager_service.proto",
+	Metadata: "api/v1/fine_tuning_service.proto",
 }
