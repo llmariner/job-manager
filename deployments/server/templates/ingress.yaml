@@ -40,6 +40,13 @@ spec:
             name: {{ include "job-manager-server.fullname" . }}-http
             port:
               number: {{ .Values.httpPort }}
+      - path: /v1/jobs
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "job-manager-server.fullname" . }}-http
+            port:
+              number: {{ .Values.httpPort }}
 
 {{- if .Values.global.workerServiceIngress.create }}
 ---
