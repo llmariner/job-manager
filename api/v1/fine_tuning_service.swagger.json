@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "api/v1/job_manager_service.proto",
+    "title": "api/v1/fine_tuning_service.proto",
     "version": "version not set"
   },
   "tags": [
