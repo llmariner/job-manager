@@ -96,6 +96,9 @@ func run(ctx context.Context, c *config.Config) error {
 	if err := v1.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
 		return err
 	}
+	if err := v1.RegisterJobServiceHandlerFromEndpoint(ctx, mux, addr, opts); err != nil {
+		return err
+	}
 
 	errCh := make(chan error)
 	go func() {
