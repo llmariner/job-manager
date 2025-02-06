@@ -15,8 +15,48 @@
   "produces": [
     "application/json"
   ],
-  "paths": {},
+  "paths": {
+    "/v1/jobs/clusters": {
+      "get": {
+        "operationId": "JobService_ListClusters",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListClustersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "JobService"
+        ]
+      }
+    }
+  },
   "definitions": {
+    "ClusterSummary": {
+      "type": "object",
+      "properties": {
+        "gpuCapacity": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gpuUsed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "jobCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -50,8 +90,14 @@
         "id": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "status": {
           "$ref": "#/definitions/v1ClusterStatus"
+        },
+        "summary": {
+          "$ref": "#/definitions/ClusterSummary"
         },
         "lastUpdatedAt": {
           "type": "string",

@@ -111,6 +111,7 @@ func (s *S) Run(ctx context.Context, port int, authConfig config.AuthConfig, usa
 				case strings.HasPrefix(fullMethod, "/llmariner.workspace."):
 					return "api.workspaces.notebooks"
 				}
+				// TODO(kenji): Add a case for JobWorkerService.
 				return "api.fine_tuning.jobs"
 			},
 		})

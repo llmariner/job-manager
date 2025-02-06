@@ -2,15 +2,26 @@ syntax = "proto3";
 
 package llmariner.jobs.server.v1;
 
+import "google/api/annotations.proto";
 import "api/v1/job_manager_server_worker.proto";
 
 option go_package = "github.com/llmariner/job-manager/api/v1";
 
 message Cluster {
+  message Summary {
+    int32 gpu_capacity = 1;
+    int32 gpu_used = 2;
+    int32 job_count = 3;
+  }
+
   string id = 1;
-  ClusterStatus status = 2;
+
+  string name = 2;
+  ClusterStatus status = 3;
+  Summary summary = 4;
+
   // last_updated_at is the last time the cluster was updated in Unix nano seconds.
-  int64 last_updated_at = 3;
+  int64 last_updated_at = 5;
 }
 
 message ListClustersRequest {
@@ -23,5 +34,9 @@ message ListClustersResponse {
 // JobService is a generic service for fine-tuning jobs, batch jobs, and workspaces.
 // Currently this is mainly for debug.
 service JobService {
-  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse) {}
+  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse) {
+    option (google.api.http) = {
+      get: "/v1/jobs/clusters"
+    };
+  }
 }

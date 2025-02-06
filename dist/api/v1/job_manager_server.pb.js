@@ -6,6 +6,6 @@
 import * as fm from "../../fetch.pb";
 export class JobService {
     static ListClusters(req, initReq) {
-        return fm.fetchReq(`/llmariner.jobs.server.v1.JobService/ListClusters`, Object.assign(Object.assign({}, initReq), { method: "POST", body: JSON.stringify(req) }));
+        return fm.fetchReq(`/v1/jobs/clusters?${fm.renderURLSearchParams(req, [])}`, Object.assign(Object.assign({}, initReq), { method: "GET" }));
     }
 }
