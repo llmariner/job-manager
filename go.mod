@@ -17,7 +17,7 @@ require (
 	github.com/llmariner/common v0.15.0
 	github.com/llmariner/file-manager v1.1.0
 	github.com/llmariner/model-manager v1.1.0
-	github.com/llmariner/rbac-manager v1.7.1
+	github.com/llmariner/rbac-manager v1.7.2-0.20250207000738-acf296282b58
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.9.0

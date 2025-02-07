@@ -11,6 +11,7 @@ type Cluster struct {
 	gorm.Model
 
 	ClusterID string `gorm:"uniqueIndex"`
+	Name      string
 
 	TenantID string `gorm:"index"`
 

@@ -45,6 +45,7 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 		}
 		cs = append(cs, &v1.Cluster{
 			Id:     c.ClusterID,
+			Name:   c.Name,
 			Status: &st,
 			Summary: &v1.Cluster_Summary{
 				GpuCapacity: gpuCapacity,
@@ -82,6 +83,7 @@ func (ws *WS) UpdateClusterStatus(
 
 	c := &store.Cluster{
 		ClusterID: clusterInfo.ClusterID,
+		Name:      clusterInfo.ClusterName,
 		TenantID:  clusterInfo.TenantID,
 		Status:    b,
 	}
