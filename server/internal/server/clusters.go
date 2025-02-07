@@ -41,6 +41,7 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 		}
 		cs = append(cs, &v1.Cluster{
 			Id:            c.ClusterID,
+			Name:          c.Name,
 			Status:        &st,
 			LastUpdatedAt: c.UpdatedAt.UnixNano(),
 		})
@@ -75,6 +76,7 @@ func (ws *WS) UpdateClusterStatus(
 
 	c := &store.Cluster{
 		ClusterID: clusterInfo.ClusterID,
+		Name:      clusterInfo.ClusterName,
 		TenantID:  clusterInfo.TenantID,
 		Status:    b,
 	}
