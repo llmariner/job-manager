@@ -2,8 +2,8 @@ import * as fm from "../../fetch.pb";
 import * as LlmarinerJobsServerV1Job_manager_server_worker from "./job_manager_server_worker.pb";
 export type ClusterSummary = {
     gpuCapacity?: number;
-    gpuUsed?: number;
-    jobCount?: number;
+    gpuAllocated?: number;
+    gpuPodCount?: number;
 };
 export type Cluster = {
     id?: string;

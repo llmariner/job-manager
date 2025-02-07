@@ -10,8 +10,8 @@ option go_package = "github.com/llmariner/job-manager/api/v1";
 message Cluster {
   message Summary {
     int32 gpu_capacity = 1;
-    int32 gpu_used = 2;
-    int32 job_count = 3;
+    int32 gpu_allocated = 2;
+    int32 gpu_pod_count = 3;
   }
 
   string id = 1;
