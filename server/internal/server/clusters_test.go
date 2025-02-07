@@ -24,6 +24,16 @@ func TestListClusters(t *testing.T) {
 				AllocatableCount: 1,
 			},
 		},
+		GpuPods: []*v1.GpuPod{
+			{
+				ResourceName:   "nvidia.com/gpu",
+				AllocatedCount: 2,
+			},
+			{
+				ResourceName:   "nvidia.com/gpu",
+				AllocatedCount: 4,
+			},
+		},
 	}
 	stb, err := proto.Marshal(status)
 	assert.NoError(t, err)
@@ -61,7 +71,9 @@ func TestListClusters(t *testing.T) {
 	assert.True(t, proto.Equal(status, c.Status))
 
 	summary := &v1.Cluster_Summary{
-		GpuCapacity: 1,
+		GpuCapacity:  1,
+		GpuAllocated: 6,
+		GpuPodCount:  2,
 	}
 	assert.True(t, proto.Equal(summary, c.Summary))
 }
@@ -84,5 +96,4 @@ func TestUpdateClusterStatus(t *testing.T) {
 	got, err := st.GetClusterByID(defaultClusterID)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultClusterID, got.ClusterID)
-
 }

@@ -47,11 +47,11 @@
           "type": "integer",
           "format": "int32"
         },
-        "gpuUsed": {
+        "gpuAllocated": {
           "type": "integer",
           "format": "int32"
         },
-        "jobCount": {
+        "gpuPodCount": {
           "type": "integer",
           "format": "int32"
         }

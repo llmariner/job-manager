@@ -43,12 +43,19 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 		for _, node := range st.GpuNodes {
 			gpuCapacity += node.AllocatableCount
 		}
+		var gpuAllocated int32
+		for _, pod := range st.GpuPods {
+			gpuAllocated += pod.AllocatedCount
+		}
+
 		cs = append(cs, &v1.Cluster{
 			Id:     c.ClusterID,
 			Name:   c.Name,
 			Status: &st,
 			Summary: &v1.Cluster_Summary{
-				GpuCapacity: gpuCapacity,
+				GpuCapacity:  gpuCapacity,
+				GpuAllocated: gpuAllocated,
+				GpuPodCount:  int32(len(st.GpuPods)),
 			},
 			LastUpdatedAt: c.UpdatedAt.UnixNano(),
 		})
