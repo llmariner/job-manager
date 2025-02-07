@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/go-logr/logr/testr"
@@ -9,6 +10,7 @@ import (
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
+	"gorm.io/gorm"
 )
 
 func TestListClusters(t *testing.T) {
@@ -57,4 +59,25 @@ func TestListClusters(t *testing.T) {
 	c := resp.Clusters[0]
 	assert.Equal(t, defaultClusterID, c.Id)
 	assert.True(t, proto.Equal(status, c.Status))
+}
+
+func TestUpdateClusterStatus(t *testing.T) {
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	_, err := st.GetClusterByID(defaultClusterID)
+	assert.Error(t, err)
+	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+
+	srv := NewWorkerServiceServer(st, testr.New(t))
+	req := &v1.UpdateClusterStatusRequest{
+		ClusterStatus: &v1.ClusterStatus{},
+	}
+	_, err = srv.UpdateClusterStatus(fakeAuthInto(context.Background()), req)
+	assert.NoError(t, err)
+
+	got, err := st.GetClusterByID(defaultClusterID)
+	assert.NoError(t, err)
+	assert.Equal(t, defaultClusterID, got.ClusterID)
+
 }

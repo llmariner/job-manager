@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -96,36 +95,4 @@ func (ws *WS) extractClusterInfoFromContext(ctx context.Context) (*auth.ClusterI
 		return nil, status.Error(codes.Unauthenticated, "cluster info not found")
 	}
 	return clusterInfo, nil
-}
-
-// UpdateClusterStatus updates the cluster status.
-func (ws *WS) UpdateClusterStatus(
-	ctx context.Context,
-	req *v1.UpdateClusterStatusRequest,
-) (*v1.UpdateClusterStatusResponse, error) {
-	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if req.ClusterStatus == nil {
-		return nil, status.Error(codes.InvalidArgument, "cluster_status is required")
-	}
-
-	b, err := proto.Marshal(req.ClusterStatus)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "marshal proto: %s", err)
-	}
-
-	c := &store.Cluster{
-		ClusterID: clusterInfo.ClusterID,
-		TenantID:  clusterInfo.TenantID,
-		Status:    b,
-	}
-
-	if err := ws.store.CreateOrUpdateCluster(c); err != nil {
-		return nil, status.Errorf(codes.Internal, "create or update cluster: %s", err)
-	}
-
-	return &v1.UpdateClusterStatusResponse{}, nil
 }

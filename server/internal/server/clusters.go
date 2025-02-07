@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -51,4 +52,36 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 	return &v1.ListClustersResponse{
 		Clusters: cs,
 	}, nil
+}
+
+// UpdateClusterStatus updates the cluster status.
+func (ws *WS) UpdateClusterStatus(
+	ctx context.Context,
+	req *v1.UpdateClusterStatusRequest,
+) (*v1.UpdateClusterStatusResponse, error) {
+	clusterInfo, err := ws.extractClusterInfoFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.ClusterStatus == nil {
+		return nil, status.Error(codes.InvalidArgument, "cluster_status is required")
+	}
+
+	b, err := proto.Marshal(req.ClusterStatus)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "marshal proto: %s", err)
+	}
+
+	c := &store.Cluster{
+		ClusterID: clusterInfo.ClusterID,
+		TenantID:  clusterInfo.TenantID,
+		Status:    b,
+	}
+
+	if err := ws.store.CreateOrUpdateCluster(c); err != nil {
+		return nil, status.Errorf(codes.Internal, "create or update cluster: %s", err)
+	}
+
+	return &v1.UpdateClusterStatusResponse{}, nil
 }
