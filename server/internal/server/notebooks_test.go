@@ -213,6 +213,11 @@ func TestStopNotebook(t *testing.T) {
 			want:  &v1.Notebook{Status: string(store.NotebookQueuedActionStop)},
 		},
 		{
+			name:  "transit requeued to stopping",
+			state: store.NotebookStateRequeued,
+			want:  &v1.Notebook{Status: string(store.NotebookQueuedActionStop)},
+		},
+		{
 			name:  "keep failed state",
 			state: store.NotebookStateFailed,
 			want:  &v1.Notebook{Status: string(store.NotebookStateFailed)},
@@ -285,6 +290,11 @@ func TestStartNotebook(t *testing.T) {
 			state:  store.NotebookStateQueued,
 			action: store.NotebookQueuedActionDelete,
 			want:   &v1.Notebook{Status: string(store.NotebookQueuedActionDelete)},
+		},
+		{
+			name:  "keep requeued state",
+			state: store.NotebookStateRequeued,
+			want:  &v1.Notebook{Status: string(store.NotebookStateRequeued)},
 		},
 	}
 	for _, tc := range tcs {
@@ -434,8 +444,15 @@ func TestUpdateNotebookState(t *testing.T) {
 			wantState: store.NotebookStateRunning,
 		},
 		{
-			name:      "set running state, previous state is not initializing",
-			prevState: store.NotebookStateQueued,
+			name:       "set running state, previous state is queued",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionRequeue,
+			state:      v1.NotebookState_RUNNING,
+			wantState:  store.NotebookStateQueued,
+		},
+		{
+			name:      "set running state, previous state is not initializing nor queued",
+			prevState: store.NotebookStateStopped,
 			state:     v1.NotebookState_RUNNING,
 			wantError: true,
 		},
@@ -465,6 +482,27 @@ func TestUpdateNotebookState(t *testing.T) {
 			prevState:  store.NotebookStateQueued,
 			prevAction: store.NotebookQueuedActionStop,
 			state:      v1.NotebookState_DELETED,
+			wantError:  true,
+		},
+		{
+			name:       "set requeued state, previous action is requeueing",
+			prevState:  store.NotebookStateQueued,
+			prevAction: store.NotebookQueuedActionRequeue,
+			state:      v1.NotebookState_REQUEUED,
+			wantState:  store.NotebookStateRequeued,
+		},
+		{
+			name:       "set requeued state, previous action is requeueing",
+			prevState:  store.NotebookStateRequeued,
+			prevAction: store.NotebookQueuedActionRequeue,
+			state:      v1.NotebookState_DELETED,
+			wantError:  true,
+		},
+		{
+			name:       "set stopped state, previous state is requeued",
+			prevState:  store.NotebookStateRequeued,
+			prevAction: store.NotebookQueuedActionRequeue,
+			state:      v1.NotebookState_STOPPED,
 			wantError:  true,
 		},
 	}

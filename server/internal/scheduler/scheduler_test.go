@@ -17,12 +17,13 @@ func TestSchedule(t *testing.T) {
 	)
 
 	tcs := []struct {
-		name     string
-		clusters []*store.Cluster
-		userInfo *auth.UserInfo
-		gpuCount int
-		want     SchedulingResult
-		wantErr  bool
+		name          string
+		clusters      []*store.Cluster
+		userInfo      *auth.UserInfo
+		gpuCount      int
+		prevClusterID string
+		want          SchedulingResult
+		wantErr       bool
 	}{
 		{
 			name:     "no clusters",
@@ -122,6 +123,28 @@ func TestSchedule(t *testing.T) {
 			gpuCount: 1,
 			wantErr:  true,
 		},
+		{
+			name: "unassigned to the same cluster",
+			clusters: []*store.Cluster{
+				{
+					ClusterID: "cluster0",
+					TenantID:  tenantID,
+					Status:    marshalStatus(t, &v1.ClusterStatus{}),
+				},
+			},
+			userInfo: &auth.UserInfo{
+				TenantID: tenantID,
+				AssignedKubernetesEnvs: []auth.AssignedKubernetesEnv{
+					{
+						ClusterID: "cluster0",
+						Namespace: "namespace0",
+					},
+				},
+			},
+			gpuCount:      0,
+			prevClusterID: "cluster0",
+			wantErr:       true,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -135,7 +158,7 @@ func TestSchedule(t *testing.T) {
 			}
 
 			sched := New(st, testr.New(t))
-			got, err := sched.Schedule(tc.userInfo, tc.gpuCount)
+			got, err := sched.Schedule(tc.userInfo, tc.prevClusterID, tc.gpuCount)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-logr/stdr"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -134,18 +135,27 @@ func run(ctx context.Context, c *config.Config) error {
 
 	sched := scheduler.New(st, logger.WithName("scheduler"))
 
+	srv := server.New(
+		st,
+		fclient,
+		mclient,
+		k8sClientFactory,
+		sched,
+		c.NotebookConfig.ImageTypes,
+		c.BatchJobConfig.Images,
+		logger,
+	)
 	go func() {
-		s := server.New(
-			st,
-			fclient,
-			mclient,
-			k8sClientFactory,
-			sched,
-			c.NotebookConfig.ImageTypes,
-			c.BatchJobConfig.Images,
-			logger,
+		errCh <- srv.Run(ctx, c.GRPCPort, c.AuthConfig, usageSetter)
+	}()
+
+	go func() {
+		// TODO(guangrui): Make the interval and maxQueuedTime configurable.
+		const (
+			defaultMaxQueuedTime       = 3 * time.Minute
+			defaultReschedulerInterval = 1 * time.Minute
 		)
-		errCh <- s.Run(ctx, c.GRPCPort, c.AuthConfig, usageSetter)
+		errCh <- srv.RunRescheduler(ctx, defaultReschedulerInterval, defaultMaxQueuedTime)
 	}()
 
 	go func() {

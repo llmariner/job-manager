@@ -212,6 +212,10 @@ func (d *D) processNotebooks(ctx context.Context) error {
 			log.Info("Deleting a k8s notebook resources")
 			err = d.nbManager.deleteNotebook(ctx, nb)
 			state = v1.NotebookState_DELETED
+		case v1.NotebookQueuedAction_REQUEUEING:
+			log.Info("Deleting a k8s notebook resources for requeueing")
+			err = d.nbManager.deleteNotebook(ctx, nb)
+			state = v1.NotebookState_REQUEUED
 		case v1.NotebookQueuedAction_ACTION_UNSPECIFIED:
 			return fmt.Errorf("notebook queued action is not specified")
 		default:
