@@ -172,3 +172,99 @@ func TestManager(t *testing.T) {
 		})
 	}
 }
+
+func TestToGPUPod(t *testing.T) {
+	tcs := []struct {
+		name   string
+		pod    *corev1.Pod
+		want   *v1.GpuPod
+		wantOK bool
+	}{
+		{
+			name: "gpu pod",
+			pod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+
+					Containers: []corev1.Container{
+						{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									nvidiaGPU: resource.MustParse("1"),
+								},
+							},
+						},
+						{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									nvidiaGPU: resource.MustParse("2"),
+								},
+							},
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+				},
+			},
+			want: &v1.GpuPod{
+				ResourceName:   nvidiaGPU.String(),
+				AllocatedCount: 3,
+			},
+			wantOK: true,
+		},
+		{
+			name: "non-gpu pod",
+			pod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+
+					Containers: []corev1.Container{
+						{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									"cpu": resource.MustParse("1"),
+								},
+							},
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodRunning,
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "pending gpu pod",
+			pod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+
+					Containers: []corev1.Container{
+						{
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									nvidiaGPU: resource.MustParse("1"),
+								},
+							},
+						},
+					},
+				},
+				Status: corev1.PodStatus{
+					Phase: corev1.PodPending,
+				},
+			},
+			wantOK: false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := toGPUPod(tc.pod, testr.New(t))
+			if !tc.wantOK {
+				assert.False(t, ok)
+				return
+			}
+			assert.True(t, ok)
+			assert.Truef(t, proto.Equal(tc.want, got), cmp.Diff(tc.want, got, protocmp.Transform()))
+		})
+	}
+}

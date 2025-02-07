@@ -120,6 +120,13 @@
           "items": {
             "$ref": "#/definitions/v1ProvisionableResource"
           }
+        },
+        "gpuPods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1GpuPod"
+          },
+          "description": "TODO(kenji): Revisit if this becomes too large."
         }
       }
     },
@@ -130,6 +137,18 @@
           "type": "string"
         },
         "allocatableCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GpuPod": {
+      "type": "object",
+      "properties": {
+        "resourceName": {
+          "type": "string"
+        },
+        "allocatedCount": {
           "type": "integer",
           "format": "int32"
         }

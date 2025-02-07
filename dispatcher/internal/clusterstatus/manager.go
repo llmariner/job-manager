@@ -95,6 +95,8 @@ func (m *Manager) updateClusterStaus(ctx context.Context) error {
 }
 
 func (m *Manager) buildClusterStaus(ctx context.Context) (*v1.ClusterStatus, error) {
+	// TODO(kenji): Add pagination.
+
 	nodes := &corev1.NodeList{}
 	if err := m.k8sClient.List(ctx, nodes); err != nil {
 		return nil, err
@@ -104,6 +106,18 @@ func (m *Manager) buildClusterStaus(ctx context.Context) (*v1.ClusterStatus, err
 	for _, node := range nodes.Items {
 		if n, ok := toGPUNode(node, m.logger); ok {
 			gpuNodes = append(gpuNodes, n)
+		}
+	}
+
+	pods := &corev1.PodList{}
+	if err := m.k8sClient.List(ctx, pods); err != nil {
+		return nil, err
+	}
+	m.logger.Info("Found Pods", "count", len(pods.Items))
+	var gpuPods []*v1.GpuPod
+	for _, pod := range pods.Items {
+		if p, ok := toGPUPod(&pod, m.logger); ok {
+			gpuPods = append(gpuPods, p)
 		}
 	}
 
@@ -122,6 +136,7 @@ func (m *Manager) buildClusterStaus(ctx context.Context) (*v1.ClusterStatus, err
 
 	return &v1.ClusterStatus{
 		GpuNodes:               gpuNodes,
+		GpuPods:                gpuPods,
 		ProvisionableResources: prs,
 	}, nil
 }
@@ -181,4 +196,40 @@ func toGPUNode(node corev1.Node, logger logr.Logger) (*v1.GpuNode, bool) {
 		}, true
 	}
 	return nil, false
+}
+
+func toGPUPod(pod *corev1.Pod, logger logr.Logger) (*v1.GpuPod, bool) {
+	// Ignore non-runing pods.
+	if pod.Status.Phase != corev1.PodRunning {
+		return nil, false
+	}
+
+	total := 0
+	for _, con := range pod.Spec.Containers {
+		limit := con.Resources.Limits
+		if limit == nil {
+			continue
+		}
+
+		// TODO(kenji): Support other accelerator types.
+		v, ok := limit[nvidiaGPU]
+		if !ok {
+			continue
+		}
+		count, ok := v.AsInt64()
+		if !ok {
+			logger.Info("Failed to convert to int64", "value", v.String())
+			continue
+		}
+		total += int(count)
+	}
+
+	if total == 0 {
+		return nil, false
+	}
+
+	return &v1.GpuPod{
+		ResourceName:   nvidiaGPU.String(),
+		AllocatedCount: int32(total),
+	}, true
 }

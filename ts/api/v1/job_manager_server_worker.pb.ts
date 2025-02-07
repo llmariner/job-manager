@@ -10,6 +10,11 @@ export type GpuNode = {
   allocatableCount?: number
 }
 
+export type GpuPod = {
+  resourceName?: string
+  allocatedCount?: number
+}
+
 export type ProvisionableResource = {
   instanceFamily?: string
   instanceType?: string
@@ -18,6 +23,7 @@ export type ProvisionableResource = {
 export type ClusterStatus = {
   gpuNodes?: GpuNode[]
   provisionableResources?: ProvisionableResource[]
+  gpuPods?: GpuPod[]
 }
 
 export type UpdateClusterStatusRequest = {

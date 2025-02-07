@@ -10,6 +10,13 @@ message GpuNode {
   // TODO(kenji): Add more information such as Nvidia GPU architecture.
 }
 
+message GpuPod {
+  string resource_name = 1;
+  int32 allocated_count = 2;
+  // TODO(kenji): Add a node name if we want to track which node the pod is running on.
+  // That will be needed to understand resource fragmentation.
+}
+
 // ProvisionableResource represents GPU instances that a cluster can provision
 // (e.g., Karpenter nodepool configuration).
 message ProvisionableResource {
@@ -20,6 +27,9 @@ message ProvisionableResource {
 message ClusterStatus {
   repeated GpuNode gpu_nodes = 1;
   repeated ProvisionableResource provisionable_resources = 2;
+
+  // TODO(kenji): Revisit if this becomes too large.
+  repeated GpuPod gpu_pods = 3;
 }
 
 message UpdateClusterStatusRequest {
