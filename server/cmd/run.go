@@ -155,7 +155,7 @@ func run(ctx context.Context, c *config.Config) error {
 
 	go func() {
 		s := server.NewSyncerServiceServer(logger, k8sClientFactory, sched)
-		errCh <- s.Run(ctx, c.SyncerServiceGRPCPort)
+		errCh <- s.Run(ctx, c.SyncerServiceGRPCPort, c.AuthConfig)
 	}()
 
 	return <-errCh

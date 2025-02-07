@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"google.golang.org/grpc"
@@ -36,14 +37,29 @@ type SS struct {
 }
 
 // Run runs the syncer service server.
-func (ss *SS) Run(ctx context.Context, port int) error {
+func (ss *SS) Run(ctx context.Context, port int, authConfig config.AuthConfig) error {
 	ss.logger.Info("Starting syncer service server...", "port", port)
 
-	// TODO: support auth
-	fakeAuth := func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-		return handler(fakeAuthInto(ctx), req)
+	var opt grpc.ServerOption
+	if authConfig.Enable {
+		ai, err := auth.NewInterceptor(ctx, auth.Config{
+			RBACServerAddr: authConfig.RBACInternalServerAddr,
+			GetAccessResourceForGRPCRequest: func(fullMethod string) string {
+				if fullMethod == "/llmariner.syncer.server.v1.SyncerService/ListClusterIDs" {
+					return "api.clusters"
+				}
+				return "api.k8s.namespaced"
+			},
+		})
+		if err != nil {
+			return err
+		}
+		opt = grpc.ChainUnaryInterceptor(ai.Unary())
+	} else {
+		opt = grpc.ChainUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+			return handler(fakeAuthInto(ctx), req)
+		})
 	}
-	opt := grpc.ChainUnaryInterceptor(fakeAuth)
 
 	srv := grpc.NewServer(opt)
 	v1.RegisterSyncerServiceServer(srv, ss)
