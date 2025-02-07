@@ -48,6 +48,14 @@ spec:
         - name: health
           containerPort: {{ include "job-manager-syncer.healthPort" . }}
           protocol: TCP
+        {{- with .Values.apiKeySecret }}
+        env:
+        - name: LLMO_SYNCER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .name }}
+              key: {{ .key }}
+        {{- end }}
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           httpGet:

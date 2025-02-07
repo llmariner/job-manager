@@ -2,11 +2,13 @@ package controller
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 
 	"github.com/awslabs/operatorpkg/context"
-	clsv1 "github.com/llmariner/cluster-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/metadata"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/rest"
@@ -22,11 +24,13 @@ import (
 type RemoteSyncerManager struct {
 	sessionManagerEndpoint string
 
+	ssClient       v1.SyncerServiceClient
 	localK8sClient client.Client
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (m *RemoteSyncerManager) SetupWithManager(mgr ctrl.Manager, sessionManagerServerAddr string) error {
+func (m *RemoteSyncerManager) SetupWithManager(mgr ctrl.Manager, ssClient v1.SyncerServiceClient, sessionManagerServerAddr string) error {
+	m.ssClient = ssClient
 	m.sessionManagerEndpoint = sessionManagerServerAddr
 	m.localK8sClient = mgr.GetClient()
 	return mgr.Add(m)
@@ -37,20 +41,24 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 	log := ctrl.LoggerFrom(ctx).WithName("syncer")
 	log.Info("Starting remote syncer manager")
 
-	// TODO(aya): support authentication & dynamic cluster registration
-	const token = "dummy"
-	cls := []*clsv1.Cluster{{Id: "default"}}
+	// TODO(aya): dynamic cluster registration
+	cls, err := m.ssClient.ListClusterIDs(
+		appendAuthorization(ctx),
+		&v1.ListClusterIDsRequest{})
+	if err != nil {
+		return fmt.Errorf("list clusters: %s", err)
+	}
 
 	eg, egCtx := errgroup.WithContext(ctx)
-	for _, c := range cls {
-		log.Info("Starting remote syncer", "clusterName", c.Name)
+	for i, c := range cls.Ids {
+		log.Info("Starting remote syncer", "cluster", c)
 		eg.Go(func() error {
-			ctx := ctrl.LoggerInto(egCtx, log.WithName(c.Id))
-			rconf := getRestConfig(m.sessionManagerEndpoint, c.Id, token)
+			ctx := ctrl.LoggerInto(egCtx, log.WithName(c))
+			rconf := getRestConfig(m.sessionManagerEndpoint, c, getAuthorizationToken())
 
 			// TODO(aya): gracefully handle errors
-			if err := newStatusSyncer(m.localK8sClient).start(ctx, rconf); err != nil {
-				return fmt.Errorf("run status syncer %s(%s): %s", c.Name, c.Id, err)
+			if err := newStatusSyncer(m.localK8sClient).start(ctx, rconf, i+1); err != nil {
+				return fmt.Errorf("run status syncer %s: %s", c, err)
 			}
 			return nil
 		})
@@ -76,7 +84,7 @@ type statusSyncer struct {
 }
 
 // start starts the status syncer.
-func (s *statusSyncer) start(ctx context.Context, conf rest.Config) error {
+func (s *statusSyncer) start(ctx context.Context, conf rest.Config, idx int) error {
 	log := ctrl.LoggerFrom(ctx)
 	log.Info("Starting status syncer", "host", conf.Host)
 
@@ -93,7 +101,7 @@ func (s *statusSyncer) start(ctx context.Context, conf rest.Config) error {
 	s.remoteK8sClient = mgr.GetClient()
 
 	if err := ctrl.NewControllerManagedBy(mgr).
-		Named("job-syncer").
+		Named(fmt.Sprintf("syncer%02d", idx)).
 		For(&batchv1.Job{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc:  func(e event.CreateEvent) bool { return true },
@@ -159,4 +167,13 @@ func getRestConfig(endpoint, clusterID, token string) rest.Config {
 		Host:        fmt.Sprintf("%s/sessions/%s", endpoint, clusterID),
 		BearerToken: token,
 	}
+}
+
+func getAuthorizationToken() string {
+	return os.Getenv("LLMO_SYNCER_API_KEY")
+}
+
+func appendAuthorization(ctx context.Context) context.Context {
+	auth := fmt.Sprintf("Bearer %s", getAuthorizationToken())
+	return metadata.AppendToOutgoingContext(ctx, "Authorization", auth)
 }
