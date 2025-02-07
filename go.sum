@@ -134,8 +134,8 @@ github.com/llmariner/file-manager v1.1.0 h1:nnzaYrnQtMejpXNOdcAzbZlkiFZ+gdw3zWXY
 github.com/llmariner/file-manager v1.1.0/go.mod h1:B1Wo3xmd5DWKHwxnZjYYOEyTqAw3ZDibIQHoiNGAIMA=
 github.com/llmariner/model-manager v1.1.0 h1:Ih5rD5Lu68IZbSeqFs/vhlkF5SRB3WYFE6tHrCoh0Kw=
 github.com/llmariner/model-manager v1.1.0/go.mod h1:i65jjZ5u8KqVAYvdyhHBxPQ3V80GowxrYVLUiODD9Jo=
-github.com/llmariner/rbac-manager v1.7.2-0.20250207000738-acf296282b58 h1:OxYXgpTMZapDp6ILbxSgsN2BHYNdt7/qmd6uPnAYsyQ=
-github.com/llmariner/rbac-manager v1.7.2-0.20250207000738-acf296282b58/go.mod h1:CIGuHstQERxFVvsdPREn9gvo8Q17CS7Ptg9VfakgLSE=
+github.com/llmariner/rbac-manager v1.8.0 h1:0MJ+BMjeqDsW9xyEK/ev4jREqV2BFQT3jdCeE2gmfaQ=
+github.com/llmariner/rbac-manager v1.8.0/go.mod h1:R9FgmUy9c1HAhDWz8V676w3hrSO/8osAEXm2gK6UcoU=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mattn/go-sqlite3 v1.14.17 h1:mCRHCLDUBXgpKAqIKsaAaAsrAlbkeomtRFKXh2L6YIM=
