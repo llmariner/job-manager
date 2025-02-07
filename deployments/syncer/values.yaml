@@ -20,6 +20,14 @@ kubernetesManager:
   # +docs:property
   # pprofBindAddress: ""
 
+# Configuration of the Secret used for syncer authentication when
+# communication with the control plane.
+apiKeySecret:
+  # The secret name.
+  name: syncer-api-key
+  # The key name with a api key set.
+  key: key
+
 # The log level of the inference-manager-engine container.
 # +docs:type=number
 logLevel: 0

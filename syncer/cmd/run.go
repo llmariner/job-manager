@@ -69,7 +69,7 @@ func run(ctx context.Context, c *config.Config) error {
 		return fmt.Errorf("setup job controller: %s", err)
 	}
 
-	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, c.SessionManagerEndpoint); err != nil {
+	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, ssc, c.SessionManagerEndpoint); err != nil {
 		return fmt.Errorf("setup remote syncer manager: %s", err)
 	}
 

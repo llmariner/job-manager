@@ -29,6 +29,7 @@ user-manager-server:
   enable: true
 cluster-manager-server:
   enable: true
+  defaultCluster: {}
 
 job-manager-server:
   enable: true

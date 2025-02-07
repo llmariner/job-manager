@@ -86,14 +86,16 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 		clusterID := job.Annotations[annoKeyClusterID]
 		if clusterID != "" {
-			if _, err := c.ssClient.DeleteKubernetesObject(ctx, &v1.DeleteKubernetesObjectRequest{
-				ClusterId: clusterID,
-				Namespace: req.Namespace,
-				Name:      req.Name,
-				Group:     jobGVR.Group,
-				Version:   jobGVR.Version,
-				Resource:  jobGVR.Resource,
-			}); err != nil {
+			if _, err := c.ssClient.DeleteKubernetesObject(
+				appendAuthorization(ctx),
+				&v1.DeleteKubernetesObjectRequest{
+					ClusterId: clusterID,
+					Namespace: req.Namespace,
+					Name:      req.Name,
+					Group:     jobGVR.Group,
+					Version:   jobGVR.Version,
+					Resource:  jobGVR.Resource,
+				}); err != nil {
 				log.Error(err, "Failed to delete job")
 				return ctrl.Result{}, err
 			}
@@ -183,7 +185,9 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 	}
 
-	resp, err := c.ssClient.PatchKubernetesObject(ctx, patchReq)
+	resp, err := c.ssClient.PatchKubernetesObject(
+		appendAuthorization(ctx),
+		patchReq)
 	if err != nil {
 		log.Error(err, "Failed to patch job", "data", string(data))
 		return ctrl.Result{}, err
