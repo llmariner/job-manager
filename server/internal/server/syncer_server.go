@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sort"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
@@ -155,4 +156,25 @@ func (ss *SS) DeleteKubernetesObject(ctx context.Context, req *v1.DeleteKubernet
 		return nil, status.Errorf(codes.Internal, "delete k8s object: %s", err)
 	}
 	return &v1.DeleteKubernetesObjectResponse{}, nil
+}
+
+// ListClusterIDs lists cluster IDs.
+func (ss *SS) ListClusterIDs(ctx context.Context, req *v1.ListClusterIDsRequest) (*v1.ListClusterIDsResponse, error) {
+	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
+	}
+	accessibleClusters := map[string]bool{}
+	for _, env := range userInfo.AssignedKubernetesEnvs {
+		accessibleClusters[env.ClusterID] = true
+	}
+
+	resp := &v1.ListClusterIDsResponse{}
+	for id := range accessibleClusters {
+		resp.Ids = append(resp.Ids, id)
+	}
+	sort.Slice(resp.Ids, func(i, j int) bool {
+		return resp.Ids[i] < resp.Ids[j]
+	})
+	return resp, nil
 }

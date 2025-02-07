@@ -40,7 +40,15 @@ message DeleteKubernetesObjectRequest {
 
 message DeleteKubernetesObjectResponse {}
 
+message ListClusterIDsRequest {}
+
+message ListClusterIDsResponse {
+  repeated string ids = 1;
+}
+
 service SyncerService {
   rpc PatchKubernetesObject(PatchKubernetesObjectRequest) returns (PatchKubernetesObjectResponse) {}
   rpc DeleteKubernetesObject(DeleteKubernetesObjectRequest) returns (DeleteKubernetesObjectResponse) {}
+
+  rpc ListClusterIDs(ListClusterIDsRequest) returns (ListClusterIDsResponse) {}
 }

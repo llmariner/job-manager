@@ -150,6 +150,7 @@ func TestReconcileJob(t *testing.T) {
 type fakeSyncerServiceClient struct {
 	patchCount int
 	delCount   int
+	listCount  int
 }
 
 func (s *fakeSyncerServiceClient) PatchKubernetesObject(ctx context.Context, in *v1.PatchKubernetesObjectRequest, opts ...grpc.CallOption) (*v1.PatchKubernetesObjectResponse, error) {
@@ -163,4 +164,9 @@ func (s *fakeSyncerServiceClient) PatchKubernetesObject(ctx context.Context, in 
 func (s *fakeSyncerServiceClient) DeleteKubernetesObject(ctx context.Context, in *v1.DeleteKubernetesObjectRequest, opts ...grpc.CallOption) (*v1.DeleteKubernetesObjectResponse, error) {
 	s.delCount++
 	return &v1.DeleteKubernetesObjectResponse{}, nil
+}
+
+func (s *fakeSyncerServiceClient) ListClusterIDs(ctx context.Context, in *v1.ListClusterIDsRequest, opts ...grpc.CallOption) (*v1.ListClusterIDsResponse, error) {
+	s.listCount++
+	return &v1.ListClusterIDsResponse{}, nil
 }

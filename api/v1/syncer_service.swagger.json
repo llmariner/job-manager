@@ -47,6 +47,17 @@
     "v1DeleteKubernetesObjectResponse": {
       "type": "object"
     },
+    "v1ListClusterIDsResponse": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1PatchKubernetesObjectRequestResources": {
       "type": "object",
       "properties": {
