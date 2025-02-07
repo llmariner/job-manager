@@ -59,6 +59,11 @@ func TestListClusters(t *testing.T) {
 	c := resp.Clusters[0]
 	assert.Equal(t, defaultClusterID, c.Id)
 	assert.True(t, proto.Equal(status, c.Status))
+
+	summary := &v1.Cluster_Summary{
+		GpuCapacity: 1,
+	}
+	assert.True(t, proto.Equal(summary, c.Summary))
 }
 
 func TestUpdateClusterStatus(t *testing.T) {

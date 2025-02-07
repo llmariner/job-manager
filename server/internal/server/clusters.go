@@ -39,10 +39,17 @@ func (s *S) ListClusters(ctx context.Context, req *v1.ListClustersRequest) (*v1.
 		if err := proto.Unmarshal(c.Status, &st); err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal cluster status: %s", err)
 		}
+		var gpuCapacity int32
+		for _, node := range st.GpuNodes {
+			gpuCapacity += node.AllocatableCount
+		}
 		cs = append(cs, &v1.Cluster{
-			Id:            c.ClusterID,
-			Name:          c.Name,
-			Status:        &st,
+			Id:     c.ClusterID,
+			Name:   c.Name,
+			Status: &st,
+			Summary: &v1.Cluster_Summary{
+				GpuCapacity: gpuCapacity,
+			},
 			LastUpdatedAt: c.UpdatedAt.UnixNano(),
 		})
 	}
