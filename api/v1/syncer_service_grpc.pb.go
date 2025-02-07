@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SyncerServiceClient interface {
 	PatchKubernetesObject(ctx context.Context, in *PatchKubernetesObjectRequest, opts ...grpc.CallOption) (*PatchKubernetesObjectResponse, error)
 	DeleteKubernetesObject(ctx context.Context, in *DeleteKubernetesObjectRequest, opts ...grpc.CallOption) (*DeleteKubernetesObjectResponse, error)
+	ListClusterIDs(ctx context.Context, in *ListClusterIDsRequest, opts ...grpc.CallOption) (*ListClusterIDsResponse, error)
 }
 
 type syncerServiceClient struct {
@@ -48,12 +49,22 @@ func (c *syncerServiceClient) DeleteKubernetesObject(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *syncerServiceClient) ListClusterIDs(ctx context.Context, in *ListClusterIDsRequest, opts ...grpc.CallOption) (*ListClusterIDsResponse, error) {
+	out := new(ListClusterIDsResponse)
+	err := c.cc.Invoke(ctx, "/llmariner.syncer.server.v1.SyncerService/ListClusterIDs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SyncerServiceServer is the server API for SyncerService service.
 // All implementations must embed UnimplementedSyncerServiceServer
 // for forward compatibility
 type SyncerServiceServer interface {
 	PatchKubernetesObject(context.Context, *PatchKubernetesObjectRequest) (*PatchKubernetesObjectResponse, error)
 	DeleteKubernetesObject(context.Context, *DeleteKubernetesObjectRequest) (*DeleteKubernetesObjectResponse, error)
+	ListClusterIDs(context.Context, *ListClusterIDsRequest) (*ListClusterIDsResponse, error)
 	mustEmbedUnimplementedSyncerServiceServer()
 }
 
@@ -66,6 +77,9 @@ func (UnimplementedSyncerServiceServer) PatchKubernetesObject(context.Context, *
 }
 func (UnimplementedSyncerServiceServer) DeleteKubernetesObject(context.Context, *DeleteKubernetesObjectRequest) (*DeleteKubernetesObjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteKubernetesObject not implemented")
+}
+func (UnimplementedSyncerServiceServer) ListClusterIDs(context.Context, *ListClusterIDsRequest) (*ListClusterIDsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListClusterIDs not implemented")
 }
 func (UnimplementedSyncerServiceServer) mustEmbedUnimplementedSyncerServiceServer() {}
 
@@ -116,6 +130,24 @@ func _SyncerService_DeleteKubernetesObject_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SyncerService_ListClusterIDs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListClusterIDsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SyncerServiceServer).ListClusterIDs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/llmariner.syncer.server.v1.SyncerService/ListClusterIDs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncerServiceServer).ListClusterIDs(ctx, req.(*ListClusterIDsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SyncerService_ServiceDesc is the grpc.ServiceDesc for SyncerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +162,10 @@ var SyncerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteKubernetesObject",
 			Handler:    _SyncerService_DeleteKubernetesObject_Handler,
+		},
+		{
+			MethodName: "ListClusterIDs",
+			Handler:    _SyncerService_ListClusterIDs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

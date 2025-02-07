@@ -24,7 +24,12 @@ export type DeleteKubernetesObjectRequest = {
     resource?: string;
 };
 export type DeleteKubernetesObjectResponse = {};
+export type ListClusterIDsRequest = {};
+export type ListClusterIDsResponse = {
+    ids?: string[];
+};
 export declare class SyncerService {
     static PatchKubernetesObject(req: PatchKubernetesObjectRequest, initReq?: fm.InitReq): Promise<PatchKubernetesObjectResponse>;
     static DeleteKubernetesObject(req: DeleteKubernetesObjectRequest, initReq?: fm.InitReq): Promise<DeleteKubernetesObjectResponse>;
+    static ListClusterIDs(req: ListClusterIDsRequest, initReq?: fm.InitReq): Promise<ListClusterIDsResponse>;
 }
