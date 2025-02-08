@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/llmariner/job-manager/syncer/internal/controller"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -46,7 +48,7 @@ func run(ctx context.Context, c *config.Config) error {
 	ctx = ctrl.LoggerInto(ctx, log)
 	ctrl.SetLogger(logger)
 
-	conn, err := grpc.NewClient(c.JobManagerServerSyncerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(c.JobManagerServerSyncerServiceAddr, grpcOption(c))
 	if err != nil {
 		return fmt.Errorf("failed to create job grpc client: %s", err)
 	}
@@ -78,4 +80,11 @@ func run(ctx context.Context, c *config.Config) error {
 	}
 
 	return mgr.Start(ctx)
+}
+
+func grpcOption(c *config.Config) grpc.DialOption {
+	if c.Worker.TLS.Enable {
+		return grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
+	}
+	return grpc.WithTransportCredentials(insecure.NewCredentials())
 }

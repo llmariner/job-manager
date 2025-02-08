@@ -9,6 +9,11 @@ jobManagerServerSyncerServiceAddr: job-manager-server-syncer-service-grpc:8082
 # The endpoint of the session-manager.
 sessionManagerEndpoint: http://session-manager-server-http:8080/v1
 
+worker:
+  tls:
+    # The flag to enable TLS access to the control-plane.
+    enable: false
+
 kubernetesManager:
   # Specify whether to enable the leader election.
   enableLeaderElection: false
