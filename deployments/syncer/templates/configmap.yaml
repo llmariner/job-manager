@@ -10,7 +10,7 @@ data:
     sessionManagerEndpoint: {{ .Values.sessionManagerEndpoint }}
     tenant:
       tls:
-        enable: {{ .Values.worker.tls.enable }}
+        enable: {{ .Values.tenant.tls.enable }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-syncer.fullname" . }}
