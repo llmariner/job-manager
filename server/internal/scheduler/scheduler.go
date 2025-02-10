@@ -92,7 +92,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 				return SchedulingResult{}, err
 			}
 
-			if ok, err := canProvisionGPUs(&status); err != nil {
+			if ok, err := canProvisionGPUs(gpuCount, &status); err != nil {
 				return SchedulingResult{}, err
 			} else if !ok {
 				s.logger.V(1).Info("Ignoring a cluster that cannot provision GPUs", "clusterID", c.ClusterID)
@@ -113,10 +113,20 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 // canProvisionGPUs returns true if the cluster can provision GPUs.
 //
 // TODO(kenji): Support other cloud providers and non-Nvidia GPUs.
-func canProvisionGPUs(status *v1.ClusterStatus) (bool, error) {
-	// TODO(kenji): Revisit the logic since this just checks if the cluster has alloctable GPUs.
+func canProvisionGPUs(requestedGPUs int, status *v1.ClusterStatus) (bool, error) {
 	if len(status.GpuNodes) > 0 {
-		return true, nil
+		// TODO(kenji): Take into resource fragmentation.
+		// TODO(kenji): Subtract the number of GPUs allocated for this scheduling (and then revert the change
+		// once dispatcher reports the updated status including the scheduled workload.
+		var allocatable int
+		for _, n := range status.GpuNodes {
+			allocatable += int(n.AllocatableCount)
+		}
+		var allocated int
+		for _, p := range status.GpuPods {
+			allocated += int(p.AllocatedCount)
+		}
+		return requestedGPUs <= allocatable-allocated, nil
 	}
 
 	for _, pr := range status.ProvisionableResources {
