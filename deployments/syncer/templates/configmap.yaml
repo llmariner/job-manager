@@ -8,7 +8,7 @@ data:
   config.yaml: |
     jobManagerServerSyncerServiceAddr: {{ .Values.jobManagerServerSyncerServiceAddr }}
     sessionManagerEndpoint: {{ .Values.sessionManagerEndpoint }}
-    worker:
+    tenant:
       tls:
         enable: {{ .Values.worker.tls.enable }}
     kubernetesManager:

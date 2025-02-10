@@ -83,7 +83,7 @@ func run(ctx context.Context, c *config.Config) error {
 }
 
 func grpcOption(c *config.Config) grpc.DialOption {
-	if c.Worker.TLS.Enable {
+	if c.Tenant.TLS.Enable {
 		return grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
 	}
 	return grpc.WithTransportCredentials(insecure.NewCredentials())

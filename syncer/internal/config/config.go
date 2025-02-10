@@ -12,19 +12,19 @@ type Config struct {
 	JobManagerServerSyncerServiceAddr string `yaml:"jobManagerServerSyncerServiceAddr"`
 	SessionManagerEndpoint            string `yaml:"sessionManagerEndpoint"`
 
-	Worker WorkerConfig `yaml:"worker"`
+	Tenant TenantConfig `yaml:"tenant"`
 
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 }
 
-// WorkerTLSConfig is the worker TLS configuration.
-type WorkerTLSConfig struct {
+// TenantTLSConfig is the tenant TLS configuration.
+type TenantTLSConfig struct {
 	Enable bool `yaml:"enable"`
 }
 
-// WorkerConfig is the worker configuration.
-type WorkerConfig struct {
-	TLS WorkerTLSConfig `yaml:"tls"`
+// TenantConfig is the tenant configuration.
+type TenantConfig struct {
+	TLS TenantTLSConfig `yaml:"tls"`
 }
 
 // KubernetesManagerConfig is the Kubernetes manager configuration.
