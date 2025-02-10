@@ -8,6 +8,9 @@ data:
   config.yaml: |
     jobManagerServerSyncerServiceAddr: {{ .Values.jobManagerServerSyncerServiceAddr }}
     sessionManagerEndpoint: {{ .Values.sessionManagerEndpoint }}
+    tenant:
+      tls:
+        enable: {{ .Values.tenant.tls.enable }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-syncer.fullname" . }}

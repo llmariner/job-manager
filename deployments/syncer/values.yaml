@@ -9,6 +9,18 @@ jobManagerServerSyncerServiceAddr: job-manager-server-syncer-service-grpc:8082
 # The endpoint of the session-manager.
 sessionManagerEndpoint: http://session-manager-server-http:8080/v1
 
+tenant:
+  # Configuration of the Secret used for syncer authentication when
+  # communication with the control plane.
+  apiKeySecret:
+    # The secret name.
+    name: syncer-api-key
+    # The key name with a api key set.
+    key: key
+  tls:
+    # The flag to enable TLS access to the control-plane.
+    enable: false
+
 kubernetesManager:
   # Specify whether to enable the leader election.
   enableLeaderElection: false
@@ -19,14 +31,6 @@ kubernetesManager:
   # The bind address for the pprof serving.
   # +docs:property
   # pprofBindAddress: ""
-
-# Configuration of the Secret used for syncer authentication when
-# communication with the control plane.
-apiKeySecret:
-  # The secret name.
-  name: syncer-api-key
-  # The key name with a api key set.
-  key: key
 
 # The log level of the inference-manager-engine container.
 # +docs:type=number
