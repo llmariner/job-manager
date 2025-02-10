@@ -171,9 +171,10 @@ func TestSchedule(t *testing.T) {
 
 func TestCanProvisionGPUs(t *testing.T) {
 	tcs := []struct {
-		name   string
-		status *v1.ClusterStatus
-		want   bool
+		name          string
+		status        *v1.ClusterStatus
+		requestedGPUs int
+		want          bool
 	}{
 		{
 			name: "no gpu nodes and no provisionable resources",
@@ -181,7 +182,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 				GpuNodes:               []*v1.GpuNode{},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
-			want: false,
+			requestedGPUs: 1,
+			want:          false,
 		},
 		{
 			name: "gpu nodes",
@@ -194,7 +196,46 @@ func TestCanProvisionGPUs(t *testing.T) {
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
-			want: true,
+			requestedGPUs: 1,
+			want:          true,
+		},
+		{
+			name: "gpu nodes with unallocated gpus",
+			status: &v1.ClusterStatus{
+				GpuNodes: []*v1.GpuNode{
+					{
+						ResourceName:     "nvidia.com/gpu",
+						AllocatableCount: 8,
+					},
+				},
+				GpuPods: []*v1.GpuPod{
+					{
+						AllocatedCount: 4,
+					},
+				},
+				ProvisionableResources: []*v1.ProvisionableResource{},
+			},
+			requestedGPUs: 2,
+			want:          true,
+		},
+		{
+			name: "gpu nodes with insufficient gpus",
+			status: &v1.ClusterStatus{
+				GpuNodes: []*v1.GpuNode{
+					{
+						ResourceName:     "nvidia.com/gpu",
+						AllocatableCount: 8,
+					},
+				},
+				GpuPods: []*v1.GpuPod{
+					{
+						AllocatedCount: 7,
+					},
+				},
+				ProvisionableResources: []*v1.ProvisionableResource{},
+			},
+			requestedGPUs: 2,
+			want:          false,
 		},
 		{
 			name: "provisionable resources with gpu instance type",
@@ -206,7 +247,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 					},
 				},
 			},
-			want: true,
+			requestedGPUs: 1,
+			want:          true,
 		},
 		{
 			name: "provisionable resources with non-gpu instance type",
@@ -218,13 +260,14 @@ func TestCanProvisionGPUs(t *testing.T) {
 					},
 				},
 			},
-			want: false,
+			requestedGPUs: 1,
+			want:          false,
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := canProvisionGPUs(tc.status)
+			got, err := canProvisionGPUs(tc.requestedGPUs, tc.status)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})
