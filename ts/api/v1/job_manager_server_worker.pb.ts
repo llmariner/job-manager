@@ -13,6 +13,7 @@ export type GpuNode = {
 export type GpuPod = {
   resourceName?: string
   allocatedCount?: number
+  namespacedName?: string
 }
 
 export type ProvisionableResource = {

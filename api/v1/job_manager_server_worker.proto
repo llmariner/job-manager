@@ -13,6 +13,7 @@ message GpuNode {
 message GpuPod {
   string resource_name = 1;
   int32 allocated_count = 2;
+  string namespaced_name = 3;
   // TODO(kenji): Add a node name if we want to track which node the pod is running on.
   // That will be needed to understand resource fragmentation.
 }

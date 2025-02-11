@@ -89,6 +89,9 @@
         "allocatedCount": {
           "type": "integer",
           "format": "int32"
+        },
+        "namespacedName": {
+          "type": "string"
         }
       }
     },
