@@ -2,6 +2,7 @@ package clusterstatus
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -231,5 +232,6 @@ func toGPUPod(pod *corev1.Pod, logger logr.Logger) (*v1.GpuPod, bool) {
 	return &v1.GpuPod{
 		ResourceName:   nvidiaGPU.String(),
 		AllocatedCount: int32(total),
+		NamespacedName: fmt.Sprintf("%s/%s", pod.Namespace, pod.Name),
 	}, true
 }
