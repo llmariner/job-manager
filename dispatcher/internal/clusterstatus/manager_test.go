@@ -183,8 +183,11 @@ func TestToGPUPod(t *testing.T) {
 		{
 			name: "gpu pod",
 			pod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pod1",
+					Namespace: "default",
+				},
 				Spec: corev1.PodSpec{
-
 					Containers: []corev1.Container{
 						{
 							Resources: corev1.ResourceRequirements{
@@ -209,6 +212,7 @@ func TestToGPUPod(t *testing.T) {
 			want: &v1.GpuPod{
 				ResourceName:   nvidiaGPU.String(),
 				AllocatedCount: 3,
+				NamespacedName: "default/pod1",
 			},
 			wantOK: true,
 		},
@@ -216,7 +220,6 @@ func TestToGPUPod(t *testing.T) {
 			name: "non-gpu pod",
 			pod: &corev1.Pod{
 				Spec: corev1.PodSpec{
-
 					Containers: []corev1.Container{
 						{
 							Resources: corev1.ResourceRequirements{
@@ -237,7 +240,6 @@ func TestToGPUPod(t *testing.T) {
 			name: "pending gpu pod",
 			pod: &corev1.Pod{
 				Spec: corev1.PodSpec{
-
 					Containers: []corev1.Container{
 						{
 							Resources: corev1.ResourceRequirements{
