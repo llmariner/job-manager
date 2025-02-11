@@ -170,7 +170,7 @@ func getRestConfig(endpoint, clusterID, token string) rest.Config {
 }
 
 func getAuthorizationToken() string {
-	return os.Getenv("LLMO_SYNCER_API_KEY")
+	return os.Getenv("LLMARINER_SYNCER_API_KEY")
 }
 
 func appendAuthorization(ctx context.Context) context.Context {
