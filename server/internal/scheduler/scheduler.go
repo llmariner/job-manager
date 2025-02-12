@@ -62,10 +62,8 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 	}
 
 	namespacesByCluster := map[string]string{}
-	clustersNamesByID := map[string]string{}
 	for _, env := range userInfo.AssignedKubernetesEnvs {
 		namespacesByCluster[env.ClusterID] = env.Namespace
-		clustersNamesByID[env.ClusterID] = env.ClusterName
 	}
 	s.logger.V(1).Info("Scheduling a workload", "gpuCount", gpuCount, "assignedClustersEnvs", userInfo.AssignedKubernetesEnvs)
 	for _, c := range clusters {
@@ -102,7 +100,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		s.logger.V(1).Info("Scheduled a workload", "clusterID", c.ClusterID, "namespace", ns)
 		return SchedulingResult{
 			ClusterID:   c.ClusterID,
-			ClusterName: clustersNamesByID[c.ClusterID],
+			ClusterName: c.Name,
 			Namespace:   ns,
 		}, nil
 	}
