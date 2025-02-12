@@ -6,10 +6,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	v1 "github.com/llmariner/job-manager/api/v1"
-	"github.com/llmariner/job-manager/server/internal/store"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/rbac-manager/pkg/auth"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -20,18 +18,18 @@ const (
 
 // New creates a new scheduler.
 func New(
-	store *store.S,
+	cache *cache.Store,
 	logger logr.Logger,
 ) *S {
 	return &S{
-		store:  store,
+		cache:  cache,
 		logger: logger,
 	}
 }
 
 // S is a scheduler.
 type S struct {
-	store  *store.S
+	cache  *cache.Store
 	logger logr.Logger
 }
 
@@ -49,7 +47,7 @@ type SchedulingResult struct {
 // will not reschedule the workload to the same cluster.
 // TODO(kenji): Improve the algorithm.
 func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpuCount int) (SchedulingResult, error) {
-	clusters, err := s.store.ListClustersByTenantID(userInfo.TenantID)
+	clusters, err := s.cache.ListClustersByTenantID(userInfo.TenantID)
 	if err != nil {
 		return SchedulingResult{}, err
 	}
@@ -85,12 +83,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		// Just pick up the first cluster that can provision GPU resources if gpuCount is > 0.
 		// Otherwise just pick up the first cluster.
 		if gpuCount > 0 {
-			var status v1.ClusterStatus
-			if err := proto.Unmarshal(c.Status, &status); err != nil {
-				return SchedulingResult{}, err
-			}
-
-			if ok, err := canProvisionGPUs(gpuCount, &status); err != nil {
+			if ok, err := canProvisionGPUs(gpuCount, c); err != nil {
 				return SchedulingResult{}, err
 			} else if !ok {
 				s.logger.V(1).Info("Ignoring a cluster that cannot provision GPUs", "clusterID", c.ClusterID)
@@ -111,23 +104,24 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 // canProvisionGPUs returns true if the cluster can provision GPUs.
 //
 // TODO(kenji): Support other cloud providers and non-Nvidia GPUs.
-func canProvisionGPUs(requestedGPUs int, status *v1.ClusterStatus) (bool, error) {
-	if len(status.GpuNodes) > 0 {
+func canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) {
+	if len(c.GPUNodes) > 0 {
 		// TODO(kenji): Take into resource fragmentation.
-		// TODO(kenji): Subtract the number of GPUs allocated for this scheduling (and then revert the change
-		// once dispatcher reports the updated status including the scheduled workload.
 		var allocatable int
-		for _, n := range status.GpuNodes {
+		for _, n := range c.GPUNodes {
 			allocatable += int(n.AllocatableCount)
 		}
 		var allocated int
-		for _, p := range status.GpuPods {
+		for _, p := range c.GPUPodsByNN {
+			allocated += int(p.AllocatedCount)
+		}
+		for _, p := range c.AssumedGPUPodsByNN {
 			allocated += int(p.AllocatedCount)
 		}
 		return requestedGPUs <= allocatable-allocated, nil
 	}
 
-	for _, pr := range status.ProvisionableResources {
+	for _, pr := range c.ProvisionableResources {
 		if i := pr.InstanceType; i != "" {
 			if ok, err := isAWSInstanceTypeForNvidiaGPU(i); err != nil {
 				return false, err

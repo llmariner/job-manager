@@ -43,6 +43,10 @@ type schedulerI interface {
 	Schedule(userInfo *auth.UserInfo, prevClusterID string, gpuCount int) (scheduler.SchedulingResult, error)
 }
 
+type cacheI interface {
+	AddAssumedPod(tenantID, clusterID string, pod *v1.GpuPod) error
+}
+
 // New creates a server.
 func New(
 	store *store.S,
@@ -50,6 +54,7 @@ func New(
 	modelClient modelClient,
 	k8sClientFactory k8s.ClientFactory,
 	scheduler schedulerI,
+	cache cacheI,
 	nbImageTypes map[string]string,
 	batchJobImages map[string]string,
 	logger logr.Logger,
@@ -64,6 +69,7 @@ func New(
 		modelClient:      modelClient,
 		k8sClientFactory: k8sClientFactory,
 		scheduler:        scheduler,
+		cache:            cache,
 		nbImageTypes:     nbImageTypes,
 		nbImageTypeStr:   strings.Join(nbtypes, ", "),
 		batchJobImages:   batchJobImages,
@@ -85,6 +91,7 @@ type S struct {
 	modelClient      modelClient
 	k8sClientFactory k8s.ClientFactory
 	scheduler        schedulerI
+	cache            cacheI
 
 	nbImageTypes   map[string]string
 	nbImageTypeStr string

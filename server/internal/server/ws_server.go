@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -21,9 +22,10 @@ const (
 )
 
 // NewWorkerServiceServer creates a new worker service server.
-func NewWorkerServiceServer(s *store.S, logger logr.Logger) *WS {
+func NewWorkerServiceServer(s *store.S, c *cache.Store, logger logr.Logger) *WS {
 	return &WS{
 		store:  s,
+		cache:  c,
 		logger: logger.WithName("worker"),
 	}
 }
@@ -37,6 +39,7 @@ type WS struct {
 
 	srv    *grpc.Server
 	store  *store.S
+	cache  *cache.Store
 	logger logr.Logger
 
 	enableAuth bool

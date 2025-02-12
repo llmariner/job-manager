@@ -19,11 +19,12 @@ import (
 )
 
 // NewSyncerServiceServer creates a new syncer service server.
-func NewSyncerServiceServer(logger logr.Logger, k8sClientFactory k8s.ClientFactory, scheduler schedulerI) *SS {
+func NewSyncerServiceServer(logger logr.Logger, k8sClientFactory k8s.ClientFactory, scheduler schedulerI, cache cacheI) *SS {
 	return &SS{
 		logger:           logger.WithName("syncer"),
 		k8sClientFactory: k8sClientFactory,
 		scheduler:        scheduler,
+		cache:            cache,
 	}
 }
 
@@ -34,6 +35,7 @@ type SS struct {
 	srv              *grpc.Server
 	k8sClientFactory k8s.ClientFactory
 	scheduler        schedulerI
+	cache            cacheI
 	logger           logr.Logger
 }
 
@@ -111,6 +113,12 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
+	if err := ss.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID, &v1.GpuPod{
+		AllocatedCount: int32(gpuCount),
+		NamespacedName: fmt.Sprintf("%s/%s", sresult.Namespace, req.Name),
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "add assumed pod: %s", err)
+	}
 	clusterID := sresult.ClusterID
 
 	if sresult.Namespace != req.Namespace {
@@ -132,6 +140,7 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "patch k8s object: %s", err)
 	}
+
 	return &v1.PatchKubernetesObjectResponse{
 		ClusterId: clusterID,
 		Uid:       string(uobj.GetUID()),

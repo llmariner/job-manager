@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -60,7 +61,7 @@ func TestListClusters(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, nil, nil, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
 
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListClusters(ctx, &v1.ListClustersRequest{})
@@ -86,7 +87,7 @@ func TestUpdateClusterStatus(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
-	srv := NewWorkerServiceServer(st, testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
 	req := &v1.UpdateClusterStatusRequest{
 		ClusterStatus: &v1.ClusterStatus{},
 	}
