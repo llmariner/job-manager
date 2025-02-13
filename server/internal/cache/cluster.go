@@ -50,7 +50,8 @@ type Cluster struct {
 
 	GPUPods []*v1.GpuPod
 	// AssumedGPUPodsByKey is a map from key to the assumed GPU pods on the node.
-	// This pod is bound to the node by scheduler, but not yet created.
+	// This pod is bound to the cluster by scheduler, but not yet created.
+	// The key is the prefix of the pod.
 	AssumedGPUPodsByKey map[string]*AssumedGPUPod
 }
 
