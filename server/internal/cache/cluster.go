@@ -45,7 +45,7 @@ type Cluster struct {
 
 	GPUPodsByNN map[string]*v1.GpuPod
 	// AssumedGPUPodsByNN is a map from namespaced-name to the assumed GPU pods on the node.
-	// This pod is bind to the node by scheduler, but not yet created.
+	// This pod is bound to the node by scheduler, but not yet created.
 	AssumedGPUPodsByNN map[string]*AssumedGPUPod
 }
 
