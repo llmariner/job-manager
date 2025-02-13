@@ -78,9 +78,7 @@ func (c *Cluster) Clone() *Cluster {
 	}
 	copy(cls.GPUNodes, c.GPUNodes)
 	copy(cls.ProvisionableResources, c.ProvisionableResources)
-	for k, v := range c.GPUPods {
-		cls.GPUPods[k] = v
-	}
+	copy(cls.GPUPods, c.GPUPods)
 	for k, v := range c.AssumedGPUPodsByKey {
 		cls.AssumedGPUPodsByKey[k] = v
 	}
