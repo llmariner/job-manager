@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 )
 
 const fieldManager = "job-manager-server"
@@ -105,7 +106,9 @@ func (c *defaultDynamicClient) PatchResource(ctx context.Context, name, namespac
 
 func (c *defaultDynamicClient) DeleteResource(ctx context.Context, name, namespace string, gvr schema.GroupVersionResource) error {
 	dr := c.getResourceInterface(namespace, gvr)
-	return dr.Delete(ctx, name, metav1.DeleteOptions{})
+	return dr.Delete(ctx, name, metav1.DeleteOptions{
+		PropagationPolicy: ptr.To(metav1.DeletePropagationBackground),
+	})
 }
 
 func (c *defaultDynamicClient) getResourceInterface(namespace string, gvr schema.GroupVersionResource) dynamic.ResourceInterface {
