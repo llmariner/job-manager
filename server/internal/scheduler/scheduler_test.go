@@ -154,11 +154,11 @@ func TestSchedule(t *testing.T) {
 			defer tearDown()
 
 			for _, c := range tc.clusters {
-				err := st.CreateOrUpdateCluster(c)
+				_, err := st.CreateOrUpdateCluster(c)
 				assert.NoError(t, err)
 			}
 
-			sched := New(cache.NewStore(st), testr.New(t))
+			sched := New(cache.NewStore(st, testr.New(t)), testr.New(t))
 			got, err := sched.Schedule(tc.userInfo, tc.prevClusterID, tc.gpuCount)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -206,8 +206,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 						AllocatableCount: 8,
 					},
 				},
-				GPUPodsByNN: map[string]*v1.GpuPod{
-					"ns-0/pod-0": {AllocatedCount: 4},
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 4},
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
@@ -223,8 +223,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 						AllocatableCount: 8,
 					},
 				},
-				GPUPodsByNN: map[string]*v1.GpuPod{
-					"ns-0/pod-0": {AllocatedCount: 7},
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 7},
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
@@ -240,10 +240,10 @@ func TestCanProvisionGPUs(t *testing.T) {
 						AllocatableCount: 8,
 					},
 				},
-				GPUPodsByNN: map[string]*v1.GpuPod{
-					"ns-0/pod-0": {AllocatedCount: 3},
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 3},
 				},
-				AssumedGPUPodsByNN: map[string]*cache.AssumedGPUPod{
+				AssumedGPUPodsByKey: map[string]*cache.AssumedGPUPod{
 					"ns-0/pod-1": {AllocatedCount: 4},
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
@@ -281,7 +281,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := canProvisionGPUs(tc.requestedGPUs, tc.status)
+			s := S{logger: testr.New(t)}
+			got, err := s.canProvisionGPUs(tc.requestedGPUs, tc.status)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})

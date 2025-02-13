@@ -134,8 +134,8 @@ func run(ctx context.Context, c *config.Config) error {
 		usageSetter = sender.NoopUsageSetter{}
 	}
 
-    // TODO(aya): stop the lazy loading and populate cache data from DB at the startup time.
-	cache := cache.NewStore(st)
+	// TODO(aya): stop the lazy loading and populate cache data from DB at the startup time.
+	cache := cache.NewStore(st, logger.WithName("cache"))
 	sched := scheduler.New(cache, logger.WithName("scheduler"))
 
 	srv := server.New(

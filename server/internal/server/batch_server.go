@@ -72,10 +72,8 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
-	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID, &v1.GpuPod{
-		AllocatedCount: int32(gpuCount),
-		NamespacedName: fmt.Sprintf("%s/%s", sresult.Namespace, jobID),
-	}); err != nil {
+	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID,
+		fmt.Sprintf("%s/%s", sresult.Namespace, jobID), gpuCount); err != nil {
 		return nil, status.Errorf(codes.Internal, "add assumed pod: %s", err)
 	}
 

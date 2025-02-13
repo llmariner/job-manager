@@ -83,7 +83,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		// Just pick up the first cluster that can provision GPU resources if gpuCount is > 0.
 		// Otherwise just pick up the first cluster.
 		if gpuCount > 0 {
-			if ok, err := canProvisionGPUs(gpuCount, c); err != nil {
+			if ok, err := s.canProvisionGPUs(gpuCount, c); err != nil {
 				return SchedulingResult{}, err
 			} else if !ok {
 				s.logger.V(1).Info("Ignoring a cluster that cannot provision GPUs", "clusterID", c.ClusterID)
@@ -93,7 +93,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		s.logger.V(1).Info("Scheduled a workload", "clusterID", c.ClusterID, "namespace", ns)
 		return SchedulingResult{
 			ClusterID:   c.ClusterID,
-			ClusterName: c.Name,
+			ClusterName: c.ClusterName,
 			Namespace:   ns,
 		}, nil
 	}
@@ -104,7 +104,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 // canProvisionGPUs returns true if the cluster can provision GPUs.
 //
 // TODO(kenji): Support other cloud providers and non-Nvidia GPUs.
-func canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) {
+func (s *S) canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) {
 	if len(c.GPUNodes) > 0 {
 		// TODO(kenji): Take into resource fragmentation.
 		var allocatable int
@@ -112,12 +112,13 @@ func canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) {
 			allocatable += int(n.AllocatableCount)
 		}
 		var allocated int
-		for _, p := range c.GPUPodsByNN {
+		for _, p := range c.GPUPods {
 			allocated += int(p.AllocatedCount)
 		}
-		for _, p := range c.AssumedGPUPodsByNN {
+		for _, p := range c.AssumedGPUPodsByKey {
 			allocated += int(p.AllocatedCount)
 		}
+		s.logger.V(3).Info("Checking GPU resources", "requestedGPUs", requestedGPUs, "allocatable", allocatable, "allocated", allocated)
 		return requestedGPUs <= allocatable-allocated, nil
 	}
 

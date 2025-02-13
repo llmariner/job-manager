@@ -160,10 +160,8 @@ func (s *S) scheduleNotebook(ctx context.Context, nb *store.Notebook, gpuCount i
 	if err != nil {
 		return sresult, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
-	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID, &v1.GpuPod{
-		AllocatedCount: int32(gpuCount),
-		NamespacedName: fmt.Sprintf("%s/%s", sresult.Namespace, nb.NotebookID),
-	}); err != nil {
+	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID,
+		fmt.Sprintf("%s/%s", sresult.Namespace, nb.NotebookID), gpuCount); err != nil {
 		return sresult, status.Errorf(codes.Internal, "add assumed pod: %s", err)
 	}
 

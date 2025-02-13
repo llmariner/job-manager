@@ -88,7 +88,7 @@ func TestCreateNotebook_SameName(t *testing.T) {
 	defer tearDown()
 
 	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
-	wsrv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	wsrv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 
 	req := &v1.CreateNotebookRequest{
 		Name: "nb0",
@@ -381,7 +381,7 @@ func TestListQueuedInternalNotebooks(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.ListQueuedInternalNotebooksRequest{}
 	got, err := srv.ListQueuedInternalNotebooks(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -521,7 +521,7 @@ func TestUpdateNotebookState(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+			srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 			_, err = srv.UpdateNotebookState(fakeAuthInto(context.Background()), &v1.UpdateNotebookStateRequest{
 				Id:    notebookID,
 				State: test.state,

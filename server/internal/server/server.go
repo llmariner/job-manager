@@ -44,7 +44,7 @@ type schedulerI interface {
 }
 
 type cacheI interface {
-	AddAssumedPod(tenantID, clusterID string, pod *v1.GpuPod) error
+	AddAssumedPod(tenantID, clusterID, key string, gpuCount int) error
 }
 
 // New creates a server.

@@ -2,9 +2,11 @@ package cache
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"google.golang.org/protobuf/proto"
@@ -18,6 +20,8 @@ type Store struct {
 	clusters map[string]Clusters
 	// mu guards all fields within this cache struct.
 	mu sync.RWMutex
+
+	logger logr.Logger
 }
 
 // Clusters is a map from cluster ID to clusters.
@@ -37,16 +41,17 @@ func (c *Clusters) Clone() Clusters {
 
 // Cluster represents a cluster.
 type Cluster struct {
-	ClusterID string
-	UpdatedAt time.Time
+	ClusterID   string
+	ClusterName string
+	UpdatedAt   time.Time
 
 	GPUNodes               []*v1.GpuNode
 	ProvisionableResources []*v1.ProvisionableResource
 
-	GPUPodsByNN map[string]*v1.GpuPod
-	// AssumedGPUPodsByNN is a map from namespaced-name to the assumed GPU pods on the node.
+	GPUPods []*v1.GpuPod
+	// AssumedGPUPodsByKey is a map from key to the assumed GPU pods on the node.
 	// This pod is bound to the node by scheduler, but not yet created.
-	AssumedGPUPodsByNN map[string]*AssumedGPUPod
+	AssumedGPUPodsByKey map[string]*AssumedGPUPod
 }
 
 // AssumedGPUPod represents an assumed GPU pod.
@@ -61,31 +66,33 @@ func (c *Cluster) Clone() *Cluster {
 		return nil
 	}
 	cls := &Cluster{
-		ClusterID: c.ClusterID,
-		UpdatedAt: c.UpdatedAt,
+		ClusterID:   c.ClusterID,
+		ClusterName: c.ClusterName,
+		UpdatedAt:   c.UpdatedAt,
 		// Make a copy of the slices and maps, but the elements are not deeply copied.
 		// This is fine because we don't modify the elements.
 		GPUNodes:               make([]*v1.GpuNode, len(c.GPUNodes)),
 		ProvisionableResources: make([]*v1.ProvisionableResource, len(c.ProvisionableResources)),
-		GPUPodsByNN:            make(map[string]*v1.GpuPod, len(c.GPUPodsByNN)),
-		AssumedGPUPodsByNN:     make(map[string]*AssumedGPUPod, len(c.AssumedGPUPodsByNN)),
+		GPUPods:                make([]*v1.GpuPod, len(c.GPUPods)),
+		AssumedGPUPodsByKey:    make(map[string]*AssumedGPUPod, len(c.AssumedGPUPodsByKey)),
 	}
 	copy(cls.GPUNodes, c.GPUNodes)
 	copy(cls.ProvisionableResources, c.ProvisionableResources)
-	for k, v := range c.GPUPodsByNN {
-		cls.GPUPodsByNN[k] = v
+	for k, v := range c.GPUPods {
+		cls.GPUPods[k] = v
 	}
-	for k, v := range c.AssumedGPUPodsByNN {
-		cls.AssumedGPUPodsByNN[k] = v
+	for k, v := range c.AssumedGPUPodsByKey {
+		cls.AssumedGPUPodsByKey[k] = v
 	}
 	return cls
 }
 
 // NewStore creates a new cache store.
-func NewStore(store *store.S) *Store {
+func NewStore(store *store.S, log logr.Logger) *Store {
 	return &Store{
 		store:    store,
 		clusters: make(map[string]Clusters),
+		logger:   log,
 	}
 }
 
@@ -137,11 +144,15 @@ func (c *Store) AddOrUpdateCluster(cluster *store.Cluster) error {
 	}
 	if ok {
 		// TODO(aya): rethink the better expiration logic.
-		for nn, pod := range oldCl.AssumedGPUPodsByNN {
-			if _, ok := cl.GPUPodsByNN[nn]; !ok && time.Since(pod.AddedAt) < assumedPodExpiration {
-				cl.AssumedGPUPodsByNN[nn] = pod
+		// NOTE: If the pod is quickly completed, it would not be recorded in GpuPods,
+		// it remains in the assumed pod map until the expiration time.
+		for key, pod := range oldCl.AssumedGPUPodsByKey {
+			if time.Since(pod.AddedAt) < assumedPodExpiration &&
+				!nnHasPrefix(cl.GPUPods, key) {
+				cl.AssumedGPUPodsByKey[key] = pod
 			}
 		}
+		c.logger.V(3).Info("updated cluster", "ID", cl.ClusterID, "gpuPods", cl.GPUPods, "assumedPods", cl.AssumedGPUPodsByKey)
 	}
 
 	c.mu.Lock()
@@ -150,9 +161,23 @@ func (c *Store) AddOrUpdateCluster(cluster *store.Cluster) error {
 	return nil
 }
 
+func nnHasPrefix(pods []*v1.GpuPod, key string) bool {
+	for _, p := range pods {
+		if strings.HasPrefix(p.NamespacedName, key) {
+			return true
+		}
+	}
+	return false
+}
+
 // AddAssumedPod adds an assumed pod to the cache.
 // If the tenant is not found in the cache, it fetches them from the store.
-func (c *Store) AddAssumedPod(tenantID, clusterID string, pod *v1.GpuPod) error {
+func (c *Store) AddAssumedPod(tenantID, clusterID, key string, gpuCount int) error {
+	if gpuCount == 0 {
+		// ignore non GPU pods.
+		return nil
+	}
+
 	cls, ok, err := c.getCluster(tenantID, clusterID)
 	if err != nil {
 		return fmt.Errorf("failed to get cluster: %s", err)
@@ -160,10 +185,11 @@ func (c *Store) AddAssumedPod(tenantID, clusterID string, pod *v1.GpuPod) error 
 	if !ok {
 		return fmt.Errorf("cluster not found: %s", clusterID)
 	}
-	cls.AssumedGPUPodsByNN[pod.NamespacedName] = &AssumedGPUPod{
-		AllocatedCount: pod.AllocatedCount,
+	cls.AssumedGPUPodsByKey[key] = &AssumedGPUPod{
+		AllocatedCount: int32(gpuCount),
 		AddedAt:        time.Now(),
 	}
+	c.logger.V(3).Info("added assumed pod", "key", key, "assumedPods", cls.AssumedGPUPodsByKey)
 
 	c.mu.Lock()
 	c.clusters[tenantID][clusterID] = cls
@@ -193,16 +219,13 @@ func convertToCacheCluster(c *store.Cluster) (*Cluster, error) {
 	if err := proto.Unmarshal(c.Status, &status); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cluster status: %s", err)
 	}
-	gpuPodsByNN := map[string]*v1.GpuPod{}
-	for _, pod := range status.GpuPods {
-		gpuPodsByNN[pod.NamespacedName] = pod
-	}
 	return &Cluster{
 		ClusterID:              c.ClusterID,
+		ClusterName:            c.Name,
 		UpdatedAt:              c.UpdatedAt,
 		GPUNodes:               status.GpuNodes,
 		ProvisionableResources: status.ProvisionableResources,
-		GPUPodsByNN:            gpuPodsByNN,
-		AssumedGPUPodsByNN:     make(map[string]*AssumedGPUPod),
+		GPUPods:                status.GpuPods,
+		AssumedGPUPodsByKey:    make(map[string]*AssumedGPUPod),
 	}, nil
 }

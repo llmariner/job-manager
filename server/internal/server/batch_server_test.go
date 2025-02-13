@@ -258,7 +258,7 @@ func TestListQueuedInternalBatchJobs(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.ListQueuedInternalBatchJobsRequest{}
 	got, err := srv.ListQueuedInternalBatchJobs(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -281,7 +281,7 @@ func TestGetInternalBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.GetInternalBatchJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalBatchJob(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -394,7 +394,7 @@ func TestUpdateBatchJobState(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+			srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 			_, err = srv.UpdateBatchJobState(fakeAuthInto(context.Background()), &v1.UpdateBatchJobStateRequest{
 				Id:    batchJobID,
 				State: test.state,

@@ -284,7 +284,7 @@ func TestListQueuedInternalJobs(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.ListQueuedInternalJobsRequest{}
 	got, err := srv.ListQueuedInternalJobs(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -307,7 +307,7 @@ func TestGetInternalJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.GetInternalJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalJob(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -425,7 +425,7 @@ func TestUpdateJobPhase(t *testing.T) {
 
 			test.req.Id = jobID
 
-			srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+			srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 			_, err = srv.UpdateJobPhase(fakeAuthInto(context.Background()), test.req)
 			if test.wantError {
 				assert.Error(t, err)
@@ -509,4 +509,4 @@ func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo, clusterID string, gpuC
 
 type fakeCache struct{}
 
-func (c *fakeCache) AddAssumedPod(tenantID, clusterID string, pod *v1.GpuPod) error { return nil }
+func (c *fakeCache) AddAssumedPod(tenantID, clusterID, key string, gpuCount int) error { return nil }

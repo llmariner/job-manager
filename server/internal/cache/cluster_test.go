@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +22,14 @@ func TestCluster_Clone(t *testing.T) {
 		ProvisionableResources: []*v1.ProvisionableResource{
 			{InstanceFamily: "f0", InstanceType: "t0"},
 		},
-		GPUPodsByNN: map[string]*v1.GpuPod{
-			"pod-1": {
+		GPUPods: []*v1.GpuPod{
+			{
 				ResourceName:   "r0",
 				AllocatedCount: 1,
 				NamespacedName: "ns-1/pod-1",
 			},
 		},
-		AssumedGPUPodsByNN: map[string]*AssumedGPUPod{
+		AssumedGPUPodsByKey: map[string]*AssumedGPUPod{
 			"pod-2": {
 				AllocatedCount: 1,
 				AddedAt:        time.Now(),
@@ -39,8 +40,8 @@ func TestCluster_Clone(t *testing.T) {
 	assert.Equal(t, cls, gotCls)
 	assert.Same(t, cls.GPUNodes[0], gotCls.GPUNodes[0])
 	assert.NotSame(t, cls.GPUNodes, gotCls.GPUNodes)
-	assert.NotSame(t, cls.GPUPodsByNN, gotCls.GPUPodsByNN)
-	assert.NotSame(t, cls.AssumedGPUPodsByNN, gotCls.AssumedGPUPodsByNN)
+	assert.NotSame(t, cls.GPUPods, gotCls.GPUPods)
+	assert.NotSame(t, cls.AssumedGPUPodsByKey, gotCls.AssumedGPUPodsByKey)
 }
 
 func TestCache(t *testing.T) {
@@ -48,16 +49,16 @@ func TestCache(t *testing.T) {
 	defer tearDown()
 
 	clusters := []*store.Cluster{
-		stCluster(t, "t0", "c0", "ns-1/pod-1"),
-		stCluster(t, "t0", "c1", "ns-1/pod-2", "ns-1/pod-3"),
+		stCluster(t, "t0", "c0", "ns-1/pod-1-abcde"),
+		stCluster(t, "t0", "c1", "ns-1/pod-2-12345", "ns-1/pod-3-ababa"),
 		stCluster(t, "t1", "c2"),
 	}
 	for _, c := range clusters {
-		err := st.CreateOrUpdateCluster(c)
+		_, err := st.CreateOrUpdateCluster(c)
 		assert.NoError(t, err)
 	}
 
-	c := NewStore(st)
+	c := NewStore(st, testr.New(t))
 	// list from store
 	gotT0Cls, err := c.ListClustersByTenantID("t0")
 	assert.NoError(t, err)
@@ -77,20 +78,18 @@ func TestCache(t *testing.T) {
 	assert.Len(t, gotEmpty, 0)
 
 	// add assumed pod to cache
-	assumedPod := &v1.GpuPod{ResourceName: "r0", AllocatedCount: 1, NamespacedName: "ns-1/pod-4"}
-	err = c.AddAssumedPod("t0", "c0", assumedPod)
+	err = c.AddAssumedPod("t0", "c0", "ns-1/pod-4", 1)
 	assert.NoError(t, err)
-	assumedPod2 := &v1.GpuPod{ResourceName: "r0", AllocatedCount: 1, NamespacedName: "ns-1/pod-5"}
-	err = c.AddAssumedPod("t0", "c0", assumedPod2)
+	err = c.AddAssumedPod("t0", "c0", "ns-1/pod-5", 1)
 	assert.NoError(t, err)
 	gotT0Cls3, err := c.ListClustersByTenantID("t0")
 	assert.NoError(t, err)
-	assert.Len(t, gotT0Cls3["c0"].GPUPodsByNN, 1)
-	assert.Len(t, gotT0Cls3["c0"].AssumedGPUPodsByNN, 2)
+	assert.Len(t, gotT0Cls3["c0"].GPUPods, 1)
+	assert.Len(t, gotT0Cls3["c0"].AssumedGPUPodsByKey, 2)
 
-	err = c.AddAssumedPod("t0", "unknown", assumedPod)
+	err = c.AddAssumedPod("t0", "unknown", "ns-1/pod-6", 1)
 	assert.ErrorContains(t, err, "cluster not found: unknown")
-	err = c.AddAssumedPod("unknown", "unknown", assumedPod)
+	err = c.AddAssumedPod("unknown", "unknown", "ns-1/pod-6", 1)
 	assert.ErrorContains(t, err, "cluster not found: unknown")
 
 	// update cluster c0
@@ -99,8 +98,8 @@ func TestCache(t *testing.T) {
 	assert.NoError(t, err)
 	gotT0Cls4, err := c.ListClustersByTenantID("t0")
 	assert.NoError(t, err)
-	assert.Len(t, gotT0Cls4["c0"].GPUPodsByNN, 2)
-	assert.Len(t, gotT0Cls4["c0"].AssumedGPUPodsByNN, 1)
+	assert.Len(t, gotT0Cls4["c0"].GPUPods, 2)
+	assert.Len(t, gotT0Cls4["c0"].AssumedGPUPodsByKey, 1)
 	// add cluster c3
 	err = c.AddOrUpdateCluster(stCluster(t, "t0", "c3"))
 	assert.NoError(t, err)

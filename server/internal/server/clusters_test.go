@@ -57,7 +57,7 @@ func TestListClusters(t *testing.T) {
 		},
 	}
 	for _, c := range cs {
-		err := st.CreateOrUpdateCluster(c)
+		_, err := st.CreateOrUpdateCluster(c)
 		assert.NoError(t, err)
 	}
 
@@ -87,7 +87,7 @@ func TestUpdateClusterStatus(t *testing.T) {
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
-	srv := NewWorkerServiceServer(st, cache.NewStore(st), testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.UpdateClusterStatusRequest{
 		ClusterStatus: &v1.ClusterStatus{},
 	}
