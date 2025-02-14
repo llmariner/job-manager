@@ -192,6 +192,9 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		patchReq)
 	if patchErr != nil {
 		log.Error(patchErr, "Failed to patch job")
+
+		// To share the error message with the user, update the job status here.
+		// Until the job is created to the worker cluster, the job status is not updated.
 		newCond := batchv1.JobCondition{
 			Type:               "FailedClusterSchedule",
 			Status:             corev1.ConditionTrue,
