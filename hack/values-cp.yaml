@@ -16,10 +16,6 @@ session-manager-server:
   workerServiceHttpService:
     type: NodePort
     nodePort: 31234
-  version: latest
-  image:
-    repository: llmariner/session-manager-server
-    pullPolicy: Never
 
 dex-server:
   enable: true
