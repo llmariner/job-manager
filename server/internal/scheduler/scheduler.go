@@ -64,6 +64,11 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		namespacesByCluster[env.ClusterID] = env.Namespace
 	}
 	s.logger.V(1).Info("Scheduling a workload", "gpuCount", gpuCount, "assignedClustersEnvs", userInfo.AssignedKubernetesEnvs)
+
+	var (
+		bestResult *SchedulingResult
+		bestScore  float64
+	)
 	for _, c := range clusters {
 		if time.Since(c.UpdatedAt) > staleThreshold {
 			s.logger.V(1).Info("Ignoring a stale cluster", "clusterID", c.ClusterID)
@@ -80,25 +85,65 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 			continue
 		}
 
-		// Just pick up the first cluster that can provision GPU resources if gpuCount is > 0.
-		// Otherwise just pick up the first cluster.
-		if gpuCount > 0 {
-			if ok, err := s.canProvisionGPUs(gpuCount, c); err != nil {
-				return SchedulingResult{}, err
-			} else if !ok {
-				s.logger.V(1).Info("Ignoring a cluster that cannot provision GPUs", "clusterID", c.ClusterID)
-				continue
-			}
+		score, err := s.scoreCluster(c, gpuCount)
+		if err != nil {
+			return SchedulingResult{}, err
 		}
+
 		s.logger.V(1).Info("Scheduled a workload", "clusterID", c.ClusterID, "namespace", ns)
-		return SchedulingResult{
-			ClusterID:   c.ClusterID,
-			ClusterName: c.ClusterName,
-			Namespace:   ns,
+
+		if !score.isFeasible {
+			s.logger.V(1).Info("Ignoring a cluster as the workload cannot be scheduled", "clusterID", c.ClusterID)
+			continue
+		}
+		if bestResult == nil || score.score > bestScore {
+			bestResult = &SchedulingResult{
+				ClusterID:   c.ClusterID,
+				ClusterName: c.ClusterName,
+				Namespace:   ns,
+			}
+			bestScore = score.score
+		}
+	}
+
+	if bestResult == nil {
+		return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
+	}
+
+	s.logger.V(1).Info("Scheduled a workload", "clusterID", bestResult.ClusterID, "namespace", bestResult.Namespace)
+	return *bestResult, nil
+}
+
+type schedulingScore struct {
+	isFeasible bool
+	score      float64
+}
+
+func (s *S) scoreCluster(c *cache.Cluster, requestedGPUs int) (schedulingScore, error) {
+	if requestedGPUs == 0 {
+		// Simply assume that the workload can run there.
+		return schedulingScore{
+			isFeasible: true,
+			score:      0,
 		}, nil
 	}
 
-	return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
+	ok, err := s.canProvisionGPUs(requestedGPUs, c)
+	if err != nil {
+		return schedulingScore{}, err
+	}
+
+	if !ok {
+		return schedulingScore{
+			isFeasible: false,
+		}, err
+	}
+	return schedulingScore{
+		isFeasible: true,
+		// TODO(kenji): Improve the scoring algorithm. Currently it is a simple best-fit where a capacility with the largest
+		// number of available GPUs is selected.
+		score: float64(availableGPUs(c)),
+	}, nil
 }
 
 // canProvisionGPUs returns true if the cluster can provision GPUs.
@@ -107,19 +152,9 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 func (s *S) canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) {
 	if len(c.GPUNodes) > 0 {
 		// TODO(kenji): Take into resource fragmentation.
-		var allocatable int
-		for _, n := range c.GPUNodes {
-			allocatable += int(n.AllocatableCount)
-		}
-		var allocated int
-		for _, p := range c.GPUPods {
-			allocated += int(p.AllocatedCount)
-		}
-		for _, p := range c.AssumedGPUPodsByKey {
-			allocated += int(p.AllocatedCount)
-		}
-		s.logger.V(3).Info("Checking GPU resources", "requestedGPUs", requestedGPUs, "allocatable", allocatable, "allocated", allocated)
-		return requestedGPUs <= allocatable-allocated, nil
+		avail := availableGPUs(c)
+		s.logger.V(3).Info("Checking GPU resources", "requestedGPUs", requestedGPUs, "availableGPUs", avail)
+		return requestedGPUs <= avail, nil
 	}
 
 	for _, pr := range c.ProvisionableResources {
@@ -141,6 +176,22 @@ func (s *S) canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) 
 	}
 
 	return false, nil
+}
+
+func availableGPUs(c *cache.Cluster) int {
+	var allocatable int
+	for _, n := range c.GPUNodes {
+		allocatable += int(n.AllocatableCount)
+	}
+	var allocated int
+	for _, p := range c.GPUPods {
+		allocated += int(p.AllocatedCount)
+	}
+	for _, p := range c.AssumedGPUPodsByKey {
+		allocated += int(p.AllocatedCount)
+	}
+
+	return allocatable - allocated
 }
 
 func isAWSInstanceTypeForNvidiaGPU(instType string) (bool, error) {

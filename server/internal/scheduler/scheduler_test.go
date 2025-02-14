@@ -146,6 +146,53 @@ func TestSchedule(t *testing.T) {
 			prevClusterID: "cluster0",
 			wantErr:       true,
 		},
+		{
+			name: "two gpu clusters",
+			clusters: []*store.Cluster{
+				{
+					ClusterID: "cluster0",
+					TenantID:  tenantID,
+					Status: marshalStatus(t, &v1.ClusterStatus{
+						GpuNodes: []*v1.GpuNode{
+							{
+								ResourceName:     "nvidia.com/gpu",
+								AllocatableCount: 16,
+							},
+						},
+					}),
+				},
+				{
+					ClusterID: "cluster1",
+					TenantID:  tenantID,
+					Status: marshalStatus(t, &v1.ClusterStatus{
+						GpuNodes: []*v1.GpuNode{
+							{
+								ResourceName:     "nvidia.com/gpu",
+								AllocatableCount: 8,
+							},
+						},
+					}),
+				},
+			},
+			userInfo: &auth.UserInfo{
+				TenantID: tenantID,
+				AssignedKubernetesEnvs: []auth.AssignedKubernetesEnv{
+					{
+						ClusterID: "cluster0",
+						Namespace: "namespace0",
+					},
+					{
+						ClusterID: "cluster1",
+						Namespace: "namespace1",
+					},
+				},
+			},
+			gpuCount: 1,
+			want: SchedulingResult{
+				ClusterID: "cluster0",
+				Namespace: "namespace0",
+			},
+		},
 	}
 
 	for _, tc := range tcs {
