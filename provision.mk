@@ -48,7 +48,6 @@ delete-kind-cluster:
 	-kind delete cluster --name $(TN_CLUSTER)
 	-kind delete cluster --name $(CP_CLUSTER)
 	for cluster in $(shell kind get clusters | grep $(WP_CLUSTER)); do \
-		rm $(CLONE_PATH)/.regkey-kind-$$cluster; \
 		kind delete cluster --name $$cluster; \
 	done
 
@@ -66,7 +65,7 @@ helm-apply-cp-deps:
 .PHONY: helm-apply-wp-deps
 helm-apply-wp-deps:
 	for cluster in $(shell kind get clusters | grep $(WP_CLUSTER)); do \
-		export REGISTRATION_KEY=$$(cat $(CLONE_PATH)/.regkey-kind-$$cluster||curl --request POST http://localhost:8080/v1/clusters -d "{\"name\":\"$$cluster\"}"|jq -r .registration_key); \
+		export REGISTRATION_KEY=$$(kubectl get --context kind-$(CP_CLUSTER) -n llmariner secret default-cluster-registration-key -o json | jq -r .data.key | base64 -d); \
 		echo "$$REGISTRATION_KEY" > $(CLONE_PATH)/.regkey-kind-$$cluster; \
 		$(MAKE) helm-apply-deps DEP_APPS=$(WP_DEP_APPS) KUBE_CTX=kind-$$cluster HELM_ENV=worker; \
 	done
@@ -96,7 +95,8 @@ helm-apply-wp-llma:
 
 .PHONY: helm-apply-tn-llma
 helm-apply-tn-llma:
-	$(MAKE) helm-apply-llma EXTRA_VALS=$(EXTRA_TN_VALS) KUBE_CTX=kind-$(TN_CLUSTER)
+	export TENANT_API_KEY=default-service-account-secret; \
+	$(MAKE) helm-apply-llma EXTRA_VALS=$(EXTRA_TN_VALS) KUBE_CTX=kind-$(TN_CLUSTER) HELM_ENV=tenant-control
 
 .PHONY: helm-apply-llma
 helm-apply-llma:

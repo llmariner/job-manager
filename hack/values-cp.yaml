@@ -25,7 +25,10 @@ user-manager-server:
   enable: true
 cluster-manager-server:
   enable: true
-  defaultCluster: {}
+  defaultCluster:
+    name: Default
+    registrationKey: default-cluster-registration-key-secret
+    tenantId: default-tenant-id
 
 job-manager-server:
   enable: true
