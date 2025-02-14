@@ -160,6 +160,10 @@ func (s *S) scheduleNotebook(ctx context.Context, nb *store.Notebook, gpuCount i
 	if err != nil {
 		return sresult, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
+	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID,
+		fmt.Sprintf("%s/%s", sresult.Namespace, nb.NotebookID), gpuCount); err != nil {
+		return sresult, status.Errorf(codes.Internal, "add assumed pod: %s", err)
+	}
 
 	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, nb.APIKey)
 	if err != nil {

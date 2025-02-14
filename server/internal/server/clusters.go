@@ -95,8 +95,12 @@ func (ws *WS) UpdateClusterStatus(
 		Status:    b,
 	}
 
-	if err := ws.store.CreateOrUpdateCluster(c); err != nil {
+	c, err = ws.store.CreateOrUpdateCluster(c)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create or update cluster: %s", err)
+	}
+	if err := ws.cache.AddOrUpdateCluster(c); err != nil {
+		return nil, status.Errorf(codes.Internal, "set cluster to cache: %s", err)
 	}
 
 	return &v1.UpdateClusterStatusResponse{}, nil

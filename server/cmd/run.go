@@ -13,6 +13,7 @@ import (
 	"github.com/llmariner/common/pkg/db"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/job-manager/server/internal/config"
 	"github.com/llmariner/job-manager/server/internal/k8s"
 	"github.com/llmariner/job-manager/server/internal/scheduler"
@@ -133,7 +134,9 @@ func run(ctx context.Context, c *config.Config) error {
 		usageSetter = sender.NoopUsageSetter{}
 	}
 
-	sched := scheduler.New(st, logger.WithName("scheduler"))
+	// TODO(aya): stop the lazy loading and populate cache data from DB at the startup time.
+	cache := cache.NewStore(st, logger.WithName("cache"))
+	sched := scheduler.New(cache, logger.WithName("scheduler"))
 
 	srv := server.New(
 		st,
@@ -141,6 +144,7 @@ func run(ctx context.Context, c *config.Config) error {
 		mclient,
 		k8sClientFactory,
 		sched,
+		cache,
 		c.NotebookConfig.ImageTypes,
 		c.BatchJobConfig.Images,
 		logger,
@@ -159,12 +163,12 @@ func run(ctx context.Context, c *config.Config) error {
 	}()
 
 	go func() {
-		s := server.NewWorkerServiceServer(st, logger)
+		s := server.NewWorkerServiceServer(st, cache, logger)
 		errCh <- s.Run(ctx, c.WorkerServiceGRPCPort, c.AuthConfig)
 	}()
 
 	go func() {
-		s := server.NewSyncerServiceServer(logger, k8sClientFactory, sched)
+		s := server.NewSyncerServiceServer(logger, k8sClientFactory, sched, cache)
 		errCh <- s.Run(ctx, c.SyncerServiceGRPCPort, c.AuthConfig)
 	}()
 

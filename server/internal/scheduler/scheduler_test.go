@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/job-manager/server/internal/store"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/stretchr/testify/assert"
@@ -153,11 +154,11 @@ func TestSchedule(t *testing.T) {
 			defer tearDown()
 
 			for _, c := range tc.clusters {
-				err := st.CreateOrUpdateCluster(c)
+				_, err := st.CreateOrUpdateCluster(c)
 				assert.NoError(t, err)
 			}
 
-			sched := New(st, testr.New(t))
+			sched := New(cache.NewStore(st, testr.New(t)), testr.New(t))
 			got, err := sched.Schedule(tc.userInfo, tc.prevClusterID, tc.gpuCount)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -172,23 +173,20 @@ func TestSchedule(t *testing.T) {
 func TestCanProvisionGPUs(t *testing.T) {
 	tcs := []struct {
 		name          string
-		status        *v1.ClusterStatus
+		status        *cache.Cluster
 		requestedGPUs int
 		want          bool
 	}{
 		{
-			name: "no gpu nodes and no provisionable resources",
-			status: &v1.ClusterStatus{
-				GpuNodes:               []*v1.GpuNode{},
-				ProvisionableResources: []*v1.ProvisionableResource{},
-			},
+			name:          "no gpu nodes and no provisionable resources",
+			status:        &cache.Cluster{},
 			requestedGPUs: 1,
 			want:          false,
 		},
 		{
 			name: "gpu nodes",
-			status: &v1.ClusterStatus{
-				GpuNodes: []*v1.GpuNode{
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{
 					{
 						ResourceName:     "nvidia.com/gpu",
 						AllocatableCount: 1,
@@ -201,17 +199,15 @@ func TestCanProvisionGPUs(t *testing.T) {
 		},
 		{
 			name: "gpu nodes with unallocated gpus",
-			status: &v1.ClusterStatus{
-				GpuNodes: []*v1.GpuNode{
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{
 					{
 						ResourceName:     "nvidia.com/gpu",
 						AllocatableCount: 8,
 					},
 				},
-				GpuPods: []*v1.GpuPod{
-					{
-						AllocatedCount: 4,
-					},
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 4},
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
@@ -220,17 +216,35 @@ func TestCanProvisionGPUs(t *testing.T) {
 		},
 		{
 			name: "gpu nodes with insufficient gpus",
-			status: &v1.ClusterStatus{
-				GpuNodes: []*v1.GpuNode{
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{
 					{
 						ResourceName:     "nvidia.com/gpu",
 						AllocatableCount: 8,
 					},
 				},
-				GpuPods: []*v1.GpuPod{
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 7},
+				},
+				ProvisionableResources: []*v1.ProvisionableResource{},
+			},
+			requestedGPUs: 2,
+			want:          false,
+		},
+		{
+			name: "gpu nodes with insufficient gpus",
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{
 					{
-						AllocatedCount: 7,
+						ResourceName:     "nvidia.com/gpu",
+						AllocatableCount: 8,
 					},
+				},
+				GPUPods: []*v1.GpuPod{
+					{AllocatedCount: 3},
+				},
+				AssumedGPUPodsByKey: map[string]*cache.AssumedGPUPod{
+					"ns-0/pod-1": {AllocatedCount: 4},
 				},
 				ProvisionableResources: []*v1.ProvisionableResource{},
 			},
@@ -239,8 +253,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 		},
 		{
 			name: "provisionable resources with gpu instance type",
-			status: &v1.ClusterStatus{
-				GpuNodes: []*v1.GpuNode{},
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{},
 				ProvisionableResources: []*v1.ProvisionableResource{
 					{
 						InstanceType: "g5.12xlarge",
@@ -252,8 +266,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 		},
 		{
 			name: "provisionable resources with non-gpu instance type",
-			status: &v1.ClusterStatus{
-				GpuNodes: []*v1.GpuNode{},
+			status: &cache.Cluster{
+				GPUNodes: []*v1.GpuNode{},
 				ProvisionableResources: []*v1.ProvisionableResource{
 					{
 						InstanceType: "m5.12xlarge",
@@ -267,7 +281,8 @@ func TestCanProvisionGPUs(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := canProvisionGPUs(tc.requestedGPUs, tc.status)
+			s := S{logger: testr.New(t)}
+			got, err := s.canProvisionGPUs(tc.requestedGPUs, tc.status)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 		})

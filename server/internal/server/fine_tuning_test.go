@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr/testr"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
+	"github.com/llmariner/job-manager/server/internal/cache"
 	"github.com/llmariner/job-manager/server/internal/k8s"
 	"github.com/llmariner/job-manager/server/internal/scheduler"
 	"github.com/llmariner/job-manager/server/internal/store"
@@ -101,6 +102,7 @@ func TestCreateJob(t *testing.T) {
 				},
 				nil,
 				&fakeScheduler{},
+				&fakeCache{},
 				nil,
 				nil,
 				testr.New(t))
@@ -138,7 +140,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListJobs(ctx, &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
@@ -183,7 +185,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
 	resp, err := srv.GetJob(fakeAuthInto(context.Background()), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
@@ -233,7 +235,7 @@ func TestJobCancel(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, nil, nil, testr.New(t))
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
 			resp, err := srv.CancelJob(fakeAuthInto(context.Background()), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -282,7 +284,7 @@ func TestListQueuedInternalJobs(t *testing.T) {
 		}))
 	}
 
-	srv := NewWorkerServiceServer(st, testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.ListQueuedInternalJobsRequest{}
 	got, err := srv.ListQueuedInternalJobs(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -305,7 +307,7 @@ func TestGetInternalJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := NewWorkerServiceServer(st, testr.New(t))
+	srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 	req := &v1.GetInternalJobRequest{Id: "job0"}
 	resp, err := srv.GetInternalJob(fakeAuthInto(context.Background()), req)
 	assert.NoError(t, err)
@@ -423,7 +425,7 @@ func TestUpdateJobPhase(t *testing.T) {
 
 			test.req.Id = jobID
 
-			srv := NewWorkerServiceServer(st, testr.New(t))
+			srv := NewWorkerServiceServer(st, cache.NewStore(st, testr.New(t)), testr.New(t))
 			_, err = srv.UpdateJobPhase(fakeAuthInto(context.Background()), test.req)
 			if test.wantError {
 				assert.Error(t, err)
@@ -504,3 +506,7 @@ func (s *fakeScheduler) Schedule(userInfo *auth.UserInfo, clusterID string, gpuC
 		Namespace: kenv.Namespace,
 	}, nil
 }
+
+type fakeCache struct{}
+
+func (c *fakeCache) AddAssumedPod(tenantID, clusterID, key string, gpuCount int) error { return nil }

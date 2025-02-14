@@ -64,7 +64,7 @@ func TestRescheduleNotebooks(t *testing.T) {
 			assert.NoError(t, err)
 			time.Sleep(time.Second * 2)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, map[string]string{"t0": "img0"}, nil, testr.New(t))
 			err = srv.rescheduleNotebooks(context.Background(), time.Second)
 			assert.NoError(t, err)
 

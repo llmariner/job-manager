@@ -107,6 +107,10 @@ func (s *S) CreateJob(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
+	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID,
+		fmt.Sprintf("%s/%s", sresult.Namespace, jobID), 1); err != nil {
+		return nil, status.Errorf(codes.Internal, "add assumed pod: %s", err)
+	}
 
 	jobProto := &v1.Job{
 		Id:              jobID,

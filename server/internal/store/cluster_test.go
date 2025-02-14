@@ -17,7 +17,7 @@ func TestCreateOrUpdateCluster(t *testing.T) {
 		TenantID:  "tid0",
 		Status:    []byte("s0"),
 	}
-	err := st.CreateOrUpdateCluster(c)
+	_, err := st.CreateOrUpdateCluster(c)
 	assert.NoError(t, err)
 
 	got, err := st.GetClusterByID("cid0")
@@ -29,7 +29,7 @@ func TestCreateOrUpdateCluster(t *testing.T) {
 	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 
 	c.Status = []byte("s1")
-	err = st.CreateOrUpdateCluster(c)
+	_, err = st.CreateOrUpdateCluster(c)
 	assert.NoError(t, err)
 
 	got, err = st.GetClusterByID("cid0")
