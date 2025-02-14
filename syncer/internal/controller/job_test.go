@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -73,9 +74,11 @@ func TestReconcileJob(t *testing.T) {
 	}
 
 	var tests = []struct {
-		name string
-		job  *batchv1.Job
+		name     string
+		job      *batchv1.Job
+		patchErr error
 
+		wantErr    bool
 		wantPatch  bool
 		wantDelete bool
 		assertFn   func(t *testing.T, job batchv1.Job)
@@ -110,6 +113,17 @@ func TestReconcileJob(t *testing.T) {
 		{
 			name: "already deleted",
 		},
+		{
+			name:      "patch error",
+			job:       createJob(nil),
+			patchErr:  errors.New("no schedulable cluster"),
+			wantPatch: true,
+			wantErr:   true,
+			assertFn: func(t *testing.T, job batchv1.Job) {
+				assert.Len(t, job.Status.Conditions, 1)
+				assert.Equal(t, "no schedulable cluster", job.Status.Conditions[0].Message)
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -117,7 +131,7 @@ func TestReconcileJob(t *testing.T) {
 			if test.job != nil {
 				objs = append(objs, test.job)
 			}
-			ssClient := &fakeSyncerServiceClient{}
+			ssClient := &fakeSyncerServiceClient{patchErr: test.patchErr}
 			jobCtr := JobController{
 				recorder:  record.NewFakeRecorder(5),
 				k8sClient: fake.NewFakeClient(objs...),
@@ -128,7 +142,11 @@ func TestReconcileJob(t *testing.T) {
 			ctx = ctrl.LoggerInto(ctx, testr.NewWithOptions(t, testr.Options{Verbosity: 8}))
 
 			_, err := jobCtr.Reconcile(ctx, req)
-			assert.NoError(t, err)
+			if test.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 
 			if test.wantPatch {
 				assert.Equal(t, 1, ssClient.patchCount)
@@ -148,6 +166,8 @@ func TestReconcileJob(t *testing.T) {
 }
 
 type fakeSyncerServiceClient struct {
+	patchErr error
+
 	patchCount int
 	delCount   int
 	listCount  int
@@ -155,6 +175,9 @@ type fakeSyncerServiceClient struct {
 
 func (s *fakeSyncerServiceClient) PatchKubernetesObject(ctx context.Context, in *v1.PatchKubernetesObjectRequest, opts ...grpc.CallOption) (*v1.PatchKubernetesObjectResponse, error) {
 	s.patchCount++
+	if s.patchErr != nil {
+		return nil, s.patchErr
+	}
 	return &v1.PatchKubernetesObjectResponse{
 		ClusterId: "cid",
 		Uid:       "uid",

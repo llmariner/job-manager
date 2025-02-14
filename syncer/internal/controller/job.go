@@ -3,10 +3,12 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	v1 "github.com/llmariner/job-manager/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -185,12 +187,42 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 	}
 
-	resp, err := c.ssClient.PatchKubernetesObject(
+	resp, patchErr := c.ssClient.PatchKubernetesObject(
 		appendAuthorization(ctx),
 		patchReq)
-	if err != nil {
-		log.Error(err, "Failed to patch job", "data", string(data))
-		return ctrl.Result{}, err
+	if patchErr != nil {
+		log.Error(patchErr, "Failed to patch job")
+
+		// To share the error message with the user, update the job status here.
+		// Until the job is created to the worker cluster, the job status is not updated.
+		newCond := batchv1.JobCondition{
+			Type:               "FailedClusterSchedule",
+			Status:             corev1.ConditionTrue,
+			LastProbeTime:      metav1.Now(),
+			LastTransitionTime: metav1.Now(),
+			Reason:             "Failed to schedule the job to the worker cluster",
+			Message:            patchErr.Error(),
+		}
+		patch := client.MergeFrom(&job)
+		newJob := job.DeepCopy()
+		updated := false
+		for i, curCond := range newJob.Status.Conditions {
+			if curCond.Type == newCond.Type {
+				newCond.LastTransitionTime = curCond.LastTransitionTime
+				newJob.Status.Conditions[i] = newCond
+				updated = true
+				break
+			}
+		}
+		if !updated {
+			newJob.Status.Conditions = append(newJob.Status.Conditions, newCond)
+		}
+		if !reflect.DeepEqual(job.Status, newJob.Status) {
+			if err := c.k8sClient.Status().Patch(ctx, newJob, patch); err != nil {
+				log.Error(err, "Failed to update status", "job", job.Name)
+			}
+		}
+		return ctrl.Result{}, patchErr
 	}
 	log.V(2).Info("Patched job", "response", resp)
 
