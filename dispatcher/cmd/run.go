@@ -15,6 +15,7 @@ import (
 	"github.com/llmariner/job-manager/dispatcher/internal/dispatcher"
 	"github.com/llmariner/job-manager/dispatcher/internal/s3"
 	mv1 "github.com/llmariner/model-manager/api/v1"
+	"github.com/llmariner/rbac-manager/pkg/auth"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -59,6 +60,10 @@ func run(ctx context.Context, c *config.Config) error {
 	log := logger.WithName("boot")
 	ctx = ctrl.LoggerInto(ctx, log)
 	ctrl.SetLogger(logger)
+
+	if err := auth.ValidateClusterRegistrationKey(); err != nil {
+		return err
+	}
 
 	restConfig, err := newRestConfig(log, c.Debug.KubeconfigPath)
 	if err != nil {
