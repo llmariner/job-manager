@@ -92,7 +92,7 @@ job:
   # The container image name used for a fine-tuning Job.
   image: public.ecr.aws/cloudnatix/llmariner/fine-tuning
   # The container image tag.
-  version: 0.130.0
+  version: 1.8.0
   # Kubernetes imagePullPolicy.
   imagePullPolicy: IfNotPresent
 
