@@ -5,8 +5,11 @@ bitsandbytes
 accelerate
 datasets
 rich
-trl
+# TODO(kenji): Upgrade once we stop using deprecated args such as model_init_kwargs.
+# See https://github.com/huggingface/trl/commit/5e90682836969310e16ed8aa711dd429f85863b7#diff-67e157adfcd37d677fba66f610e3dfb56238cc550f221e8683fcfa0556e0f7ca .
+trl==0.12.2
 peft
 gguf
 wandb
-autoawq
+# TODO(kenji): Add this back. We're getting No module named 'torch'.
+# autoawq
