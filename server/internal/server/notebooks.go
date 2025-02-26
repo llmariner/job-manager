@@ -112,6 +112,10 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		KubernetesNamespace: sresult.Namespace,
 		ClusterId:           sresult.ClusterID,
 
+		// TODO(kenji): Revisit. We decided to store token here (and in the DB column) for two purposes
+		// (support rescheduling & expose the token to the frontend), but it's not clear if it's the best way.
+		Token: nbToken,
+
 		OrganizationTitle: userInfo.OrganizationTitle,
 		ProjectTitle:      userInfo.ProjectTitle,
 		ClusterName:       sresult.ClusterName,
@@ -126,8 +130,6 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Errorf(codes.Internal, "create notebook: %s", err)
 	}
 
-	// not stored, and set token only for the response
-	nbProto.Token = nbToken
 	return nbProto, nil
 }
 

@@ -25,7 +25,6 @@ message Notebook {
   Error error = 9;
   string status = 10;
 
-  // this field is populated only when a new notebook is created.
   string token = 11;
 
   string project_id = 12;
