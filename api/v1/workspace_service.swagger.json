@@ -381,8 +381,7 @@
           "type": "string"
         },
         "token": {
-          "type": "string",
-          "description": "this field is populated only when a new notebook is created."
+          "type": "string"
         },
         "projectId": {
           "type": "string"

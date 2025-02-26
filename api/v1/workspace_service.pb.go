@@ -145,21 +145,20 @@ type Notebook struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id        string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name      string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	CreatedAt int64             `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	StartedAt int64             `protobuf:"varint,4,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	StoppedAt int64             `protobuf:"varint,5,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
-	Image     string            `protobuf:"bytes,6,opt,name=image,proto3" json:"image,omitempty"`
-	Resources *Resources        `protobuf:"bytes,7,opt,name=resources,proto3" json:"resources,omitempty"`
-	Envs      map[string]string `protobuf:"bytes,8,rep,name=envs,proto3" json:"envs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Error     *Notebook_Error   `protobuf:"bytes,9,opt,name=error,proto3" json:"error,omitempty"`
-	Status    string            `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
-	// this field is populated only when a new notebook is created.
-	Token               string `protobuf:"bytes,11,opt,name=token,proto3" json:"token,omitempty"`
-	ProjectId           string `protobuf:"bytes,12,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	OrganizationId      string `protobuf:"bytes,14,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	KubernetesNamespace string `protobuf:"bytes,13,opt,name=kubernetes_namespace,json=kubernetesNamespace,proto3" json:"kubernetes_namespace,omitempty"`
+	Id                  string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	CreatedAt           int64             `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	StartedAt           int64             `protobuf:"varint,4,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	StoppedAt           int64             `protobuf:"varint,5,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
+	Image               string            `protobuf:"bytes,6,opt,name=image,proto3" json:"image,omitempty"`
+	Resources           *Resources        `protobuf:"bytes,7,opt,name=resources,proto3" json:"resources,omitempty"`
+	Envs                map[string]string `protobuf:"bytes,8,rep,name=envs,proto3" json:"envs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Error               *Notebook_Error   `protobuf:"bytes,9,opt,name=error,proto3" json:"error,omitempty"`
+	Status              string            `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
+	Token               string            `protobuf:"bytes,11,opt,name=token,proto3" json:"token,omitempty"`
+	ProjectId           string            `protobuf:"bytes,12,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	OrganizationId      string            `protobuf:"bytes,14,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	KubernetesNamespace string            `protobuf:"bytes,13,opt,name=kubernetes_namespace,json=kubernetesNamespace,proto3" json:"kubernetes_namespace,omitempty"`
 	// cluster_id is the ID of the cluster where the notebook runs.
 	ClusterId         string `protobuf:"bytes,19,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
 	OrganizationTitle string `protobuf:"bytes,20,opt,name=organization_title,json=organizationTitle,proto3" json:"organization_title,omitempty"`
