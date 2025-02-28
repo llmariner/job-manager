@@ -7,9 +7,9 @@
 import * as fm from "../../fetch.pb"
 import * as LlmarinerJobsServerV1Job_manager_server_worker from "./job_manager_server_worker.pb"
 export type ClusterSummary = {
-  gpuCapacity?: number
-  gpuAllocated?: number
-  gpuPodCount?: number
+  gpu_capacity?: number
+  gpu_allocated?: number
+  gpu_pod_count?: number
 }
 
 export type Cluster = {
@@ -17,7 +17,7 @@ export type Cluster = {
   name?: string
   status?: LlmarinerJobsServerV1Job_manager_server_worker.ClusterStatus
   summary?: ClusterSummary
-  lastUpdatedAt?: string
+  last_updated_at?: string
 }
 
 export type ListClustersRequest = {
