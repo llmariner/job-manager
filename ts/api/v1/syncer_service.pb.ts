@@ -6,31 +6,31 @@
 
 import * as fm from "../../fetch.pb"
 export type PatchKubernetesObjectRequestResources = {
-  gpuLimit?: number
+  gpu_limit?: number
 }
 
 export type PatchKubernetesObjectRequest = {
   namespace?: string
   name?: string
-  group?: string
-  version?: string
-  resource?: string
+  Group?: string
+  Version?: string
+  Resource?: string
   resources?: PatchKubernetesObjectRequestResources
   data?: Uint8Array
 }
 
 export type PatchKubernetesObjectResponse = {
-  clusterId?: string
+  cluster_id?: string
   uid?: string
 }
 
 export type DeleteKubernetesObjectRequest = {
-  clusterId?: string
+  cluster_id?: string
   namespace?: string
   name?: string
-  group?: string
-  version?: string
-  resource?: string
+  Group?: string
+  Version?: string
+  Resource?: string
 }
 
 export type DeleteKubernetesObjectResponse = {
