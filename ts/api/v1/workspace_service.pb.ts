@@ -42,22 +42,22 @@ export type NotebookError = {
 export type Notebook = {
   id?: string
   name?: string
-  createdAt?: string
-  startedAt?: string
-  stoppedAt?: string
+  created_at?: string
+  started_at?: string
+  stopped_at?: string
   image?: string
   resources?: Resources
   envs?: {[key: string]: string}
   error?: NotebookError
   status?: string
   token?: string
-  projectId?: string
-  organizationId?: string
-  kubernetesNamespace?: string
-  clusterId?: string
-  organizationTitle?: string
-  projectTitle?: string
-  clusterName?: string
+  project_id?: string
+  organization_id?: string
+  kubernetes_namespace?: string
+  cluster_id?: string
+  organization_title?: string
+  project_title?: string
+  cluster_name?: string
 }
 
 export type ResourcesQuantity = {
@@ -66,10 +66,10 @@ export type ResourcesQuantity = {
 }
 
 export type Resources = {
-  cpuMilicore?: ResourcesQuantity
-  memoryMegabytes?: ResourcesQuantity
-  storageMegabytes?: ResourcesQuantity
-  gpuCount?: number
+  cpu_milicore?: ResourcesQuantity
+  memory_megabytes?: ResourcesQuantity
+  storage_megabytes?: ResourcesQuantity
+  gpu_count?: number
 }
 
 
@@ -93,7 +93,7 @@ export type ListNotebooksRequest = {
 
 export type ListNotebooksResponse = {
   notebooks?: Notebook[]
-  hasMore?: boolean
+  has_more?: boolean
 }
 
 export type GetNotebookRequest = {
@@ -118,7 +118,7 @@ export type StartNotebookRequest = {
 export type InternalNotebook = {
   notebook?: Notebook
   state?: NotebookState
-  queuedAction?: NotebookQueuedAction
+  queued_action?: NotebookQueuedAction
 }
 
 export type ListQueuedInternalNotebooksRequest = {

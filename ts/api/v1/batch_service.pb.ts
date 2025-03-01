@@ -38,7 +38,7 @@ export type BatchJobError = {
 }
 
 export type BatchJobResources = {
-  gpuCount?: number
+  gpu_count?: number
 }
 
 
@@ -50,26 +50,26 @@ export type BatchJobKind = BaseBatchJobKind
 
 export type BatchJob = {
   id?: string
-  createdAt?: string
-  finishedAt?: string
+  created_at?: string
+  finished_at?: string
   error?: BatchJobError
   status?: string
   image?: string
   command?: string
   resources?: BatchJobResources
   envs?: {[key: string]: string}
-  dataFiles?: string[]
-  projectId?: string
-  kubernetesNamespace?: string
-  clusterId?: string
+  data_files?: string[]
+  project_id?: string
+  kubernetes_namespace?: string
+  cluster_id?: string
   kind?: BatchJobKind
-  organizationTitle?: string
-  projectTitle?: string
-  clusterName?: string
+  organization_title?: string
+  project_title?: string
+  cluster_name?: string
 }
 
 export type PyTorchJob = {
-  workerCount?: number
+  worker_count?: number
 }
 
 export type CreateBatchJobRequest = {
@@ -78,7 +78,7 @@ export type CreateBatchJobRequest = {
   scripts?: {[key: string]: Uint8Array}
   resources?: BatchJobResources
   envs?: {[key: string]: string}
-  dataFiles?: string[]
+  data_files?: string[]
   kind?: BatchJobKind
 }
 
@@ -89,7 +89,7 @@ export type ListBatchJobsRequest = {
 
 export type ListBatchJobsResponse = {
   jobs?: BatchJob[]
-  hasMore?: boolean
+  has_more?: boolean
 }
 
 export type GetBatchJobRequest = {
@@ -107,7 +107,7 @@ export type DeleteBatchJobRequest = {
 export type InternalBatchJob = {
   job?: BatchJob
   state?: InternalBatchJobState
-  queuedAction?: InternalBatchJobAction
+  queued_action?: InternalBatchJobAction
 }
 
 export type ListQueuedInternalBatchJobsRequest = {
