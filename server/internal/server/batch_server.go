@@ -136,7 +136,7 @@ func (s *S) CreateBatchJob(ctx context.Context, req *v1.CreateBatchJobRequest) (
 func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v1.ListBatchJobsResponse, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Limit < 0 {
@@ -150,7 +150,7 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 		limit = maxPageSize
 	}
 
-	var after uint
+	var afterID uint
 	if req.After != "" {
 		job, err := s.store.GetActiveBatchJobByIDAndProjectID(req.After, userInfo.ProjectID)
 		if err != nil {
@@ -159,10 +159,10 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 			}
 			return nil, status.Errorf(codes.Internal, "get batch job: %s", err)
 		}
-		after = job.ID
+		afterID = job.ID
 	}
 
-	jobs, hasMore, err := s.store.ListActiveBatchJobsByProjectIDWithPagination(userInfo.ProjectID, after, int(limit))
+	jobs, hasMore, err := s.store.ListActiveBatchJobsByProjectIDWithPagination(userInfo.ProjectID, afterID, int(limit))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "list batch jobs: %s", err)
 	}
@@ -175,9 +175,16 @@ func (s *S) ListBatchJobs(ctx context.Context, req *v1.ListBatchJobsRequest) (*v
 		}
 		jobProtos = append(jobProtos, jobProto)
 	}
+
+	totalItems, err := s.store.CountActiveBatchJobsByProjectID(userInfo.ProjectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "count batch jobs: %s", err)
+	}
+
 	return &v1.ListBatchJobsResponse{
-		Jobs:    jobProtos,
-		HasMore: hasMore,
+		Jobs:       jobProtos,
+		HasMore:    hasMore,
+		TotalItems: int32(totalItems),
 	}, nil
 }
 

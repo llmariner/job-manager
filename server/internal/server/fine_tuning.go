@@ -168,13 +168,10 @@ func (s *S) validateFile(ctx context.Context, fileID string) error {
 }
 
 // ListJobs lists all jobs.
-func (s *S) ListJobs(
-	ctx context.Context,
-	req *v1.ListJobsRequest,
-) (*v1.ListJobsResponse, error) {
+func (s *S) ListJobs(ctx context.Context, req *v1.ListJobsRequest) (*v1.ListJobsResponse, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Limit < 0 {
@@ -213,10 +210,17 @@ func (s *S) ListJobs(
 		}
 		jobProtos = append(jobProtos, jobProto)
 	}
+
+	totalItems, err := s.store.CountJobsByProjectID(userInfo.ProjectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "count jobs: %s", err)
+	}
+
 	return &v1.ListJobsResponse{
-		Object:  "list",
-		Data:    jobProtos,
-		HasMore: hasMore,
+		Object:     "list",
+		Data:       jobProtos,
+		HasMore:    hasMore,
+		TotalItems: int32(totalItems),
 	}, nil
 }
 

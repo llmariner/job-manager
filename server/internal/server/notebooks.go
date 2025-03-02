@@ -223,9 +223,16 @@ func (s *S) ListNotebooks(ctx context.Context, req *v1.ListNotebooksRequest) (*v
 		}
 		nbProtos = append(nbProtos, notebookProto)
 	}
+
+	totalItems, err := s.store.CountActiveNotebooksByProjectID(userInfo.ProjectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "count notebooks: %s", err)
+	}
+
 	return &v1.ListNotebooksResponse{
-		Notebooks: nbProtos,
-		HasMore:   hasMore,
+		Notebooks:  nbProtos,
+		HasMore:    hasMore,
+		TotalItems: int32(totalItems),
 	}, nil
 }
 

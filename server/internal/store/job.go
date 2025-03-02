@@ -267,3 +267,12 @@ func (s *S) UpdateOutputModelID(jobID string, currentVersion int, outputModelID 
 	}
 	return nil
 }
+
+// CountJobsByProjectID counts the total number of jobs by project ID.
+func (s *S) CountJobsByProjectID(projectID string) (int64, error) {
+	var count int64
+	if err := s.db.Model(&Job{}).Where("project_id = ?", projectID).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}

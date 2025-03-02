@@ -240,3 +240,12 @@ func (s *S) SetNonQueuedBatchJobStateAndMessage(id string, currentVersion int, n
 	}
 	return nil
 }
+
+// CountActiveBatchJobsByProjectID counts the total number of active batch jobs by project ID.
+func (s *S) CountActiveBatchJobsByProjectID(projectID string) (int64, error) {
+	var count int64
+	if err := s.db.Model(&BatchJob{}).Where("project_id = ? AND state != ?", projectID, BatchJobStateDeleted).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}

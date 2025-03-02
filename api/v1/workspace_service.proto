@@ -76,7 +76,9 @@ message ListNotebooksRequest {
 
 message ListNotebooksResponse {
   repeated Notebook notebooks = 1;
-  bool has_more = 3;
+  bool has_more = 2;
+  // total_items is the total number of batch jobs.
+  int32 total_items = 3;
 }
 
 message GetNotebookRequest {

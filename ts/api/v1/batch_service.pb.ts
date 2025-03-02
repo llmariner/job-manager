@@ -90,6 +90,7 @@ export type ListBatchJobsRequest = {
 export type ListBatchJobsResponse = {
   jobs?: BatchJob[]
   has_more?: boolean
+  total_items?: number
 }
 
 export type GetBatchJobRequest = {
