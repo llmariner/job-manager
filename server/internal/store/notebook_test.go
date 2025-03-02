@@ -134,3 +134,47 @@ func TestUpdateNotebook(t *testing.T) {
 	assert.Equal(t, curVersion+1, nb1.Version)
 	assert.Equal(t, NotebookStateQueued, nb1.State)
 }
+
+func TestCountActiveNotebooksByProjectID(t *testing.T) {
+	st, teardown := NewTest(t)
+	defer teardown()
+
+	nbs := []*Notebook{
+		{
+			NotebookID: "nb0",
+			ProjectID:  "pid0",
+			State:      NotebookStateRunning,
+		},
+		{
+			NotebookID: "nb1",
+			ProjectID:  "pid0",
+			State:      NotebookStateStopped,
+		},
+		{
+			NotebookID: "nb2",
+			ProjectID:  "pid0",
+			State:      NotebookStateDeleted,
+		},
+		{
+			NotebookID: "nb3",
+			ProjectID:  "pid1",
+			State:      NotebookStateRunning,
+		},
+	}
+	for _, nb := range nbs {
+		err := st.CreateNotebook(nb)
+		assert.NoError(t, err)
+	}
+
+	count, err := st.CountActiveNotebooksByProjectID("pid0")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+
+	count, err = st.CountActiveNotebooksByProjectID("pid1")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), count)
+
+	count, err = st.CountActiveNotebooksByProjectID("pid2")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}

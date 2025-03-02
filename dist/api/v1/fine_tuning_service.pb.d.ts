@@ -87,6 +87,7 @@ export type ListJobsResponse = {
     object?: string;
     data?: Job[];
     has_more?: boolean;
+    total_items?: number;
 };
 export type GetJobRequest = {
     id?: string;

@@ -315,3 +315,12 @@ func (s *S) UpdateNotebookForRescheduling(nb *Notebook) error {
 	}
 	return nil
 }
+
+// CountActiveNotebooksByProjectID counts the total number of active notebooks by project ID.
+func (s *S) CountActiveNotebooksByProjectID(projectID string) (int64, error) {
+	var count int64
+	if err := s.db.Model(&Notebook{}).Where("project_id = ? AND state != ?", projectID, NotebookStateDeleted).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}

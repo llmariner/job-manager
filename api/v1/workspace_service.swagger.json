@@ -327,6 +327,11 @@
         },
         "hasMore": {
           "type": "boolean"
+        },
+        "totalItems": {
+          "type": "integer",
+          "format": "int32",
+          "description": "total_items is the total number of batch jobs."
         }
       }
     },

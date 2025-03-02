@@ -80,6 +80,7 @@ export type ListNotebooksRequest = {
 export type ListNotebooksResponse = {
     notebooks?: Notebook[];
     has_more?: boolean;
+    total_items?: number;
 };
 export type GetNotebookRequest = {
     id?: string;

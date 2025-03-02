@@ -172,3 +172,39 @@ func TestUpdateOutputModelID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "output-model-id", got.OutputModelID)
 }
+
+func TestCountJobsByProjectID(t *testing.T) {
+	st, teardown := NewTest(t)
+	defer teardown()
+
+	jobs := []*Job{
+		{
+			JobID:     "job0",
+			ProjectID: "pid0",
+		},
+		{
+			JobID:     "job1",
+			ProjectID: "pid0",
+		},
+		{
+			JobID:     "job2",
+			ProjectID: "pid1",
+		},
+	}
+	for _, job := range jobs {
+		err := st.CreateJob(job)
+		assert.NoError(t, err)
+	}
+
+	count, err := st.CountJobsByProjectID("pid0")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), count)
+
+	count, err = st.CountJobsByProjectID("pid1")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), count)
+
+	count, err = st.CountJobsByProjectID("pid2")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), count)
+}

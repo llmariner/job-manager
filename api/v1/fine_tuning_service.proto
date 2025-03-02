@@ -102,6 +102,10 @@ message ListJobsResponse {
   string object = 1;
   repeated Job data = 2;
   bool has_more = 3;
+
+  // total_items is the total number of batch jobs. This is not defined in the
+  // OpenAI API spec, but we include here for better UX in the frontend.
+  int32 total_items = 4;
 }
 
 message GetJobRequest {
