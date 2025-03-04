@@ -25,7 +25,7 @@ func (s *S) CreateJob(
 ) (*v1.Job, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	// TODO(kenji): Add more validation.
@@ -231,7 +231,7 @@ func (s *S) GetJob(
 ) (*v1.Job, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -262,7 +262,7 @@ func (s *S) CancelJob(
 ) (*v1.Job, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Id == "" {

@@ -24,7 +24,7 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	s.logger.Info("Receive CreateNotebook request", "req", req)
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Name == "" {
@@ -266,7 +266,7 @@ func (s *S) GetNotebook(ctx context.Context, req *v1.GetNotebookRequest) (*v1.No
 func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.Notebook, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -317,7 +317,7 @@ func (s *S) StopNotebook(ctx context.Context, req *v1.StopNotebookRequest) (*v1.
 func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v1.Notebook, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Id == "" {
@@ -368,7 +368,7 @@ func (s *S) StartNotebook(ctx context.Context, req *v1.StartNotebookRequest) (*v
 func (s *S) DeleteNotebook(ctx context.Context, req *v1.DeleteNotebookRequest) (*v1.DeleteNotebookResponse, error) {
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 
 	if req.Id == "" {
