@@ -136,7 +136,7 @@ notebook:
   mountPath: ""
 
 # Specify how frequently cluster status is updated.
-clusterStatusUpdateInterval: 5m
+clusterStatusUpdateInterval: 1m
 
 kubernetesManager:
   # Specify whether to enable the leader election.
