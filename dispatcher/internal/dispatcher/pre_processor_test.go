@@ -56,19 +56,21 @@ func TestPreProcess(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func TestExtractBucketName(t *testing.T) {
+func TestSplitS3Path(t *testing.T) {
 	tcs := []struct {
-		path    string
-		want    string
-		wantErr bool
+		path       string
+		wantBucket string
+		wantPath   string
+		wantErr    bool
 	}{
 		{
-			path: "s3://my-bucket/path/to/file",
-			want: "my-bucket",
+			path:       "s3://my-bucket/path/to/file",
+			wantBucket: "my-bucket",
+			wantPath:   "path/to/file",
 		},
 		{
-			path: "s3://my-bucket",
-			want: "my-bucket",
+			path:    "s3://my-bucket",
+			wantErr: true,
 		},
 		{
 			path:    "foo/bar",
@@ -77,14 +79,15 @@ func TestExtractBucketName(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.path, func(t *testing.T) {
-			got, err := extractBucketName(tc.path)
+			gotBucket, gotPath, err := splitS3Path(tc.path)
 			if tc.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.want, got)
+			assert.Equal(t, tc.wantBucket, gotBucket)
+			assert.Equal(t, tc.wantPath, gotPath)
 		})
 	}
 }

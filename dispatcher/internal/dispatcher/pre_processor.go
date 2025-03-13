@@ -166,25 +166,33 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 	}
 
 	bucket := p.s3Bucket
-	if strings.HasPrefix(fresp.Path, "s3://") {
+	path := fresp.Path
+	if strings.HasPrefix(path, "s3://") {
 		// The path contains a bucket name. Use it instead of the default bucket.
-		bucket, err = extractBucketName(fresp.Path)
+		bucket, path, err = splitS3Path(fresp.Path)
 		if err != nil {
 			return "", fmt.Errorf("extract bucket name: %s", err)
 		}
+		path = strings.TrimPrefix(path, "s3://"+bucket+"/")
 	}
 
-	url, err := p.s3Client.GeneratePresignedURL(ctx, bucket, fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
+	url, err := p.s3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", fmt.Errorf("generate presigned url: %s", err)
 	}
 	return url, nil
 }
 
-func extractBucketName(s3Path string) (string, error) {
+func splitS3Path(s3Path string) (string, string, error) {
 	// The path is in the format of "s3://bucket-name/path/to/object".
 	if !strings.HasPrefix(s3Path, "s3://") {
-		return "", fmt.Errorf("invalid s3 path: %s", s3Path)
+		return "", "", fmt.Errorf("invalid s3 path: %s", s3Path)
 	}
-	return strings.Split(s3Path, "/")[2], nil
+	if strings.Count(s3Path, "/") < 3 {
+		return "", "", fmt.Errorf("invalid s3 path: %s", s3Path)
+	}
+	l := strings.Split(s3Path, "/")
+	bucket := l[2]
+	path := strings.Join(l[3:], "/")
+	return bucket, path, nil
 }
