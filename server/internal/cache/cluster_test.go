@@ -39,9 +39,9 @@ func TestCluster_Clone(t *testing.T) {
 	gotCls := cls.Clone()
 	assert.Equal(t, cls, gotCls)
 	assert.Same(t, cls.GPUNodes[0], gotCls.GPUNodes[0])
-	assert.NotSame(t, cls.GPUNodes, gotCls.GPUNodes)
-	assert.NotSame(t, cls.GPUPods, gotCls.GPUPods)
-	assert.NotSame(t, cls.AssumedGPUPodsByKey, gotCls.AssumedGPUPodsByKey)
+	assert.NotSame(t, &cls.GPUNodes, &gotCls.GPUNodes)
+	assert.NotSame(t, &cls.GPUPods, &gotCls.GPUPods)
+	assert.NotSame(t, &cls.AssumedGPUPodsByKey, &gotCls.AssumedGPUPodsByKey)
 }
 
 func TestCache(t *testing.T) {
@@ -68,7 +68,7 @@ func TestCache(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, gotT0Cls2, 2)
 	assert.Equal(t, gotT0Cls, gotT0Cls2)
-	assert.NotSame(t, gotT0Cls, gotT0Cls2)
+	assert.NotSame(t, &gotT0Cls, &gotT0Cls2)
 
 	gotT1Cls, err := c.ListClustersByTenantID("t1")
 	assert.NoError(t, err)

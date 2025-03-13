@@ -10,7 +10,7 @@ require (
 	github.com/awslabs/operatorpkg v0.0.0-20241205163410-0fff9f28d115
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/stdr v1.2.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
 	github.com/llmariner/api-usage v1.2.0
 	github.com/llmariner/cluster-manager v1.5.1
