@@ -69,6 +69,8 @@ type BatchJobManagerOptions struct {
 
 	WandbConfig config.WandbAPIKeySecretConfig
 	KueueConfig config.KueueConfig
+
+	S3Bucket string
 }
 
 // NewBatchJobManager returns a new batch job manager.
@@ -81,6 +83,7 @@ func NewBatchJobManager(opts BatchJobManagerOptions) *BatchJobManager {
 		llmaBaseURL: opts.LlmaBaseURL,
 		wandbConfig: opts.WandbConfig,
 		kueueConfig: opts.KueueConfig,
+		s3Bucket:    opts.S3Bucket,
 	}
 }
 
@@ -95,6 +98,8 @@ type BatchJobManager struct {
 
 	wandbConfig config.WandbAPIKeySecretConfig
 	kueueConfig config.KueueConfig
+
+	s3Bucket string
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -452,7 +457,7 @@ func (m *BatchJobManager) getNameAndPresignedURL(ctx context.Context, fileID str
 	if err != nil {
 		return "", "", fmt.Errorf("get file path: %s", err)
 	}
-	url, err := m.s3Client.GeneratePresignedURL(ctx, fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
+	url, err := m.s3Client.GeneratePresignedURL(ctx, m.s3Bucket, fresp.Path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", "", fmt.Errorf("generate presigned url: %s", err)
 	}
