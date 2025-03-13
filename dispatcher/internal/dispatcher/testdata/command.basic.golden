@@ -6,13 +6,13 @@ mkdir base-model
 
 
 mkdir -p $(dirname base-model/config.json)
-curl --fail --silent --output base-model/config.json "https://example.com/config.json"
+curl --fail --no-progress-meter --output base-model/config.json "https://example.com/config.json"
 
 
 mkdir dataset/
-curl --fail --silent --output dataset/train.json "https://example.com/training-file"
+curl --fail --no-progress-meter --output dataset/train.json "https://example.com/training-file"
 
-curl --fail --silent --output dataset/test.json "https://example.com/validation-file"
+curl --fail --no-progress-meter --output dataset/test.json "https://example.com/validation-file"
 
 
 mkdir output
@@ -34,4 +34,4 @@ python ./convert-lora-to-ggml.py ./output
 rm -rf output/checkpoint-*
 
 # Upload all files under the "output" directory.
-find output -type f -exec curl --fail --silent --request POST -F 'key=value' -F file=@{} "https://example.com/output-model" \;
+find output -type f -exec curl --fail --no-progress-meter --request POST -F 'key=value' -F file=@{} "https://example.com/output-model" \;

@@ -6,13 +6,13 @@ mkdir base-model
 
 {{ range $path, $url := .BaseModelURLs }}
 mkdir -p $(dirname base-model/{{ $path }})
-curl --fail --silent --output base-model/{{ $path }} "{{ $url }}"
+curl --fail --no-progress-meter --output base-model/{{ $path }} "{{ $url }}"
 {{ end }}
 
 mkdir dataset/
-curl --fail --silent --output dataset/train.json "{{.TrainingFileURL }}"
+curl --fail --no-progress-meter --output dataset/train.json "{{.TrainingFileURL }}"
 {{if .ValidationFileURL }}
-curl --fail --silent --output dataset/test.json "{{.ValidationFileURL }}"
+curl --fail --no-progress-meter --output dataset/test.json "{{.ValidationFileURL }}"
 {{ end }}
 
 mkdir output
@@ -34,4 +34,4 @@ python ./convert-lora-to-ggml.py ./output
 rm -rf output/checkpoint-*
 
 # Upload all files under the "output" directory.
-find output -type f -exec curl --fail --silent --request POST {{ .OutputModelPresignFlags }} -F file=@{} "{{ .OutputModelURL }}" \;
+find output -type f -exec curl --fail --no-progress-meter --request POST {{ .OutputModelPresignFlags }} -F file=@{} "{{ .OutputModelURL }}" \;
