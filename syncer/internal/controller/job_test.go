@@ -44,7 +44,7 @@ func TestReconcileJob(t *testing.T) {
 				Labels:    labels,
 			},
 			Spec: batchv1.JobSpec{
-				ManagedBy: ptr.To(fullControllerName),
+				ManagedBy: ptr.To(fullJobControllerName),
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"job-name": "test",
@@ -90,14 +90,14 @@ func TestReconcileJob(t *testing.T) {
 				assert.Contains(t, job.Annotations, annoKeyClusterID)
 				assert.Contains(t, job.Annotations, annoKeyDeployedAt)
 				assert.Contains(t, job.Annotations, annoKeyUID)
-				assert.Contains(t, job.Finalizers, fullControllerName)
+				assert.Contains(t, job.Finalizers, fullJobControllerName)
 			},
 			wantPatch: true,
 		},
 		{
 			name: "no change",
 			job: createJob(func(job *batchv1.Job) {
-				job.Finalizers = append(job.Finalizers, fullControllerName)
+				job.Finalizers = append(job.Finalizers, fullJobControllerName)
 				job.Annotations = map[string]string{annoKeyDeployedAt: metav1.Now().Format(time.RFC3339)}
 			}),
 		},
@@ -106,7 +106,7 @@ func TestReconcileJob(t *testing.T) {
 			job: createJob(func(job *batchv1.Job) {
 				job.DeletionTimestamp = ptr.To(metav1.Now())
 				job.Annotations = map[string]string{annoKeyClusterID: "cid"}
-				job.Finalizers = append(job.Finalizers, fullControllerName)
+				job.Finalizers = append(job.Finalizers, fullJobControllerName)
 			}),
 			wantDelete: true,
 		},

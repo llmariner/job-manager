@@ -19,6 +19,19 @@ rules:
   - update
   - watch
 - apiGroups:
+    - jobset.x-k8s.io
+  resources:
+    - jobsets
+    - jobsets/status
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
   - ""
   resources:
   - events
