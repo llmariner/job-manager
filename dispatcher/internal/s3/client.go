@@ -30,15 +30,13 @@ func NewClient(ctx context.Context, c config.S3Config) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		svc:    svc,
-		bucket: c.Bucket,
+		svc: svc,
 	}, nil
 }
 
 // Client is a client for S3.
 type Client struct {
-	svc    *s3.Client
-	bucket string
+	svc *s3.Client
 }
 
 // RequestType is the type of the request.
@@ -52,13 +50,13 @@ const (
 )
 
 // GeneratePresignedURL generates a pre-signed URL.
-func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType RequestType) (string, error) {
+func (c *Client) GeneratePresignedURL(ctx context.Context, bucket, key string, expire time.Duration, requestType RequestType) (string, error) {
 	presigner := s3.NewPresignClient(c.svc)
 
 	switch requestType {
 	case RequestTypeGetObject:
 		req, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(c.bucket),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		}, func(opts *s3.PresignOptions) {
 			opts.Expires = expire
@@ -69,7 +67,7 @@ func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire ti
 		return req.URL, nil
 	case RequestTypePutObject:
 		req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
-			Bucket: aws.String(c.bucket),
+			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 		}, func(opts *s3.PresignOptions) {
 			opts.Expires = expire
@@ -85,10 +83,10 @@ func (c *Client) GeneratePresignedURL(ctx context.Context, key string, expire ti
 
 // GeneratePresignedURLForPost generates a pre-signed URL for a POST request. It allows uploading files
 // with given key prefix. For example, when a file 'myfile' is uploaded, the key will be keyPrefix/myfile.
-func (c *Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
+func (c *Client) GeneratePresignedURLForPost(ctx context.Context, bucket, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
 	presigner := s3.NewPresignClient(c.svc)
 	req, err := presigner.PresignPostObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(c.bucket),
+		Bucket: aws.String(bucket),
 		Key:    aws.String(keyPrefix + "/${filename}"),
 	}, func(opts *s3.PresignPostOptions) {
 		opts.Expires = expire
@@ -104,7 +102,7 @@ func (c *Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefix stri
 		return nil, err
 	}
 
-	req.URL, err = reconstructPresignURL(req.URL, c.bucket)
+	req.URL, err = reconstructPresignURL(req.URL, bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -138,10 +136,11 @@ func reconstructPresignURL(origURL, bucket string) (string, error) {
 // ListObjectsPages returns S3 objects with pagination.
 func (c *Client) ListObjectsPages(
 	ctx context.Context,
+	bucket string,
 	prefix string,
 ) (*s3.ListObjectsV2Output, error) {
 	return c.svc.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(c.bucket),
+		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
 	})
 }
