@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +75,7 @@ func TestReconcileJob(t *testing.T) {
 		return &job
 	}
 
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		job      *batchv1.Job
 		patchErr error
@@ -120,7 +122,7 @@ func TestReconcileJob(t *testing.T) {
 			wantPatch: true,
 			wantErr:   true,
 			assertFn: func(t *testing.T, job batchv1.Job) {
-				assert.Len(t, job.Status.Conditions, 1)
+				require.Len(t, job.Status.Conditions, 1)
 				assert.Equal(t, "no schedulable cluster", job.Status.Conditions[0].Message)
 			},
 		},
@@ -133,9 +135,12 @@ func TestReconcileJob(t *testing.T) {
 			}
 			ssClient := &fakeSyncerServiceClient{patchErr: test.patchErr}
 			jobCtr := JobController{
-				recorder:  record.NewFakeRecorder(5),
-				k8sClient: fake.NewFakeClient(objs...),
-				ssClient:  ssClient,
+				syncController{
+					controllerName: fullJobControllerName,
+					recorder:       record.NewFakeRecorder(5),
+					k8sClient:      fake.NewFakeClient(objs...),
+					ssClient:       ssClient,
+				},
 			}
 
 			ctx := context.Background()
@@ -143,22 +148,22 @@ func TestReconcileJob(t *testing.T) {
 
 			_, err := jobCtr.Reconcile(ctx, req)
 			if test.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			if test.wantPatch {
-				assert.Equal(t, 1, ssClient.patchCount)
+				require.Equal(t, 1, ssClient.patchCount)
 			}
 			if test.wantDelete {
-				assert.Equal(t, 1, ssClient.delCount)
+				require.Equal(t, 1, ssClient.delCount)
 			}
 
 			if test.assertFn != nil {
 				var gotJob batchv1.Job
 				err = jobCtr.k8sClient.Get(ctx, req.NamespacedName, &gotJob)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				test.assertFn(t, gotJob)
 			}
 		})

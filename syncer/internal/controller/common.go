@@ -2,17 +2,17 @@ package controller
 
 import (
 	"context"
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/llmariner/job-manager/api/v1"
 	v2 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 )
 
 const (
@@ -34,7 +34,6 @@ var excludeLabelKeys = map[string]struct{}{
 
 type syncController struct {
 	controllerName string
-	recorder       record.EventRecorder
 	k8sClient      client.Client
 	ssClient       v1.SyncerServiceClient
 }
@@ -77,12 +76,13 @@ func (c syncController) syncPatch(ctx context.Context, req *v1.PatchKubernetesOb
 }
 
 func (c syncController) tagWithFinalizer(ctx context.Context, obj client.Object, log logr.Logger) (controllerruntime.Result, error) {
-	if !controllerutil.ContainsFinalizer(obj, c.controllerName) {
-		controllerutil.AddFinalizer(obj, c.controllerName)
-		if err := c.k8sClient.Update(ctx, obj); err != nil {
-			log.Error(err, "add finalizer")
-			return controllerruntime.Result{}, client.IgnoreNotFound(err)
-		}
+	if controllerutil.ContainsFinalizer(obj, c.controllerName) {
+		return controllerruntime.Result{}, nil
+	}
+	controllerutil.AddFinalizer(obj, c.controllerName)
+	if err := c.k8sClient.Update(ctx, obj); err != nil {
+		log.Error(err, "add finalizer")
+		return controllerruntime.Result{}, client.IgnoreNotFound(err)
 	}
 	return controllerruntime.Result{}, nil
 }
@@ -144,8 +144,8 @@ func isDeployed(o client.Object) bool {
 	return o.GetAnnotations()[annoKeyDeployedAt] != ""
 }
 
-func isDeleted(obj client.Object) bool {
-	return !obj.GetDeletionTimestamp().IsZero()
+func isDeleted(o client.Object) bool {
+	return !o.GetDeletionTimestamp().IsZero()
 }
 
 func prepareSyncPatchRequest(
@@ -157,7 +157,7 @@ func prepareSyncPatchRequest(
 ) (*v1.PatchKubernetesObjectRequest, error) {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&deployObj)
 	if err != nil {
-		log.Error(err, "Failed to convert job set to unstructured")
+		log.Error(err, "Failed to convert a resource to unstructured")
 		return nil, err
 	}
 	uobj := &unstructured.Unstructured{Object: obj}
@@ -173,7 +173,7 @@ func prepareSyncPatchRequest(
 
 	data, err := uobj.MarshalJSON()
 	if err != nil {
-		log.Error(err, "Failed to marshal job set")
+		log.Error(err, "Failed to marshal resource")
 		return nil, err
 	}
 

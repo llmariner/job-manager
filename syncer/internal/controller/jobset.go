@@ -3,12 +3,16 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
+
+	"k8s.io/client-go/tools/record"
+
 	v1 "github.com/llmariner/job-manager/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
-	"reflect"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	jobset "sigs.k8s.io/jobset/api/jobset/v1alpha2"
@@ -28,6 +32,7 @@ var jobSetGVR = schema.GroupVersionResource{
 // JobSetController reconciles a Job object
 type JobSetController struct {
 	syncController
+	recorder record.EventRecorder
 }
 
 // SetupWithManager sets up the controller with the Manager.

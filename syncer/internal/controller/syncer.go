@@ -60,22 +60,22 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 		return fmt.Errorf("list clusters: %s", err)
 	}
 
+	syncer := newStatusSyncer(m.localK8sClient)
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, c := range cls.Ids {
 		log.Info("Starting remote syncer", "cluster", c)
 		ctx := ctrl.LoggerInto(egCtx, log.WithName(c))
 		rconf := getRestConfig(m.sessionManagerEndpoint, c, getAuthorizationToken())
-
 		eg.Go(func() error {
 			// TODO(aya): gracefully handle errors
-			if err := newStatusSyncer(m.localK8sClient).start(ctx, rconf, i+1, &batchv1.Job{}, syncJobsFn); err != nil {
+			if err := syncer.start(ctx, rconf, jobControllerName, i+1, &batchv1.Job{}, syncJobsFn); err != nil {
 				return fmt.Errorf("run job status syncer %s: %w", c, err)
 			}
 			return nil
 		})
 		eg.Go(func() error {
 			// TODO(aya): gracefully handle errors
-			if err := newStatusSyncer(m.localK8sClient).start(ctx, rconf, i+1, &jobset.JobSet{}, syncJobsSetFn); err != nil {
+			if err := syncer.start(ctx, rconf, jobSetControllerName, i+1, &jobset.JobSet{}, syncJobsSetFn); err != nil {
 				return fmt.Errorf("run jobSet status syncer %s: %w", c, err)
 			}
 			return nil
@@ -89,6 +89,7 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 	return nil
 }
 
+// newStatusSyncer constructor
 func newStatusSyncer(localK8sClient client.Client) *clusterStatusSyncer {
 	return &clusterStatusSyncer{
 		localK8sClient: localK8sClient,
@@ -106,13 +107,20 @@ type clusterStatusSyncer struct {
 }
 
 // start starts the status syncer and blocks
-func (s *clusterStatusSyncer) start(ctx context.Context, conf rest.Config, idx int, object client.Object, reconcileFn clusterStatusObjectReconcileFn) error {
+func (s *clusterStatusSyncer) start(
+	ctx context.Context,
+	conf rest.Config,
+	controllerName string,
+	idx int,
+	object client.Object,
+	reconcileFn clusterStatusObjectReconcileFn,
+) error {
 	typeName := reflect.TypeOf(object).Elem().Name()
 	log := ctrl.LoggerFrom(ctx).
 		WithValues("type", typeName, "idx", idx)
 	log.Info("Starting status syncer", "host", conf.Host)
 
-	lbsl := labels.SelectorFromSet(labels.Set{deployedByLabelKey: jobControllerName})
+	lbsl := labels.SelectorFromSet(labels.Set{deployedByLabelKey: controllerName})
 	mgr, err := ctrl.NewManager(&conf, ctrl.Options{
 		Scheme: Scheme,
 		// TODO(aya): rethink the monitoring
@@ -147,6 +155,7 @@ func (s *clusterStatusSyncer) start(ctx context.Context, conf rest.Config, idx i
 	log.Info("Manager stopped")
 	return nil
 }
+
 func (s *clusterStatusSyncer) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return s.reconcileFn(ctx, req, s.remoteK8sClient, s.localK8sClient)
 }
@@ -195,37 +204,37 @@ func syncJobsFn(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8s
 func syncJobsSetFn(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8sClient client.Client) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
-	var remoteJob jobset.JobSet
-	if err := remoteK8sClient.Get(ctx, req.NamespacedName, &remoteJob); err != nil {
+	var remoteJobSet jobset.JobSet
+	if err := remoteK8sClient.Get(ctx, req.NamespacedName, &remoteJobSet); err != nil {
 		err = client.IgnoreNotFound(err)
 		if err != nil {
-			log.Error(err, "Failed to get remote job")
+			log.Error(err, "Failed to get remote jobSet")
 		}
 		return ctrl.Result{}, err
 	}
-	if !remoteJob.DeletionTimestamp.IsZero() {
-		log.V(2).Info("Job is being deleted", "job", remoteJob.Name)
+	if !remoteJobSet.DeletionTimestamp.IsZero() {
+		log.V(2).Info("JobSet is being deleted", "job", remoteJobSet.Name)
 		return ctrl.Result{}, nil
 	}
 
-	var localJob jobset.JobSet
-	if err := localK8sClient.Get(ctx, req.NamespacedName, &localJob); err != nil {
+	var localJobSet jobset.JobSet
+	if err := localK8sClient.Get(ctx, req.NamespacedName, &localJobSet); err != nil {
 		err = client.IgnoreNotFound(err)
 		if err != nil {
-			log.Error(err, "Failed to get local job")
+			log.Error(err, "Failed to get local jobSet")
 		}
 		return ctrl.Result{}, err
 	}
 
-	if reflect.DeepEqual(localJob.Status, remoteJob.Status) {
-		log.V(4).Info("Status is up-to-date", "job", localJob.Name)
+	if reflect.DeepEqual(localJobSet.Status, remoteJobSet.Status) {
+		log.V(4).Info("Status is up-to-date", "jobSet", localJobSet.Name)
 		return ctrl.Result{}, nil
 	}
-	patch := client.MergeFrom(&localJob)
-	newJob := localJob.DeepCopy()
-	newJob.Status = remoteJob.Status
-	if err := localK8sClient.Status().Patch(ctx, newJob, patch); err != nil {
-		log.Error(err, "Failed to update status", "jobSet", localJob.Name)
+	patch := client.MergeFrom(&localJobSet)
+	newJobSet := localJobSet.DeepCopy()
+	newJobSet.Status = remoteJobSet.Status
+	if err := localK8sClient.Status().Patch(ctx, newJobSet, patch); err != nil {
+		log.Error(err, "Failed to update status", "jobSet", localJobSet.Name)
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
