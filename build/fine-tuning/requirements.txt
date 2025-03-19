@@ -1,4 +1,4 @@
-transformers==4.46.3
+transformers==4.48.0
 torch
 # TODO(kenji): Fix. This installs bitsandbytes compiled without GPU support.
 bitsandbytes
