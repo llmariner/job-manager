@@ -8,6 +8,7 @@ RUN \
     ca-certificates \
     curl
 
+COPY accelerate /bin/accelerate
 COPY sft.py .
 COPY convert-lora-to-ggml.py .
 

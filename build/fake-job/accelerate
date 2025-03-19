@@ -1,0 +1,3 @@
+# A fake accelerate command that just runs sft.py
+
+python ./sft.py
