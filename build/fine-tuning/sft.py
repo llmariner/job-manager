@@ -111,7 +111,8 @@ if __name__ == "__main__":
     eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     # TODO(kenji): Revisit these parameters.
     peft_config = LoraConfig(
