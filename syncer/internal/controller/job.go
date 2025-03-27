@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	jobControllerName     = "job-controller"
+	jobControllerName     = "src-controller"
 	fullJobControllerName = domain + "/" + jobControllerName
 )
 
@@ -54,13 +54,13 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err := c.k8sClient.Get(ctx, req.NamespacedName, &job); err != nil {
 		err = client.IgnoreNotFound(err)
 		if err != nil {
-			log.Error(err, "Failed to get job")
+			log.Error(err, "Failed to get src")
 		}
 		return ctrl.Result{}, err
 	}
 
 	if mgr := ptr.Deref(job.Spec.ManagedBy, ""); mgr != c.controllerName {
-		log.V(4).Info("Skip job", "managedBy", mgr)
+		log.V(4).Info("Skip src", "managedBy", mgr)
 		return ctrl.Result{}, nil
 	}
 
@@ -105,12 +105,12 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	resp, patchErr := c.syncPatch(ctx, patchReq)
 	if patchErr != nil {
-		log.Error(patchErr, "Failed to patch job")
+		log.Error(patchErr, "Failed to patch src")
 		patch := client.MergeFrom(&job)
 		newJob := job.DeepCopy()
 
-		// To share the error message with the user, update the job status here.
-		// Until the job is created to the worker cluster, the job status is not updated.
+		// To share the error message with the user, update the src status here.
+		// Until the src is created to the worker cluster, the src status is not updated.
 		newCond := batchv1.JobCondition{
 			Type:               "FailedClusterSchedule",
 			Status:             corev1.ConditionTrue,
@@ -133,12 +133,12 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		}
 		if !reflect.DeepEqual(job.Status, newJob.Status) {
 			if err := c.k8sClient.Status().Patch(ctx, newJob, patch); err != nil {
-				log.Error(err, "Failed to update status", "job", job.Name)
+				log.Error(err, "Failed to update status", "src", job.Name)
 			}
 		}
 		return ctrl.Result{}, patchErr
 	}
-	log.V(2).Info("Patched job", "response", resp)
+	log.V(2).Info("Patched src", "response", resp)
 
 	patch := client.MergeFrom(&job)
 	newJob := job.DeepCopy()
@@ -147,6 +147,6 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	c.recorder.Event(&job, "Normal", "Deployed", fmt.Sprintf("Job(%s) is deployed to the Cluster(%s)", resp.Uid, resp.ClusterId))
-	log.Info("Deployed job")
+	log.Info("Deployed src")
 	return ctrl.Result{}, nil
 }

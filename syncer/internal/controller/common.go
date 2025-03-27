@@ -27,9 +27,9 @@ const (
 
 var excludeLabelKeys = map[string]struct{}{
 	"batch.kubernetes.io/controller-uid": {},
-	"batch.kubernetes.io/job-name":       {},
+	"batch.kubernetes.io/src-name":       {},
 	"controller-uid":                     {},
-	"job-name":                           {},
+	"src-name":                           {},
 }
 
 type syncController struct {

@@ -110,7 +110,7 @@ func (c *JobSetController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 		return ctrl.Result{}, patchErr
 	}
-	log.V(2).Info("Patched job set", "response", resp)
+	log.V(2).Info("Patched src set", "response", resp)
 
 	patch := client.MergeFrom(&jobSet)
 	newJobSet := jobSet.DeepCopy()
@@ -119,7 +119,7 @@ func (c *JobSetController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	c.recorder.Event(&jobSet, "Normal", "Deployed", fmt.Sprintf("JobSet(%s) is deployed to the Cluster(%s)", resp.Uid, resp.ClusterId))
-	log.Info("Deployed job set")
+	log.Info("Deployed src set")
 	return ctrl.Result{}, nil
 }
 
@@ -151,7 +151,7 @@ func removeCreationTime(uobj *unstructured.Unstructured) error {
 
 // find minimum GPUs required
 func calcMinJobSetGPUs(deployObj *jobset.JobSet) uint32 {
-	// quick solution that picks the most expensive job in terms of GPU as bottleneck
+	// quick solution that picks the most expensive src in terms of GPU as bottleneck
 	var maxJobGPU uint32
 	for _, job := range deployObj.Spec.ReplicatedJobs {
 		jobSpec := job.Template.Spec
