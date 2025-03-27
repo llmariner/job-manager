@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"k8s.io/client-go/tools/record"
-
 	v1 "github.com/llmariner/job-manager/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	jobset "sigs.k8s.io/jobset/api/jobset/v1alpha2"
@@ -116,7 +114,7 @@ func (c *JobSetController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	patch := client.MergeFrom(&jobSet)
 	newJobSet := jobSet.DeepCopy()
-	if result, err := c.storeDeploymentData(ctx, newJobSet, resp, patch, log); err != nil {
+	if result, err := c.storeObjectData(ctx, newJobSet, resp, patch, log); err != nil {
 		return result, err
 	}
 
@@ -138,31 +136,11 @@ func removeCreationTime(uobj *unstructured.Unstructured) error {
 		return nil
 	}
 
-	clearCreationTime := func(jobMap map[string]any, metadataPath []string) error {
-		metadata, metadataFound, err := unstructured.NestedMap(jobMap, metadataPath...)
-		if err != nil || !metadataFound {
-			return nil // skip
+	for _, job := range replicatedJobs {
+		if jobMap, ok := job.(map[string]any); ok {
+			unstructured.RemoveNestedField(jobMap, "template", "spec", "template", "metadata", "creationTimestamp")
+			unstructured.RemoveNestedField(jobMap, "template", "metadata", "creationTimestamp")
 		}
-		if _, exists := metadata["creationTimestamp"]; !exists {
-			return nil
-		}
-		delete(metadata, "creationTimestamp")
-		return unstructured.SetNestedMap(jobMap, metadata, metadataPath...)
-	}
-
-	for i, job := range replicatedJobs {
-		jobMap, ok := job.(map[string]any)
-		if !ok {
-			continue
-		}
-
-		if err := clearCreationTime(jobMap, []string{"template", "spec", "template", "metadata"}); err != nil {
-			return fmt.Errorf("error updating spec template metadata for job index %d: %w", i, err)
-		}
-		if err := clearCreationTime(jobMap, []string{"template", "metadata"}); err != nil {
-			return fmt.Errorf("error updating tempalte metadata for job index %d: %w", i, err)
-		}
-		replicatedJobs[i] = jobMap
 	}
 
 	if err := unstructured.SetNestedSlice(uobj.Object, replicatedJobs, "spec", "replicatedJobs"); err != nil {

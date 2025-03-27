@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"k8s.io/client-go/tools/record"
-
 	v1 "github.com/llmariner/job-manager/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -144,7 +142,7 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	patch := client.MergeFrom(&job)
 	newJob := job.DeepCopy()
-	if result, err := c.storeDeploymentData(ctx, newJob, resp, patch, log); err != nil {
+	if result, err := c.storeObjectData(ctx, newJob, resp, patch, log); err != nil {
 		return result, err
 	}
 

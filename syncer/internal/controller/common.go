@@ -87,7 +87,7 @@ func (c syncController) tagWithFinalizer(ctx context.Context, obj client.Object,
 	return controllerruntime.Result{}, nil
 }
 
-func (c syncController) storeDeploymentData(ctx context.Context, obj client.Object, resp *v1.PatchKubernetesObjectResponse, patch client.Patch, log logr.Logger) (controllerruntime.Result, error) {
+func (c syncController) storeObjectData(ctx context.Context, obj client.Object, resp *v1.PatchKubernetesObjectResponse, patch client.Patch, log logr.Logger) (controllerruntime.Result, error) {
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
@@ -165,10 +165,6 @@ func prepareSyncPatchRequest(
 		if err := mutator(uobj); err != nil {
 			return nil, err
 		}
-	}
-	if err := removeCreationTime(uobj); err != nil {
-		log.Error(err, "Failed to remove creationTime from metadata")
-		return nil, err
 	}
 
 	data, err := uobj.MarshalJSON()
