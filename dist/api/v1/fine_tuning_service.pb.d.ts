@@ -37,45 +37,45 @@ export type JobError = {
     param?: string;
 };
 export type JobHyperparameters = {
-    batchSize?: number;
-    learningRateMultiplier?: number;
-    nEpochs?: number;
+    batch_size?: number;
+    learning_rate_multiplier?: number;
+    n_epochs?: number;
 };
 export type Job = {
     id?: string;
-    createdAt?: string;
+    created_at?: string;
     error?: JobError;
-    fineTunedModel?: string;
-    finishedAt?: string;
+    fine_tuned_model?: string;
+    finished_at?: string;
     hyperparameters?: JobHyperparameters;
     model?: string;
     object?: string;
-    organizationId?: string;
-    resultFiles?: string[];
+    organization_id?: string;
+    result_files?: string[];
     status?: string;
-    trainedTokens?: number;
-    trainingFile?: string;
-    validationFile?: string;
+    trained_tokens?: number;
+    training_file?: string;
+    validation_file?: string;
     integrations?: Integration[];
     seed?: number;
-    projectId?: string;
-    kubernetesNamespace?: string;
-    clusterId?: string;
-    organizationTitle?: string;
-    projectTitle?: string;
-    clusterName?: string;
+    project_id?: string;
+    kubernetes_namespace?: string;
+    cluster_id?: string;
+    organization_title?: string;
+    project_title?: string;
+    cluster_name?: string;
 };
 export type CreateJobRequestHyperparameters = {
-    batchSize?: number;
-    learningRateMultiplier?: number;
-    nEpochs?: number;
+    batch_size?: number;
+    learning_rate_multiplier?: number;
+    n_epochs?: number;
 };
 export type CreateJobRequest = {
     model?: string;
-    trainingFile?: string;
+    training_file?: string;
     hyperparameters?: CreateJobRequestHyperparameters;
     suffix?: string;
-    validationFile?: string;
+    validation_file?: string;
     integrations?: Integration[];
     seed?: number;
 };
@@ -86,7 +86,8 @@ export type ListJobsRequest = {
 export type ListJobsResponse = {
     object?: string;
     data?: Job[];
-    hasMore?: boolean;
+    has_more?: boolean;
+    total_items?: number;
 };
 export type GetJobRequest = {
     id?: string;
@@ -96,10 +97,10 @@ export type CancelJobRequest = {
 };
 export type InternalJob = {
     job?: Job;
-    outputModelId?: string;
+    output_model_id?: string;
     suffix?: string;
     state?: InternalJobState;
-    queuedAction?: InternalJobAction;
+    queued_action?: InternalJobAction;
 };
 export type ListQueuedInternalJobsRequest = {};
 export type ListQueuedInternalJobsResponse = {
@@ -112,7 +113,7 @@ export type UpdateJobPhaseRequest = {
     id?: string;
     phase?: UpdateJobPhaseRequestPhase;
     message?: string;
-    modelId?: string;
+    model_id?: string;
 };
 export type UpdateJobPhaseResponse = {};
 export declare class FineTuningService {

@@ -96,7 +96,7 @@ func (ss *SS) PatchKubernetesObject(ctx context.Context, req *v1.PatchKubernetes
 
 	userInfo, ok := auth.ExtractUserInfoFromContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("failed to extract user info from context")
+		return nil, status.Errorf(codes.Unauthenticated, "failed to extract user info from context")
 	}
 	apikey, err := auth.ExtractTokenFromContext(ctx)
 	if err != nil {

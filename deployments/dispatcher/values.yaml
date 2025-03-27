@@ -92,7 +92,7 @@ job:
   # The container image name used for a fine-tuning Job.
   image: public.ecr.aws/cloudnatix/llmariner/fine-tuning
   # The container image tag.
-  version: 1.8.0
+  version: 1.13.1
   # Kubernetes imagePullPolicy.
   imagePullPolicy: IfNotPresent
 
@@ -136,7 +136,7 @@ notebook:
   mountPath: ""
 
 # Specify how frequently cluster status is updated.
-clusterStatusUpdateInterval: 5m
+clusterStatusUpdateInterval: 1m
 
 kubernetesManager:
   # Specify whether to enable the leader election.

@@ -137,6 +137,7 @@ func run(ctx context.Context, c *config.Config) error {
 		LlmaBaseURL: c.Notebook.LLMarinerBaseURL,
 		WandbConfig: c.Job.WandbAPIKeySecret,
 		KueueConfig: c.KueueIntegration,
+		S3Bucket:    c.ObjectStore.S3.Bucket,
 	})
 	if err := bjm.SetupWithManager(mgr); err != nil {
 		return err
@@ -153,7 +154,7 @@ func run(ctx context.Context, c *config.Config) error {
 		preProcessor = &dispatcher.NoopPreProcessor{}
 		postProcessor = &dispatcher.NoopPostProcessor{}
 	} else {
-		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client)
+		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client, c.ObjectStore.S3.Bucket)
 		postProcessor = dispatcher.NewPostProcessor(mclient)
 	}
 	if err := dispatcher.New(ftClient, wsClient, bwClient, jc, preProcessor, nbm, bjm, c.PollingInterval).

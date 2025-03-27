@@ -69,6 +69,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 		bestResult *SchedulingResult
 		bestScore  float64
 	)
+	var infeasibleReasons []string
 	for _, c := range clusters {
 		if time.Since(c.UpdatedAt) > staleThreshold {
 			s.logger.V(1).Info("Ignoring a stale cluster", "clusterID", c.ClusterID)
@@ -94,6 +95,7 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 
 		if !score.isFeasible {
 			s.logger.V(1).Info("Ignoring a cluster as the workload cannot be scheduled", "clusterID", c.ClusterID)
+			infeasibleReasons = append(infeasibleReasons, fmt.Sprintf("{cluster: %q, reason: %q}", c.ClusterName, score.infeasibleReason))
 			continue
 		}
 		if bestResult == nil || score.score > bestScore {
@@ -107,7 +109,11 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 	}
 
 	if bestResult == nil {
-		return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
+		if len(infeasibleReasons) == 0 {
+			return SchedulingResult{}, fmt.Errorf("no schedulable cluster")
+		}
+
+		return SchedulingResult{}, fmt.Errorf("workload not schedulable: %s", strings.Join(infeasibleReasons, ", "))
 	}
 
 	s.logger.V(1).Info("Scheduled a workload", "clusterID", bestResult.ClusterID, "namespace", bestResult.Namespace)
@@ -115,8 +121,9 @@ func (s *S) Schedule(userInfo *auth.UserInfo, prevScheduledClusterID string, gpu
 }
 
 type schedulingScore struct {
-	isFeasible bool
-	score      float64
+	isFeasible       bool
+	score            float64
+	infeasibleReason string
 }
 
 func (s *S) scoreCluster(c *cache.Cluster, requestedGPUs int) (schedulingScore, error) {
@@ -132,12 +139,13 @@ func (s *S) scoreCluster(c *cache.Cluster, requestedGPUs int) (schedulingScore, 
 	if err != nil {
 		return schedulingScore{}, err
 	}
-
 	if !ok {
 		return schedulingScore{
-			isFeasible: false,
+			isFeasible:       false,
+			infeasibleReason: "insufficient GPU resources",
 		}, err
 	}
+
 	return schedulingScore{
 		isFeasible: true,
 		// TODO(kenji): Improve the scoring algorithm. Currently it is a simple best-fit where a capacility with the largest

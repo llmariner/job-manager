@@ -447,6 +447,11 @@
         },
         "hasMore": {
           "type": "boolean"
+        },
+        "totalItems": {
+          "type": "integer",
+          "format": "int32",
+          "description": "total_items is the total number of batch jobs. This is not defined in the\nOpenAI API spec, but we include here for better UX in the frontend."
         }
       }
     },

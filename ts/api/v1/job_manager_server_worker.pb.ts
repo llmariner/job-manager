@@ -6,29 +6,29 @@
 
 import * as fm from "../../fetch.pb"
 export type GpuNode = {
-  resourceName?: string
-  allocatableCount?: number
+  resource_name?: string
+  allocatable_count?: number
 }
 
 export type GpuPod = {
-  resourceName?: string
-  allocatedCount?: number
-  namespacedName?: string
+  resource_name?: string
+  allocated_count?: number
+  namespaced_name?: string
 }
 
 export type ProvisionableResource = {
-  instanceFamily?: string
-  instanceType?: string
+  instance_family?: string
+  instance_type?: string
 }
 
 export type ClusterStatus = {
-  gpuNodes?: GpuNode[]
-  provisionableResources?: ProvisionableResource[]
-  gpuPods?: GpuPod[]
+  gpu_nodes?: GpuNode[]
+  provisionable_resources?: ProvisionableResource[]
+  gpu_pods?: GpuPod[]
 }
 
 export type UpdateClusterStatusRequest = {
-  clusterStatus?: ClusterStatus
+  cluster_status?: ClusterStatus
 }
 
 export type UpdateClusterStatusResponse = {

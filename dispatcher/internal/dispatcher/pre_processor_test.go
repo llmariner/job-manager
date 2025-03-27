@@ -29,7 +29,7 @@ func TestPreProcess(t *testing.T) {
 	}
 	sc := &fakeS3Client{}
 
-	p := NewPreProcessor(fc, mc, sc)
+	p := NewPreProcessor(fc, mc, sc, "my-bucket")
 
 	job := &v1.InternalJob{
 		Job: &v1.Job{
@@ -54,6 +54,42 @@ func TestPreProcess(t *testing.T) {
 		OutputModelPresignFlags: "-F 'key0=value0'",
 	}
 	assert.Equal(t, want, got)
+}
+
+func TestSplitS3Path(t *testing.T) {
+	tcs := []struct {
+		path       string
+		wantBucket string
+		wantPath   string
+		wantErr    bool
+	}{
+		{
+			path:       "s3://my-bucket/path/to/file",
+			wantBucket: "my-bucket",
+			wantPath:   "path/to/file",
+		},
+		{
+			path:    "s3://my-bucket",
+			wantErr: true,
+		},
+		{
+			path:    "foo/bar",
+			wantErr: true,
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.path, func(t *testing.T) {
+			gotBucket, gotPath, err := splitS3Path(tc.path)
+			if tc.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantBucket, gotBucket)
+			assert.Equal(t, tc.wantPath, gotPath)
+		})
+	}
 }
 
 type fakeFileClient struct {
@@ -95,11 +131,11 @@ func (f *fakeModelClient) GetBaseModelPath(ctx context.Context, in *mv1.GetBaseM
 type fakeS3Client struct {
 }
 
-func (c *fakeS3Client) GeneratePresignedURL(ctx context.Context, key string, expire time.Duration, requestType is3.RequestType) (string, error) {
+func (c *fakeS3Client) GeneratePresignedURL(ctx context.Context, bucket, key string, expire time.Duration, requestType is3.RequestType) (string, error) {
 	return fmt.Sprintf("presigned-%s", key), nil
 }
 
-func (c *fakeS3Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
+func (c *fakeS3Client) GeneratePresignedURLForPost(ctx context.Context, bucket, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error) {
 	return &s3.PresignedPostRequest{
 		URL: "http://example.com",
 		Values: map[string]string{
@@ -108,7 +144,7 @@ func (c *fakeS3Client) GeneratePresignedURLForPost(ctx context.Context, keyPrefi
 	}, nil
 }
 
-func (c *fakeS3Client) ListObjectsPages(ctx context.Context, prefix string) (*s3.ListObjectsV2Output, error) {
+func (c *fakeS3Client) ListObjectsPages(ctx context.Context, bucket, prefix string) (*s3.ListObjectsV2Output, error) {
 	return &s3.ListObjectsV2Output{
 		Contents: []types.Object{
 			{Key: proto.String("model-path/obj1")},
