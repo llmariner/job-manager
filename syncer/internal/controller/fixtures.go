@@ -3,6 +3,7 @@ package controller
 import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	jobset "sigs.k8s.io/jobset/api/jobset/v1alpha2"
@@ -98,6 +99,11 @@ func podTemplateSpecFixture(mutators ...func(spec *corev1.PodTemplateSpec)) core
 					Name:  "hello",
 					Image: "busybox",
 					Args:  []string{"echo", "test"},
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							"nvidia.com/gpu": *resource.NewQuantity(1, resource.DecimalSI),
+						},
+					},
 				},
 			},
 		},

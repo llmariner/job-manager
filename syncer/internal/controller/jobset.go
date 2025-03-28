@@ -151,7 +151,8 @@ func removeCreationTime(uobj *unstructured.Unstructured) error {
 
 // find minimum GPUs required
 func calcMinJobSetGPUs(deployObj *jobset.JobSet) uint32 {
-	// quick solution that picks the most expensive src in terms of GPU as bottleneck
+	// quick solution that picks the most expensive containers in terms of GPU as bottleneck
+	// see https://kubernetes.io/docs/concepts/workloads/controllers/job/#controlling-parallelism
 	var maxJobGPU uint32
 	for _, job := range deployObj.Spec.ReplicatedJobs {
 		jobSpec := job.Template.Spec
@@ -160,8 +161,12 @@ func calcMinJobSetGPUs(deployObj *jobset.JobSet) uint32 {
 				continue
 			}
 			if gpu, ok := container.Resources.Limits["nvidia.com/gpu"]; ok {
+				// "If it is unspecified, it defaults to 1."
 				parallelJobs := ptr.Deref(jobSpec.Parallelism, 1)
-				mustCompleteCount := ptr.Deref(jobSpec.Completions, 1)
+				// "do not specify .spec.completions, default to .spec.parallelism."
+				mustCompleteCount := ptr.Deref(jobSpec.Completions, parallelJobs)
+				// "For fixed completion count Jobs, the actual number of pods running in parallel will not exceed
+				// the number of remaining completions."
 				instanceCount := min(mustCompleteCount, parallelJobs)
 				gpuCount := uint32(gpu.Value()) * uint32(instanceCount)
 				if gpuCount > maxJobGPU {
