@@ -55,6 +55,7 @@ func run(ctx context.Context, c *config.Config) error {
 	ssc := v1.NewSyncerServiceClient(conn)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:           controller.Scheme,
 		LeaderElection:   c.KubernetesManager.EnableLeaderElection,
 		LeaderElectionID: c.KubernetesManager.LeaderElectionID,
 		Metrics: metricsserver.Options{
@@ -69,6 +70,9 @@ func run(ctx context.Context, c *config.Config) error {
 
 	if err := (&controller.JobController{}).SetupWithManager(mgr, ssc); err != nil {
 		return fmt.Errorf("setup job controller: %s", err)
+	}
+	if err := (&controller.JobSetController{}).SetupWithManager(mgr, ssc); err != nil {
+		return fmt.Errorf("setup job-set controller: %s", err)
 	}
 
 	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, ssc, c.SessionManagerEndpoint); err != nil {
