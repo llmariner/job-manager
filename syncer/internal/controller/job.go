@@ -60,7 +60,7 @@ func (c *JobController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	if mgr := ptr.Deref(job.Spec.ManagedBy, ""); mgr != c.controllerName {
-		log.V(4).Info("Skip src", "managedBy", mgr)
+		log.V(4).Info("Skip job", "managedBy", mgr)
 		return ctrl.Result{}, nil
 	}
 

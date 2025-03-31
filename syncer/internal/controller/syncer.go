@@ -51,7 +51,7 @@ func (m *RemoteSyncerManager) SetupWithManager(mgr ctrl.Manager, ssClient v1.Syn
 	return mgr.Add(m)
 }
 
-// Start starts the remote syncer manager and blocks
+// Start starts the remote syncer manager and blocks.
 func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 	log := ctrl.LoggerFrom(ctx).WithName("syncer")
 	log.Info("Starting remote syncer manager")
