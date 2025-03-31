@@ -27,6 +27,7 @@ import (
 	jobsetv1alpha2 "sigs.k8s.io/jobset/api/jobset/v1alpha2"
 )
 
+// Scheme defines methods for serializing and deserializing API objects.
 var Scheme = runtime.NewScheme()
 
 func init() {
