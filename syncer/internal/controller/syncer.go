@@ -1,12 +1,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
 
-	"github.com/awslabs/operatorpkg/context"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
@@ -16,10 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	jobsetv1alpha2 "sigs.k8s.io/jobset/api/jobset/v1alpha2"
@@ -62,25 +64,16 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 		return fmt.Errorf("list clusters: %s", err)
 	}
 
-	syncer := newStatusSyncer(m.localK8sClient)
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, c := range cls.Ids {
 		log.Info("Starting remote syncer", "cluster", c)
 		ctx := ctrl.LoggerInto(egCtx, log.WithName(c))
 		rconf := getRestConfig(m.sessionManagerEndpoint, c, getAuthorizationToken())
 		eg.Go(func() error {
-			// TODO(aya): gracefully handle errors
-			if err := syncer.start(ctx, rconf, jobControllerName, i+1, &batchv1.Job{}, syncJobsFn); err != nil {
-				return fmt.Errorf("run src status syncer %s: %w", c, err)
-			}
-			return nil
+			return m.runStatusSyncer(ctx, rconf, c, i+1, jobControllerName, &batchv1.Job{}, syncJobsFn)
 		})
 		eg.Go(func() error {
-			// TODO(aya): gracefully handle errors
-			if err := syncer.start(ctx, rconf, jobSetControllerName, i+1, &jobsetv1alpha2.JobSet{}, syncJobsSetFn); err != nil {
-				return fmt.Errorf("run jobSet status syncer %s: %w", c, err)
-			}
-			return nil
+			return m.runStatusSyncer(ctx, rconf, c, i+1, jobSetControllerName, &jobsetv1alpha2.JobSet{}, syncJobsSetFn)
 		})
 	}
 
@@ -91,15 +84,49 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 	return nil
 }
 
-// newStatusSyncer constructor
-func newStatusSyncer(localK8sClient client.Client) *clusterStatusSyncer {
-	return &clusterStatusSyncer{
-		localK8sClient: localK8sClient,
+// runStatusSyncer sets up a new remote job status syncer instance and starts reconciling. This method blocks until
+// start errors or is aborted.
+func (m *RemoteSyncerManager) runStatusSyncer(
+	ctx context.Context,
+	rconf rest.Config,
+	clusterID string,
+	idx int,
+	controllerName string,
+	object client.Object,
+	reconcileFn clusterStatusObjectReconcileFn,
+) error {
+	typeName := reflect.TypeOf(object).Elem().Name()
+	log := ctrl.LoggerFrom(ctx).
+		WithValues("type", typeName, "idx", idx)
+	log.Info("Starting status syncer", "host", rconf.Host)
+
+	// TODO(aya): gracefully handle errors
+	syncer := newStatusSyncer(m.localK8sClient, reconcileFn)
+	instanceName := fmt.Sprintf("%s-syncer%02d", strings.ToLower(typeName), idx)
+	mgr, err := initRemoteControllerManager(rconf, controllerName, instanceName, object, syncer)
+	if err != nil {
+		return fmt.Errorf("init %s remote controller %s: %w", typeName, clusterID, err)
 	}
+	syncer.remoteK8sClient = mgr.GetClient()
+
+	log.Info("Starting manager...")
+	if err := mgr.Start(ctx); err != nil {
+		return fmt.Errorf("run %s status syncer %s: %w", typeName, clusterID, err)
+	}
+	log.Info("Manager stopped")
+	return nil
 }
 
 // abstract reconcile function as extension point
 type clusterStatusObjectReconcileFn func(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8sClient client.Client) (ctrl.Result, error)
+
+// newStatusSyncer constructor
+func newStatusSyncer(localK8sClient client.Client, fn clusterStatusObjectReconcileFn) *clusterStatusSyncer {
+	return &clusterStatusSyncer{
+		localK8sClient: localK8sClient,
+		reconcileFn:    fn,
+	}
+}
 
 // statusSyncer syncs the status of the remote src to the local src.
 type clusterStatusSyncer struct {
@@ -108,58 +135,42 @@ type clusterStatusSyncer struct {
 	reconcileFn     clusterStatusObjectReconcileFn
 }
 
-// start starts the status syncer and blocks
-func (s *clusterStatusSyncer) start(
-	ctx context.Context,
+func (s *clusterStatusSyncer) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	return s.reconcileFn(ctx, req, s.remoteK8sClient, s.localK8sClient)
+}
+
+// initRemoteControllerManager setup the remote controller manager for this instance
+func initRemoteControllerManager(
 	conf rest.Config,
 	controllerName string,
-	idx int,
-	object client.Object,
-	reconcileFn clusterStatusObjectReconcileFn,
-) error {
-	typeName := reflect.TypeOf(object).Elem().Name()
-	log := ctrl.LoggerFrom(ctx).
-		WithValues("type", typeName, "idx", idx)
-	log.Info("Starting status syncer", "host", conf.Host)
-
-	lbsl := labels.SelectorFromSet(labels.Set{deployedByLabelKey: controllerName})
+	instanceName string,
+	managedObj client.Object,
+	syncer *clusterStatusSyncer,
+) (manager.Manager, error) {
 	mgr, err := ctrl.NewManager(&conf, ctrl.Options{
 		Scheme: Scheme,
 		// TODO(aya): rethink the monitoring
 		Metrics: metricsserver.Options{BindAddress: "0"},
-		Cache:   cache.Options{DefaultLabelSelector: lbsl},
+		Cache: cache.Options{
+			DefaultLabelSelector: labels.SelectorFromSet(labels.Set{deployedByLabelKey: controllerName}),
+		},
 	})
 	if err != nil {
-		log.Error(err, "Failed to create manager")
-		return fmt.Errorf("create manager: %s", err)
+		return nil, fmt.Errorf("create manager: %w", err)
 	}
-	s.remoteK8sClient = mgr.GetClient()
-	s.reconcileFn = reconcileFn
-
 	if err := ctrl.NewControllerManagedBy(mgr).
-		Named(fmt.Sprintf("%s-syncer%02d", strings.ToLower(typeName), idx)).
-		For(object).
+		Named(instanceName).
+		For(managedObj).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc:  func(e event.CreateEvent) bool { return true },
 			UpdateFunc:  func(e event.UpdateEvent) bool { return true },
 			DeleteFunc:  func(e event.DeleteEvent) bool { return false },
 			GenericFunc: func(e event.GenericEvent) bool { return false },
 		}).
-		Complete(s); err != nil {
-		log.Error(err, "Failed to setup syncer")
-		return fmt.Errorf("setup syncer: %s", err)
+		Complete(syncer); err != nil {
+		return nil, fmt.Errorf("setup controller: %w", err)
 	}
-
-	log.Info("Starting manager...")
-	if err := mgr.Start(ctx); err != nil {
-		return fmt.Errorf("start manager: %s", err)
-	}
-	log.Info("Manager stopped")
-	return nil
-}
-
-func (s *clusterStatusSyncer) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	return s.reconcileFn(ctx, req, s.remoteK8sClient, s.localK8sClient)
+	return mgr, nil
 }
 
 // syncJobsFn synchronizes the status of a remote Kubernetes src with its local counterpart.
