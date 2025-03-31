@@ -9,9 +9,9 @@ import (
 	"github.com/go-logr/logr/testr"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,57 +23,12 @@ import (
 
 func TestReconcileJob(t *testing.T) {
 	req := ctrl.Request{
-		NamespacedName: types.NamespacedName{
-			Namespace: "default",
-			Name:      "test",
-		},
+		NamespacedName: types.NamespacedName{Namespace: "default", Name: "test"},
 	}
-
-	createJob := func(mutateFn func(job *batchv1.Job)) *batchv1.Job {
-		labels := map[string]string{
-			"batch.kubernetes.io/controller-uid": "uid",
-			"batch.kubernetes.io/job-name":       "job",
-			"controller-uid":                     "uid",
-			"job-name":                           "test",
-			"custom":                             "test",
-		}
-		job := batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Name,
-				Namespace: req.Namespace,
-				Labels:    labels,
-			},
-			Spec: batchv1.JobSpec{
-				ManagedBy: ptr.To(fullControllerName),
-				Selector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"job-name": "test",
-					},
-				},
-				Template: corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{
-						Labels: labels,
-					},
-					Spec: corev1.PodSpec{
-						RestartPolicy: corev1.RestartPolicyNever,
-						Containers: []corev1.Container{
-							{
-								Name:  "hello",
-								Image: "busybox",
-								Args:  []string{"echo", "test"},
-							},
-						},
-					},
-				},
-			},
-		}
-		if mutateFn != nil {
-			mutateFn(&job)
-		}
-		return &job
+	myJobFixture := func(m ...func(job *batchv1.Job)) *batchv1.Job {
+		return jobFixture(append(m, func(job *batchv1.Job) { job.Name, job.Namespace = req.Name, req.Namespace })...)
 	}
-
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		job      *batchv1.Job
 		patchErr error
@@ -85,28 +40,28 @@ func TestReconcileJob(t *testing.T) {
 	}{
 		{
 			name: "deploy",
-			job:  createJob(nil),
+			job:  myJobFixture(),
 			assertFn: func(t *testing.T, job batchv1.Job) {
 				assert.Contains(t, job.Annotations, annoKeyClusterID)
 				assert.Contains(t, job.Annotations, annoKeyDeployedAt)
 				assert.Contains(t, job.Annotations, annoKeyUID)
-				assert.Contains(t, job.Finalizers, fullControllerName)
+				assert.Contains(t, job.Finalizers, fullJobControllerName)
 			},
 			wantPatch: true,
 		},
 		{
 			name: "no change",
-			job: createJob(func(job *batchv1.Job) {
-				job.Finalizers = append(job.Finalizers, fullControllerName)
+			job: myJobFixture(func(job *batchv1.Job) {
+				job.Finalizers = append(job.Finalizers, fullJobControllerName)
 				job.Annotations = map[string]string{annoKeyDeployedAt: metav1.Now().Format(time.RFC3339)}
 			}),
 		},
 		{
 			name: "finalize",
-			job: createJob(func(job *batchv1.Job) {
+			job: myJobFixture(func(job *batchv1.Job) {
 				job.DeletionTimestamp = ptr.To(metav1.Now())
 				job.Annotations = map[string]string{annoKeyClusterID: "cid"}
-				job.Finalizers = append(job.Finalizers, fullControllerName)
+				job.Finalizers = append(job.Finalizers, fullJobControllerName)
 			}),
 			wantDelete: true,
 		},
@@ -115,12 +70,12 @@ func TestReconcileJob(t *testing.T) {
 		},
 		{
 			name:      "patch error",
-			job:       createJob(nil),
+			job:       myJobFixture(),
 			patchErr:  errors.New("no schedulable cluster"),
 			wantPatch: true,
 			wantErr:   true,
 			assertFn: func(t *testing.T, job batchv1.Job) {
-				assert.Len(t, job.Status.Conditions, 1)
+				require.Len(t, job.Status.Conditions, 1)
 				assert.Equal(t, "no schedulable cluster", job.Status.Conditions[0].Message)
 			},
 		},
@@ -133,9 +88,12 @@ func TestReconcileJob(t *testing.T) {
 			}
 			ssClient := &fakeSyncerServiceClient{patchErr: test.patchErr}
 			jobCtr := JobController{
-				recorder:  record.NewFakeRecorder(5),
-				k8sClient: fake.NewFakeClient(objs...),
-				ssClient:  ssClient,
+				syncController: syncController{
+					controllerName: fullJobControllerName,
+					k8sClient:      fake.NewFakeClient(objs...),
+					ssClient:       ssClient,
+				},
+				recorder: record.NewFakeRecorder(5),
 			}
 
 			ctx := context.Background()
@@ -143,22 +101,22 @@ func TestReconcileJob(t *testing.T) {
 
 			_, err := jobCtr.Reconcile(ctx, req)
 			if test.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			if test.wantPatch {
-				assert.Equal(t, 1, ssClient.patchCount)
+				require.Equal(t, 1, ssClient.patchCount)
 			}
 			if test.wantDelete {
-				assert.Equal(t, 1, ssClient.delCount)
+				require.Equal(t, 1, ssClient.delCount)
 			}
 
 			if test.assertFn != nil {
 				var gotJob batchv1.Job
 				err = jobCtr.k8sClient.Get(ctx, req.NamespacedName, &gotJob)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				test.assertFn(t, gotJob)
 			}
 		})
