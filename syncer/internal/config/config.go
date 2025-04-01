@@ -14,6 +14,8 @@ type Config struct {
 
 	Tenant TenantConfig `yaml:"tenant"`
 
+	SyncedKinds SyncedKindsConfig `yaml:"syncedKinds"`
+
 	KubernetesManager KubernetesManagerConfig `yaml:"kubernetesManager"`
 }
 
@@ -25,6 +27,12 @@ type TenantTLSConfig struct {
 // TenantConfig is the tenant configuration.
 type TenantConfig struct {
 	TLS TenantTLSConfig `yaml:"tls"`
+}
+
+// SyncedKindsConfig specifies which kinds to sync.
+type SyncedKindsConfig struct {
+	Jobs    bool `yaml:"jobs"`
+	JobSets bool `yaml:"jobSets"`
 }
 
 // KubernetesManagerConfig is the Kubernetes manager configuration.

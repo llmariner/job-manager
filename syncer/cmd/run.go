@@ -68,11 +68,16 @@ func run(ctx context.Context, c *config.Config) error {
 		return fmt.Errorf("create manager: %s", err)
 	}
 
-	if err := (&controller.JobController{}).SetupWithManager(mgr, ssc); err != nil {
-		return fmt.Errorf("setup job controller: %s", err)
+	if c.SyncedKinds.Jobs {
+		if err := (&controller.JobController{}).SetupWithManager(mgr, ssc); err != nil {
+			return fmt.Errorf("setup job controller: %s", err)
+		}
 	}
-	if err := (&controller.JobSetController{}).SetupWithManager(mgr, ssc); err != nil {
-		return fmt.Errorf("setup job-set controller: %s", err)
+
+	if c.SyncedKinds.JobSets {
+		if err := (&controller.JobSetController{}).SetupWithManager(mgr, ssc); err != nil {
+			return fmt.Errorf("setup job-set controller: %s", err)
+		}
 	}
 
 	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, ssc, c.SessionManagerEndpoint); err != nil {
