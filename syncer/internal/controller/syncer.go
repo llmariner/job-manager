@@ -57,6 +57,7 @@ func (m *RemoteSyncerManager) SetupWithManager(
 	m.ssClient = ssClient
 	m.sessionManagerEndpoint = sessionManagerServerAddr
 	m.localK8sClient = mgr.GetClient()
+	m.syncedKinds = syncedKinds
 	return mgr.Add(m)
 }
 
