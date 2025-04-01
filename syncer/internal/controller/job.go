@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	jobControllerName     = "src-controller"
+	jobControllerName     = "job-controller"
 	fullJobControllerName = domain + "/" + jobControllerName
 )
 
