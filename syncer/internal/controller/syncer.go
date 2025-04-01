@@ -17,6 +17,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 
+	"github.com/llmariner/job-manager/syncer/internal/config"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,10 +43,17 @@ type RemoteSyncerManager struct {
 
 	ssClient       v1.SyncerServiceClient
 	localK8sClient client.Client
+
+	syncedKinds config.SyncedKindsConfig
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (m *RemoteSyncerManager) SetupWithManager(mgr ctrl.Manager, ssClient v1.SyncerServiceClient, sessionManagerServerAddr string) error {
+func (m *RemoteSyncerManager) SetupWithManager(
+	mgr ctrl.Manager,
+	ssClient v1.SyncerServiceClient,
+	sessionManagerServerAddr string,
+	syncedKinds config.SyncedKindsConfig,
+) error {
 	m.ssClient = ssClient
 	m.sessionManagerEndpoint = sessionManagerServerAddr
 	m.localK8sClient = mgr.GetClient()
@@ -70,12 +78,17 @@ func (m *RemoteSyncerManager) Start(ctx context.Context) error {
 		log.Info("Starting remote syncer", "cluster", c)
 		ctx := ctrl.LoggerInto(egCtx, log.WithName(c))
 		rconf := getRestConfig(m.sessionManagerEndpoint, c, getAuthorizationToken())
-		eg.Go(func() error {
-			return m.runStatusSyncer(ctx, rconf, c, i+1, jobControllerName, &batchv1.Job{}, syncJobsFn)
-		})
-		eg.Go(func() error {
-			return m.runStatusSyncer(ctx, rconf, c, i+1, jobSetControllerName, &jobsetv1alpha2.JobSet{}, syncJobsSetFn)
-		})
+		if m.syncedKinds.Jobs {
+			eg.Go(func() error {
+				return m.runStatusSyncer(ctx, rconf, c, i+1, jobControllerName, &batchv1.Job{}, syncJobsFn)
+			})
+		}
+
+		if m.syncedKinds.JobSets {
+			eg.Go(func() error {
+				return m.runStatusSyncer(ctx, rconf, c, i+1, jobSetControllerName, &jobsetv1alpha2.JobSet{}, syncJobSetsFn)
+			})
+		}
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -214,8 +227,8 @@ func syncJobsFn(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8s
 	return ctrl.Result{}, nil
 }
 
-// syncJobsSetFn synchronizes the status of a remote Kubernetes jobSet with its local counterpart.
-func syncJobsSetFn(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8sClient client.Client) (ctrl.Result, error) {
+// syncJobSetsFn synchronizes the status of a remote Kubernetes jobSet with its local counterpart.
+func syncJobSetsFn(ctx context.Context, req ctrl.Request, remoteK8sClient, localK8sClient client.Client) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	var remoteJobSet jobsetv1alpha2.JobSet

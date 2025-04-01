@@ -35,6 +35,14 @@ type SyncedKindsConfig struct {
 	JobSets bool `yaml:"jobSets"`
 }
 
+// validate validates the configuration.
+func (c *SyncedKindsConfig) validate() error {
+	if !c.Jobs && !c.JobSets {
+		return fmt.Errorf("at least one kind must be set")
+	}
+	return nil
+}
+
 // KubernetesManagerConfig is the Kubernetes manager configuration.
 type KubernetesManagerConfig struct {
 	EnableLeaderElection bool   `yaml:"enableLeaderElection"`
@@ -59,6 +67,9 @@ func (c *Config) Validate() error {
 	}
 	if c.SessionManagerEndpoint == "" {
 		return fmt.Errorf("sessionManagerEndpoint must be set")
+	}
+	if err := c.SyncedKinds.validate(); err != nil {
+		return fmt.Errorf("syncedKinds: %s", err)
 	}
 	if err := c.KubernetesManager.validate(); err != nil {
 		return fmt.Errorf("kubernetesManager: %s", err)
