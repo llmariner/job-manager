@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/llmariner/job-manager/api/v1"
+	v1 "github.com/llmariner/job-manager/api/v1"
 	v2 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime"
+	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -38,7 +38,13 @@ type syncController struct {
 	ssClient       v1.SyncerServiceClient
 }
 
-func (c syncController) syncDeleted(ctx context.Context, req controllerruntime.Request, obj client.Object, log logr.Logger) (controllerruntime.Result, error) {
+func (c syncController) syncDeleted(
+	ctx context.Context,
+	req controllerruntime.Request,
+	obj client.Object,
+	gvr schema.GroupVersionResource,
+	log logr.Logger,
+) (controllerruntime.Result, error) {
 	if !controllerutil.ContainsFinalizer(obj, c.controllerName) {
 		return controllerruntime.Result{}, nil
 	}
@@ -51,9 +57,9 @@ func (c syncController) syncDeleted(ctx context.Context, req controllerruntime.R
 				ClusterId: clusterID,
 				Namespace: req.Namespace,
 				Name:      req.Name,
-				Group:     jobSetGVR.Group,
-				Version:   jobSetGVR.Version,
-				Resource:  jobSetGVR.Resource,
+				Group:     gvr.Group,
+				Version:   gvr.Version,
+				Resource:  gvr.Resource,
 			}); err != nil {
 			log.Error(err, "Failed to delete", "object", obj.GetName(), "clusterID", clusterID)
 			return controllerruntime.Result{}, err

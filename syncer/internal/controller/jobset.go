@@ -64,7 +64,7 @@ func (c *JobSetController) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	if isDeleted(&jobSet) {
-		return c.syncDeleted(ctx, req, &jobSet, log)
+		return c.syncDeleted(ctx, req, &jobSet, jobSetGVR, log)
 	}
 
 	if result, err := c.tagWithFinalizer(ctx, &jobSet, log); err != nil {
