@@ -13,7 +13,7 @@ data:
         enable: {{ .Values.tenant.tls.enable }}
     syncedKinds:
       jobs: {{ .Values.syncedKinds.jobs }}
-      jobsets: {{ .Values.syncedKinds.jobsets }}
+      jobSets: {{ .Values.syncedKinds.jobSets }}
     kubernetesManager:
       enableLeaderElection: {{ .Values.kubernetesManager.enableLeaderElection }}
       leaderElectionID: {{ include "job-manager-syncer.fullname" . }}

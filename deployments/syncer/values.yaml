@@ -25,7 +25,7 @@ syncedKinds:
   # Enable synchorization of Jobs.
   jobs: true
   # Enable synchorization of JobSets.
-  jobsets: false
+  jobSets: false
 
 kubernetesManager:
   # Specify whether to enable the leader election.
