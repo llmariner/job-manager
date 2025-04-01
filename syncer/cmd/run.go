@@ -80,7 +80,7 @@ func run(ctx context.Context, c *config.Config) error {
 		}
 	}
 
-	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, ssc, c.SessionManagerEndpoint); err != nil {
+	if err := (&controller.RemoteSyncerManager{}).SetupWithManager(mgr, ssc, c.SessionManagerEndpoint, c.SyncedKinds); err != nil {
 		return fmt.Errorf("setup remote syncer manager: %s", err)
 	}
 
