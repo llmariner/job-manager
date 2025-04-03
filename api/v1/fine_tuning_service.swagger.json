@@ -396,6 +396,9 @@
         },
         "clusterName": {
           "type": "string"
+        },
+        "resources": {
+          "$ref": "#/definitions/v1JobResources"
         }
       }
     },
@@ -430,6 +433,15 @@
           "type": "integer",
           "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
+        }
+      }
+    },
+    "v1JobResources": {
+      "type": "object",
+      "properties": {
+        "gpuCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

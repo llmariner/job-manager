@@ -66,6 +66,11 @@ message Job {
   string organization_title = 20;
   string project_title = 21;
   string cluster_name = 22;
+
+  message Resources {
+    int32 gpu_count = 1;
+  }
+  Resources resources = 23;
 }
 
 message CreateJobRequest {

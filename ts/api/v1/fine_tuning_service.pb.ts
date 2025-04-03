@@ -55,6 +55,10 @@ export type JobHyperparameters = {
   n_epochs?: number
 }
 
+export type JobResources = {
+  gpu_count?: number
+}
+
 export type Job = {
   id?: string
   created_at?: string
@@ -78,6 +82,7 @@ export type Job = {
   organization_title?: string
   project_title?: string
   cluster_name?: string
+  resources?: JobResources
 }
 
 export type CreateJobRequestHyperparameters = {
