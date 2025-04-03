@@ -15,7 +15,7 @@ require (
 	github.com/llmariner/cluster-manager v1.5.1
 	github.com/llmariner/common v0.15.0
 	github.com/llmariner/file-manager v1.1.0
-	github.com/llmariner/model-manager v1.1.0
+	github.com/llmariner/model-manager v1.11.0
 	github.com/llmariner/rbac-manager v1.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
