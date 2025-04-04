@@ -24,6 +24,9 @@ func TestJobCmd(t *testing.T) {
 			jobConfig: config.JobConfig{},
 			job: &v1.Job{
 				Model: "model-id",
+				Resources: &v1.Job_Resources{
+					GpuCount: 2,
+				},
 			},
 			goldenFile: "testdata/command.basic.golden",
 		},
@@ -47,6 +50,9 @@ func TestJobCmd(t *testing.T) {
 			},
 			job: &v1.Job{
 				Model: "model-id",
+				Resources: &v1.Job_Resources{
+					GpuCount: 2,
+				},
 			},
 			goldenFile: "testdata/command.multi-gpu.golden",
 		},
