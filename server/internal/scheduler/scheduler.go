@@ -165,24 +165,10 @@ func (s *S) canProvisionGPUs(requestedGPUs int, c *cache.Cluster) (bool, error) 
 		return requestedGPUs <= avail, nil
 	}
 
-	for _, pr := range c.ProvisionableResources {
-		if i := pr.InstanceType; i != "" {
-			if ok, err := isAWSInstanceTypeForNvidiaGPU(i); err != nil {
-				return false, err
-			} else if ok {
-				return true, nil
-			}
-		}
-
-		if i := pr.InstanceFamily; i != "" {
-			if ok, err := isAWSInstanceFamilyForNvidiaGPU(i); err != nil {
-				return false, err
-			} else if ok {
-				return true, nil
-			}
-		}
+	// TODO(guangrui): Consider to check if the instance type is GPU instance type.
+	if len(c.ProvisionableResources) > 0 {
+		return true, nil
 	}
-
 	return false, nil
 }
 

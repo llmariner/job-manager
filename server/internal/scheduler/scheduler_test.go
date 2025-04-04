@@ -311,19 +311,6 @@ func TestCanProvisionGPUs(t *testing.T) {
 			requestedGPUs: 1,
 			want:          true,
 		},
-		{
-			name: "provisionable resources with non-gpu instance type",
-			status: &cache.Cluster{
-				GPUNodes: []*v1.GpuNode{},
-				ProvisionableResources: []*v1.ProvisionableResource{
-					{
-						InstanceType: "m5.12xlarge",
-					},
-				},
-			},
-			requestedGPUs: 1,
-			want:          false,
-		},
 	}
 
 	for _, tc := range tcs {

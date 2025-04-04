@@ -94,6 +94,7 @@ message CreateJobRequest {
   string validation_file = 5;
   repeated Integration integrations = 6;
   int32 seed = 7;
+  Job.Resources resources = 8;
 }
 
 message ListJobsRequest {

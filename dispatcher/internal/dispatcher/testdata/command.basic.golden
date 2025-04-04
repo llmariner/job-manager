@@ -19,7 +19,7 @@ mkdir output
 
 accelerate launch \
   --mixed_precision=no \
-  --num_processes=1 \
+  --num_processes=2 \
   --num_machines=1 \
   --num_cpu_threads_per_process=1 \
   --dynamo_backend=no \

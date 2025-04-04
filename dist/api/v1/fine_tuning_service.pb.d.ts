@@ -82,6 +82,7 @@ export type CreateJobRequest = {
     validation_file?: string;
     integrations?: Integration[];
     seed?: number;
+    resources?: JobResources;
 };
 export type ListJobsRequest = {
     after?: string;

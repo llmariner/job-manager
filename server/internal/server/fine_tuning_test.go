@@ -55,6 +55,19 @@ func TestCreateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "success with validation resources",
+			req: &v1.CreateJobRequest{
+				Model:          modelID,
+				TrainingFile:   tFileID,
+				ValidationFile: vFileID,
+				Suffix:         "suffix0",
+				Resources: &v1.Job_Resources{
+					GpuCount: int32(4),
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "invalid training file",
 			req: &v1.CreateJobRequest{
 				Model:        modelID,
@@ -176,12 +189,21 @@ func TestGetJob(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()
 
-	err := st.CreateJob(&store.Job{
+	jobProto := &v1.Job{
+		Id: jobID,
+		Resources: &v1.Job_Resources{
+			GpuCount: 4,
+		},
+	}
+	msg, err := proto.Marshal(jobProto)
+	assert.NoError(t, err)
+	err = st.CreateJob(&store.Job{
 		JobID:        jobID,
 		TenantID:     defaultTenantID,
 		ProjectID:    defaultProjectID,
 		State:        store.JobStateQueued,
 		QueuedAction: store.JobQueuedActionCreate,
+		Message:      msg,
 	})
 	assert.NoError(t, err)
 
@@ -189,6 +211,7 @@ func TestGetJob(t *testing.T) {
 	resp, err := srv.GetJob(fakeAuthInto(context.Background()), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
+	assert.Equal(t, int32(4), resp.Resources.GpuCount)
 }
 
 func TestJobCancel(t *testing.T) {

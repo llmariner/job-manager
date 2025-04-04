@@ -114,13 +114,22 @@ func (s *S) CreateJob(
 		}
 	}
 
-	// TODO(kenji): Fix the gpuCount. Currently it is set in the dispatcher.
-	sresult, err := s.scheduler.Schedule(userInfo, "", 1)
+	// Assume the minimum schedulable GPU count is 1.
+	gpuCount := int32(1)
+	if req.Resources != nil {
+		if req.Resources.GpuCount < 0 {
+			return nil, status.Errorf(codes.InvalidArgument, "gpu count must be non-negative")
+		}
+		if req.Resources.GpuCount > gpuCount {
+			gpuCount = req.Resources.GpuCount
+		}
+	}
+	sresult, err := s.scheduler.Schedule(userInfo, "", int(gpuCount))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "schedule: %s", err)
 	}
 	if err := s.cache.AddAssumedPod(userInfo.TenantID, sresult.ClusterID,
-		fmt.Sprintf("%s/%s", sresult.Namespace, jobID), 1); err != nil {
+		fmt.Sprintf("%s/%s", sresult.Namespace, jobID), int(gpuCount)); err != nil {
 		return nil, status.Errorf(codes.Internal, "add assumed pod: %s", err)
 	}
 
@@ -144,6 +153,9 @@ func (s *S) CreateJob(
 		OrganizationTitle: userInfo.OrganizationTitle,
 		ProjectTitle:      userInfo.ProjectTitle,
 		ClusterName:       sresult.ClusterName,
+		Resources: &v1.Job_Resources{
+			GpuCount: gpuCount,
+		},
 	}
 	msg, err := proto.Marshal(jobProto)
 	if err != nil {

@@ -157,7 +157,16 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 		AdditionalSFTArgs string
 	}
 	numProcessors := 1
-	if p.jobConfig.NumGPUs > 0 {
+	if job.Resources != nil {
+		if job.Resources.GpuCount < 0 {
+			return "", fmt.Errorf("gpu count should be non-negative")
+		}
+		if job.Resources.GpuCount > int32(numProcessors) {
+			numProcessors = int(job.Resources.GpuCount)
+		}
+	}
+	// TODO(guangrui): Consider deprecate jobConfig.NumGPUs?
+	if p.jobConfig.NumGPUs > numProcessors {
 		numProcessors = p.jobConfig.NumGPUs
 	}
 	additionalSFTArgs, err := toAddtionalSFTArgs(job, p.jobConfig)
