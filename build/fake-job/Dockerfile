@@ -11,11 +11,4 @@ RUN \
 COPY accelerate /bin/accelerate
 COPY sft.py .
 COPY convert-lora-to-ggml.py .
-
-COPY ggml-adapter-model.bin .
-COPY adapter_model.safetensors .
-COPY tokenizer_config.json .
-COPY special_tokens_map.json .
-COPY tokenizer.json .
-COPY training_args.bin .
-COPY adapter_config.json .
+COPY ft-output .
