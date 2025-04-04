@@ -1,8 +1,6 @@
 import os
 
 # Move files in the current directory to the "output" directory.
-files = os.listdir()
+files = os.listdir("./ft-output")
 for fn in files:
-    if fn == "output" or fn.endswith(".py"):
-        continue
-    os.rename(fn, f"output/{fn}")
+    os.rename("./ft-output/" + fn, f"output/{fn}")
