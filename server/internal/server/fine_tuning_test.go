@@ -461,7 +461,10 @@ func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest,
 		return nil, status.Error(codes.NotFound, "model not found")
 	}
 
-	return &mv1.Model{}, nil
+	return &mv1.Model{
+		Id:      c.id,
+		Formats: []mv1.ModelFormat{mv1.ModelFormat_MODEL_FORMAT_HUGGING_FACE},
+	}, nil
 }
 
 type noopK8sClientFactory struct{}

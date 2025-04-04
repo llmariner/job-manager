@@ -134,8 +134,8 @@ github.com/llmariner/common v0.15.0 h1:KkDDKXcFPMlCNOZG1vK1nKd05FYagf7CRmPtRO42h
 github.com/llmariner/common v0.15.0/go.mod h1:nt793i6mCLc3tpIA223EvxHLuHa/8Ft+oa4h8m5EWKE=
 github.com/llmariner/file-manager v1.1.0 h1:nnzaYrnQtMejpXNOdcAzbZlkiFZ+gdw3zWXYtKVNe3E=
 github.com/llmariner/file-manager v1.1.0/go.mod h1:B1Wo3xmd5DWKHwxnZjYYOEyTqAw3ZDibIQHoiNGAIMA=
-github.com/llmariner/model-manager v1.1.0 h1:Ih5rD5Lu68IZbSeqFs/vhlkF5SRB3WYFE6tHrCoh0Kw=
-github.com/llmariner/model-manager v1.1.0/go.mod h1:i65jjZ5u8KqVAYvdyhHBxPQ3V80GowxrYVLUiODD9Jo=
+github.com/llmariner/model-manager v1.11.0 h1:E/hWwdAvw5m0GUU1AxQDqGod3JoZViwl5obqR4ji1OY=
+github.com/llmariner/model-manager v1.11.0/go.mod h1:syjDVecJ2d04vpdL1yVkDxxhMV1tzYQMnFE8ECzNVf0=
 github.com/llmariner/rbac-manager v1.9.1 h1:VnLkSXCEDcGV8U+JeUDzGbCTlrV669jfxMzaeUGaG0Q=
 github.com/llmariner/rbac-manager v1.9.1/go.mod h1:R9FgmUy9c1HAhDWz8V676w3hrSO/8osAEXm2gK6UcoU=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=

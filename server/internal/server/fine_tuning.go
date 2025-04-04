@@ -57,13 +57,25 @@ func (s *S) CreateJob(
 
 	// Pass the Authorization to the context for downstream gRPC calls.
 	ctx = auth.CarryMetadata(ctx)
-	if _, err := s.modelClient.GetModel(ctx, &mv1.GetModelRequest{
+	model, err := s.modelClient.GetModel(ctx, &mv1.GetModelRequest{
 		Id: req.Model,
-	}); err != nil {
+	})
+	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, status.Errorf(codes.InvalidArgument, "model not found")
 		}
 		return nil, status.Errorf(codes.InvalidArgument, "get model path: %s", err)
+	}
+	// Check if the model format includes Hugging Face.
+	hasHuggingFace := false
+	for _, f := range model.Formats {
+		if f == mv1.ModelFormat_MODEL_FORMAT_HUGGING_FACE {
+			hasHuggingFace = true
+			break
+		}
+	}
+	if !hasHuggingFace {
+		return nil, status.Errorf(codes.InvalidArgument, "model %q is not the Hugging Face format and it does not support fine-tuning", req.Model)
 	}
 
 	if err := s.validateFile(ctx, req.TrainingFile); err != nil {
