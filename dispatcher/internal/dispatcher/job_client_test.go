@@ -14,10 +14,11 @@ import (
 
 func TestJobCmd(t *testing.T) {
 	tcs := []struct {
-		name       string
-		jobConfig  config.JobConfig
-		job        *v1.Job
-		goldenFile string
+		name        string
+		jobConfig   config.JobConfig
+		job         *v1.Job
+		goldenFile  string
+		expGPUCount int
 	}{
 		{
 			name:      "basic",
@@ -28,7 +29,8 @@ func TestJobCmd(t *testing.T) {
 					GpuCount: 2,
 				},
 			},
-			goldenFile: "testdata/command.basic.golden",
+			goldenFile:  "testdata/command.basic.golden",
+			expGPUCount: 2,
 		},
 		{
 			name:      "hyperparamters",
@@ -41,20 +43,19 @@ func TestJobCmd(t *testing.T) {
 					NEpochs:                10,
 				},
 			},
-			goldenFile: "testdata/command.hyperparameters.golden",
+			goldenFile:  "testdata/command.hyperparameters.golden",
+			expGPUCount: 1,
 		},
 		{
 			name: "multi-gpu",
-			jobConfig: config.JobConfig{
-				NumGPUs: 4,
-			},
 			job: &v1.Job{
 				Model: "model-id",
 				Resources: &v1.Job_Resources{
-					GpuCount: 2,
+					GpuCount: 4,
 				},
 			},
-			goldenFile: "testdata/command.multi-gpu.golden",
+			goldenFile:  "testdata/command.multi-gpu.golden",
+			expGPUCount: 4,
 		},
 	}
 	for _, tc := range tcs {
@@ -77,9 +78,9 @@ func TestJobCmd(t *testing.T) {
 				OutputModelURL:          "https://example.com/output-model",
 				OutputModelPresignFlags: "-F 'key=value'",
 			}
-			got, err := jc.cmd(tc.job, presult)
+			got, gpuCount, err := jc.cmd(tc.job, presult)
 			assert.NoError(t, err)
-
+			assert.Equal(t, tc.expGPUCount, gpuCount)
 			want, err := os.ReadFile(tc.goldenFile)
 			assert.NoError(t, err)
 			assert.Equal(t, string(want), got)

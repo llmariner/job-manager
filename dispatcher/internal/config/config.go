@@ -87,7 +87,6 @@ type JobConfig struct {
 	Image           string            `yaml:"image"`
 	Version         string            `yaml:"version"`
 	ImagePullPolicy corev1.PullPolicy `yaml:"imagePullPolicy"`
-	NumGPUs         int               `yaml:"numGpus"`
 
 	WandbAPIKeySecret WandbAPIKeySecretConfig `yaml:"wandbApiKeySecret"`
 
@@ -110,11 +109,6 @@ func (c *JobConfig) validate() error {
 	if p != corev1.PullAlways && p != corev1.PullIfNotPresent && p != corev1.PullNever {
 		return fmt.Errorf("invalid image pull policy")
 	}
-
-	if c.NumGPUs < 0 {
-		return fmt.Errorf("num GPUs must be greater than or equal to 0")
-	}
-
 	return nil
 }
 
