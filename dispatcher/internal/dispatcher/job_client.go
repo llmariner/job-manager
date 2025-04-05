@@ -93,7 +93,7 @@ func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult
 }
 
 func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1apply.JobSpecApplyConfiguration, error) {
-	cmd, err := p.cmd(job, presult)
+	cmd, gpuCount, err := p.cmd(job, presult)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1app
 		WithImage(fmt.Sprintf("%s:%s", p.jobConfig.Image, p.jobConfig.Version)).
 		WithImagePullPolicy(p.jobConfig.ImagePullPolicy).
 		WithCommand("/bin/bash", "-c", cmd).
-		WithResources(p.res())
+		WithResources(p.res(gpuCount))
 
 	if s := p.jobConfig.WandbAPIKeySecret; s.Name != "" {
 		if s.Key == "" {
@@ -133,17 +133,17 @@ func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1app
 	return jobSpec, nil
 }
 
-func (p *JobClient) res() *corev1apply.ResourceRequirementsApplyConfiguration {
-	if p.jobConfig.NumGPUs == 0 {
+func (p *JobClient) res(gpuCount int) *corev1apply.ResourceRequirementsApplyConfiguration {
+	if gpuCount == 0 {
 		return nil
 	}
 	return corev1apply.ResourceRequirements().
 		WithLimits(corev1.ResourceList{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.jobConfig.NumGPUs), resource.DecimalSI),
+			"nvidia.com/gpu": *resource.NewQuantity(int64(gpuCount), resource.DecimalSI),
 		})
 }
 
-func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) {
+func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, error) {
 	t := template.Must(template.New("cmd").Parse(cmdTemplate))
 	type Params struct {
 		BaseModelName           string
@@ -156,22 +156,13 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 		NumProcessors     int
 		AdditionalSFTArgs string
 	}
-	numProcessors := 1
-	if job.Resources != nil {
-		if job.Resources.GpuCount < 0 {
-			return "", fmt.Errorf("gpu count should be non-negative")
-		}
-		if job.Resources.GpuCount > int32(numProcessors) {
-			numProcessors = int(job.Resources.GpuCount)
-		}
-	}
-	// TODO(guangrui): Consider deprecate jobConfig.NumGPUs?
-	if p.jobConfig.NumGPUs > numProcessors {
-		numProcessors = p.jobConfig.NumGPUs
+	numProcessors, err := getGpuCount(job)
+	if err != nil {
+		return "", 0, err
 	}
 	additionalSFTArgs, err := toAddtionalSFTArgs(job, p.jobConfig)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	params := Params{
@@ -187,9 +178,23 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, error) 
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {
-		return "", err
+		return "", 0, err
 	}
-	return buf.String(), nil
+	return buf.String(), numProcessors, nil
+}
+
+func getGpuCount(job *v1.Job) (int, error) {
+	numProcessors := 1
+	if job.Resources == nil {
+		return numProcessors, nil
+	}
+	if job.Resources.GpuCount < 0 {
+		return 0, fmt.Errorf("gpu count should be non-negative")
+	}
+	if int(job.Resources.GpuCount) > numProcessors {
+		numProcessors = int(job.Resources.GpuCount)
+	}
+	return numProcessors, nil
 }
 
 func (p *JobClient) getQueueName(namespace string) string {
