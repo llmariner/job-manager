@@ -485,8 +485,9 @@ func (c *noopModelClient) GetModel(ctx context.Context, in *mv1.GetModelRequest,
 	}
 
 	return &mv1.Model{
-		Id:      c.id,
-		Formats: []mv1.ModelFormat{mv1.ModelFormat_MODEL_FORMAT_HUGGING_FACE},
+		Id:          c.id,
+		Formats:     []mv1.ModelFormat{mv1.ModelFormat_MODEL_FORMAT_HUGGING_FACE},
+		IsBaseModel: true,
 	}, nil
 }
 
