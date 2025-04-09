@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/llmariner/common/pkg/id"
@@ -67,7 +66,7 @@ func (s *S) CreateJob(
 		}
 		return nil, status.Errorf(codes.InvalidArgument, "get model path: %s", err)
 	}
-	if strings.HasPrefix(model.Id, "ft:") {
+	if !model.IsBaseModel {
 		return nil, status.Errorf(codes.InvalidArgument, "model %q is a fine-tuned model. Use a base model instead.", req.Model)
 	}
 
