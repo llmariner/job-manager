@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-logr/stdr"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/llmariner/api-usage/pkg/sender"
+	"github.com/llmariner/common/pkg/aws"
 	"github.com/llmariner/common/pkg/db"
 	fv1 "github.com/llmariner/file-manager/api/v1"
 	v1 "github.com/llmariner/job-manager/api/v1"
@@ -26,6 +28,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/encoding/protojson"
+	"gorm.io/gorm"
 )
 
 func runCmd() *cobra.Command {
@@ -67,6 +70,38 @@ func run(ctx context.Context, c *config.Config) error {
 	st := store.New(dbInst)
 	if err := st.AutoMigrate(); err != nil {
 		return err
+	}
+
+	// Initialize KMS and data key when KMS is enabled
+	var dataKey []byte
+	if c.KMSConfig.Enable {
+		log.Info("KMS encryption is enabled")
+		awsConfig := aws.NewConfigOptions{
+			Region: c.KMSConfig.Region,
+		}
+		if ar := c.KMSConfig.AssumeRole; ar != nil {
+			awsConfig.AssumeRole = &aws.AssumeRole{
+				RoleARN:    ar.RoleARN,
+				ExternalID: ar.ExternalID,
+			}
+		}
+		kmsClient, err := aws.NewKMSClient(ctx, awsConfig, c.KMSConfig.KeyAlias)
+		if err != nil {
+			return err
+		}
+
+		dk, err := st.GetDataKey(ctx, kmsClient)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+			log.Info("Creating a data key")
+			dk, err = st.CreateDataKey(ctx, kmsClient)
+			if err != nil {
+				return err
+			}
+		}
+		dataKey = dk
 	}
 
 	addr := fmt.Sprintf("localhost:%d", c.GRPCPort)
@@ -148,6 +183,7 @@ func run(ctx context.Context, c *config.Config) error {
 		c.NotebookConfig.ImageTypes,
 		c.BatchJobConfig.Images,
 		logger,
+		dataKey,
 	)
 	go func() {
 		errCh <- srv.Run(ctx, c.GRPCPort, c.AuthConfig, usageSetter)

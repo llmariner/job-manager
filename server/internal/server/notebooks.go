@@ -84,13 +84,20 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	nb := &store.Notebook{
 		NotebookID:     nbID,
 		ProjectMessage: proj,
-		APIKey:         apikey,
-		Token:          nbToken,
 		State:          store.NotebookStateQueued,
 		QueuedAction:   store.NotebookQueuedActionStart,
 		TenantID:       userInfo.TenantID,
 		ProjectID:      userInfo.ProjectID,
 		Name:           req.Name,
+	}
+
+	// Set API key and token using the helper methods
+	if err := nb.SetAPIKey(ctx, apikey, s.dataKey); err != nil {
+		return nil, status.Errorf(codes.Internal, "set api key: %s", err)
+	}
+
+	if err := nb.SetToken(ctx, nbToken, s.dataKey); err != nil {
+		return nil, status.Errorf(codes.Internal, "set token: %s", err)
 	}
 
 	sresult, err := s.scheduleNotebook(ctx, nb, gpuCount)
@@ -167,13 +174,24 @@ func (s *S) scheduleNotebook(ctx context.Context, nb *store.Notebook, gpuCount i
 		return sresult, status.Errorf(codes.Internal, "add assumed pod: %s", err)
 	}
 
-	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, nb.APIKey)
+	// Get the API key and token using the helper methods
+	apiKey, err := nb.GetAPIKey(ctx, s.dataKey)
+	if err != nil {
+		return sresult, status.Errorf(codes.Internal, "get api key: %s", err)
+	}
+
+	token, err := nb.GetToken(ctx, s.dataKey)
+	if err != nil {
+		return sresult, status.Errorf(codes.Internal, "get token: %s", err)
+	}
+
+	kclient, err := s.k8sClientFactory.NewClient(sresult.ClusterID, apiKey)
 	if err != nil {
 		return sresult, status.Errorf(codes.Internal, "create k8s client: %s", err)
 	}
 	if err := kclient.CreateSecret(ctx, nb.NotebookID, sresult.Namespace, map[string][]byte{
-		"OPENAI_API_KEY": []byte(nb.APIKey),
-		"NOTEBOOK_TOKEN": []byte(nb.Token),
+		"OPENAI_API_KEY": []byte(apiKey),
+		"NOTEBOOK_TOKEN": []byte(token),
 	}); err != nil {
 		return sresult, status.Errorf(codes.Internal, "create secret: %s", err)
 	}

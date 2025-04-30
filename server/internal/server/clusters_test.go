@@ -61,7 +61,7 @@ func TestListClusters(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t), nil)
 
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListClusters(ctx, &v1.ListClustersRequest{})

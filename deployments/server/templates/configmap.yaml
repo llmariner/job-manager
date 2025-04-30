@@ -35,3 +35,14 @@ data:
         {{- toYaml .Values.batchJob.images | nindent 8 }}
     usageSender:
       {{- toYaml .Values.global.usageSender | nindent 6 }}
+    kms:
+      enable: {{ .Values.kms.enable }}
+      keyAlias: {{ .Values.kms.keyAlias }}
+      region: {{ .Values.kms.region }}
+      {{- with .Values.kms.assumeRole }}
+      {{- if .roleArn }}
+      assumeRole:
+        roleArn: {{ .roleArn }}
+        externalId: {{ .externalId }}
+      {{- end }}
+      {{- end }}

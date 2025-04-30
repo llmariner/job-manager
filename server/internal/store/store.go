@@ -27,5 +27,6 @@ func autoMigrate(db *gorm.DB) error {
 		&Job{},
 		&Notebook{},
 		&BatchJob{},
+		&DataKey{},
 	)
 }

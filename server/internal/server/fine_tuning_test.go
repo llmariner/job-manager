@@ -118,7 +118,8 @@ func TestCreateJob(t *testing.T) {
 				&fakeCache{},
 				nil,
 				nil,
-				testr.New(t))
+				testr.New(t),
+				nil)
 			resp, err := srv.CreateJob(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -153,7 +154,7 @@ func TestListJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t), nil)
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListJobs(ctx, &v1.ListJobsRequest{Limit: 5})
 	assert.NoError(t, err)
@@ -207,7 +208,7 @@ func TestGetJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t), nil)
 	resp, err := srv.GetJob(fakeAuthInto(context.Background()), &v1.GetJobRequest{Id: jobID})
 	assert.NoError(t, err)
 	assert.Equal(t, string(store.JobQueuedActionCreate), resp.Status)
@@ -258,7 +259,7 @@ func TestJobCancel(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t))
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, nil, testr.New(t), nil)
 			resp, err := srv.CancelJob(fakeAuthInto(context.Background()), &v1.CancelJobRequest{Id: jobID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)

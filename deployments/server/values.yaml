@@ -288,6 +288,26 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1000
 
+# The AWS KMS configuration to encrypt API keys.
+kms:
+  # The flag to enable encryption.
+  enable: false
+
+  # The key alias.
+  # +docs:property
+  # keyAlias: ""
+
+  # The region name.
+  # +docs:property
+  # region: ""
+
+  # Optional AssumeRole.
+  # For more information, see [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html).
+  # +docs:property
+  # assumeRole:
+  #   roleArn: ""
+  #   externalId: ""
+
 # Additional volumes to add to the job-manager-server pod.
 # For more information, see [Volumes](https://kubernetes.io/docs/concepts/storage/volumes/).
 # +docs:property
