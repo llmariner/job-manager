@@ -1,9 +1,11 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/llmariner/common/pkg/aws"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	rbacv1 "github.com/llmariner/rbac-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
@@ -63,9 +65,13 @@ type Notebook struct {
 	Message []byte
 	// ProjectMessage is the marshalled JSON of the rbac v1.Project.
 	ProjectMessage []byte
-	// TODO(guangrui): Consider not to save APIKey and Token in the database.
+
+	// APIKey and Token are set when kms encryption is disabled.
 	APIKey string
 	Token  string
+	// EncryptedAPIKey and EncryptedToken are encrypted by data key, and set when kms encryption is enabled.
+	EncryptedAPIKey []byte
+	EncryptedToken  []byte
 
 	State NotebookState `gorm:"index:idx_notebook_project_id_state;index:idx_notebook_tenant_id_cluster_id_state"`
 	// QueuedAction is the action of the queued notebook. This field is only used when
@@ -73,6 +79,64 @@ type Notebook struct {
 	QueuedAction NotebookQueuedAction
 
 	Version int
+}
+
+// GetAPIKey returns the API key, decrypting it if necessary.
+func (n *Notebook) GetAPIKey(ctx context.Context, dataKey []byte) (string, error) {
+	if len(dataKey) > 0 && len(n.EncryptedAPIKey) > 0 {
+		// Use the AWS decrypt function with notebook ID as context
+		decrypted, err := aws.Decrypt(ctx, n.EncryptedAPIKey, n.NotebookID, dataKey)
+		if err != nil {
+			return "", fmt.Errorf("decrypt api key: %w", err)
+		}
+		return decrypted, nil
+	}
+	return n.APIKey, nil
+}
+
+// GetToken returns the token, decrypting it if necessary.
+func (n *Notebook) GetToken(ctx context.Context, dataKey []byte) (string, error) {
+	if len(dataKey) > 0 && len(n.EncryptedToken) > 0 {
+		// Use the AWS decrypt function with notebook ID as context
+		decrypted, err := aws.Decrypt(ctx, n.EncryptedToken, n.NotebookID, dataKey)
+		if err != nil {
+			return "", fmt.Errorf("decrypt token: %w", err)
+		}
+		return decrypted, nil
+	}
+	return n.Token, nil
+}
+
+// SetAPIKey sets the API key, encrypting it if a data key is provided.
+func (n *Notebook) SetAPIKey(ctx context.Context, apiKey string, dataKey []byte) error {
+	if len(dataKey) > 0 {
+		// Use the AWS encrypt function with notebook ID as context
+		encrypted, err := aws.Encrypt(ctx, apiKey, n.NotebookID, dataKey)
+		if err != nil {
+			return fmt.Errorf("encrypt api key: %w", err)
+		}
+		n.EncryptedAPIKey = encrypted
+		n.APIKey = ""
+	} else {
+		n.APIKey = apiKey
+	}
+	return nil
+}
+
+// SetToken sets the token, encrypting it if a data key is provided.
+func (n *Notebook) SetToken(ctx context.Context, token string, dataKey []byte) error {
+	if len(dataKey) > 0 {
+		// Use the AWS encrypt function with notebook ID as context
+		encrypted, err := aws.Encrypt(ctx, token, n.NotebookID, dataKey)
+		if err != nil {
+			return fmt.Errorf("encrypt token: %w", err)
+		}
+		n.EncryptedToken = encrypted
+		n.Token = ""
+	} else {
+		n.Token = token
+	}
+	return nil
 }
 
 // V1Notebook converts a notebook to a v1.Notebook.

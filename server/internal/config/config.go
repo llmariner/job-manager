@@ -26,6 +26,8 @@ type Config struct {
 
 	NotebookConfig NotebookConfig `yaml:"notebook"`
 	BatchJobConfig BatchJobConfig `yaml:"batchJob"`
+
+	KMSConfig KMSConfig `yaml:"kms"`
 }
 
 // NotebookConfig is the notebook configuration.
@@ -71,6 +73,46 @@ func (c *AuthConfig) Validate() error {
 	return nil
 }
 
+// AssumeRoleConfig is the assume role configuration.
+type AssumeRoleConfig struct {
+	RoleARN    string `yaml:"roleArn"`
+	ExternalID string `yaml:"externalId"`
+}
+
+func (c *AssumeRoleConfig) validate() error {
+	if c.RoleARN == "" {
+		return fmt.Errorf("roleArn must be set")
+	}
+	return nil
+}
+
+// KMSConfig is AWS KMS configuration.
+type KMSConfig struct {
+	Enable     bool              `yaml:"enable"`
+	KeyAlias   string            `yaml:"keyAlias"`
+	Region     string            `yaml:"region"`
+	AssumeRole *AssumeRoleConfig `yaml:"assumeRole"`
+}
+
+// Validate validates the configuration.
+func (c *KMSConfig) validate() error {
+	if !c.Enable {
+		return nil
+	}
+	if c.KeyAlias == "" {
+		return fmt.Errorf("keyAlias must be set")
+	}
+	if c.Region == "" {
+		return fmt.Errorf("region must be set")
+	}
+	if ar := c.AssumeRole; ar != nil {
+		if err := ar.validate(); err != nil {
+			return fmt.Errorf("assumeRole: %s", err)
+		}
+	}
+	return nil
+}
+
 // Validate validates the configuration.
 func (c *Config) Validate() error {
 	if c.GRPCPort <= 0 {
@@ -108,6 +150,9 @@ func (c *Config) Validate() error {
 	}
 	if err := c.UsageSender.Validate(); err != nil {
 		return err
+	}
+	if err := c.KMSConfig.validate(); err != nil {
+		return fmt.Errorf("kms: %s", err)
 	}
 	return nil
 }

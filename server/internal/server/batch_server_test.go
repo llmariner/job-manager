@@ -62,7 +62,7 @@ func TestCreateBatchJob(t *testing.T) {
 			st, tearDown := store.NewTest(t)
 			defer tearDown()
 
-			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, map[string]string{"t0": "img0"}, testr.New(t))
+			srv := New(st, nil, nil, &noopK8sClientFactory{}, &fakeScheduler{}, &fakeCache{}, nil, map[string]string{"t0": "img0"}, testr.New(t), nil)
 			resp, err := srv.CreateBatchJob(fakeAuthInto(context.Background()), tc.req)
 			if tc.wantErr {
 				assert.Error(t, err)
@@ -98,7 +98,7 @@ func TestListBatchJobs(t *testing.T) {
 	err := st.SetBatchJobState("nb10", 0, store.BatchJobStateDeleted)
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t), nil)
 	ctx := fakeAuthInto(context.Background())
 	resp, err := srv.ListBatchJobs(ctx, &v1.ListBatchJobsRequest{Limit: 5})
 	assert.NoError(t, err)
@@ -143,7 +143,7 @@ func TestGetBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t), nil)
 	resp, err := srv.GetBatchJob(fakeAuthInto(context.Background()), &v1.GetBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 	assert.EqualValues(t, store.BatchJobQueuedActionCreate, store.BatchJobState(resp.Status))
@@ -204,7 +204,7 @@ func TestCancelBatchJob(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
+			srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t), nil)
 			resp, err := srv.CancelBatchJob(fakeAuthInto(context.Background()), &v1.CancelBatchJobRequest{Id: nbID})
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want.Status, resp.Status)
@@ -303,7 +303,7 @@ func TestDeleteBatchJob(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t))
+	srv := New(st, nil, nil, nil, nil, nil, nil, nil, testr.New(t), nil)
 	_, err = srv.DeleteBatchJob(fakeAuthInto(context.Background()), &v1.DeleteBatchJobRequest{Id: nbID})
 	assert.NoError(t, err)
 }

@@ -58,6 +58,7 @@ func New(
 	nbImageTypes map[string]string,
 	batchJobImages map[string]string,
 	logger logr.Logger,
+	dataKey []byte,
 ) *S {
 	nbtypes := make([]string, 0, len(nbImageTypes))
 	for t := range nbImageTypes {
@@ -74,6 +75,7 @@ func New(
 		nbImageTypeStr:   strings.Join(nbtypes, ", "),
 		batchJobImages:   batchJobImages,
 		logger:           logger.WithName("grpc"),
+		dataKey:          dataKey,
 	}
 }
 
@@ -98,7 +100,8 @@ type S struct {
 
 	batchJobImages map[string]string
 
-	logger logr.Logger
+	logger  logr.Logger
+	dataKey []byte
 }
 
 // Run starts the gRPC server.
