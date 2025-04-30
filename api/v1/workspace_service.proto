@@ -170,6 +170,7 @@ message ListQueuedInternalNotebooksResponse {
 message UpdateNotebookStateRequest {
   string id = 1;
   NotebookState state = 2;
+  string reason = 3;
 }
 
 message UpdateNotebookStateResponse {

@@ -471,12 +471,14 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 			return nil, status.Errorf(codes.FailedPrecondition, "notebook is not starting: %s", nb.QueuedAction)
 		}
 		if err := nb.MutateMessage(func(nb *v1.Notebook) {
-			nb.StartedAt = time.Now().UTC().Unix()
+			if nb.StartedAt == 0 {
+				nb.StartedAt = time.Now().UTC().Unix()
+			}
 			nb.StoppedAt = 0
 		}); err != nil {
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
-		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateInitializing, nb.Message); err != nil {
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateInitializing, nb.Message, req.Reason); err != nil {
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
 	case v1.NotebookState_RUNNING:
@@ -504,7 +506,7 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		}); err != nil {
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
-		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateStopped, nb.Message); err != nil {
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateStopped, nb.Message, req.Reason); err != nil {
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
 	case v1.NotebookState_DELETED:
@@ -522,7 +524,7 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 		}); err != nil {
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
-		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateDeleted, nb.Message); err != nil {
+		if err := ws.store.SetNonQueuedStateAndMessage(nb.NotebookID, nb.Version, store.NotebookStateDeleted, nb.Message, req.Reason); err != nil {
 			return nil, status.Errorf(codes.Internal, "set non queued state and message: %s", err)
 		}
 	case v1.NotebookState_REQUEUED:
@@ -536,6 +538,7 @@ func (ws *WS) UpdateNotebookState(ctx context.Context, req *v1.UpdateNotebookSta
 			return nil, status.Errorf(codes.Internal, "mutate message: %s", err)
 		}
 		nb.State = store.NotebookStateRequeued
+		nb.Reason = ""
 		if err := ws.store.UpdateNotebookForRescheduling(nb); err != nil {
 			return nil, status.Errorf(codes.Internal, "update notebook: %s", err)
 		}

@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/llmariner/job-manager/api/v1"
@@ -33,6 +34,9 @@ const (
 	notebookIDAnnotationKey      = "llmariner/notebook-id"
 
 	nbManagerName = "notebook-manager"
+
+	pullingImageReason = "Pulling"
+	nbContainerName    = "jupyterlab"
 )
 
 // NewNotebookManager creates a new NotebookManager
@@ -102,15 +106,42 @@ func (n *NotebookManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	if nb.Status.ReadyReplicas < replicas {
+	// Get the associated Pod to check its status reason
+	podList := &corev1.PodList{}
+	if err := n.k8sClient.List(ctx, podList,
+		client.InNamespace(req.Namespace),
+		client.MatchingLabels(nb.Spec.Selector.MatchLabels)); err != nil {
+		log.Error(err, "Failed to list pods for the notebook deployment")
+		return ctrl.Result{}, err
+	}
+
+	reason := ""
+	state := v1.NotebookState_RUNNING
+
+	// Try to extract a more specific reason from the Pod status
+	if len(podList.Items) > 0 {
+		pod := podList.Items[0]
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			if containerStatus.Name == nbContainerName {
+				if containerStatus.State.Waiting != nil && strings.Contains(containerStatus.State.Waiting.Reason, pullingImageReason) {
+					reason = pullingImageReason
+					state = v1.NotebookState_INITIALIZING
+				}
+				break
+			}
+		}
+	}
+
+	if nb.Status.ReadyReplicas < replicas && reason == "" {
 		log.V(4).Info("Notebook deployment is not ready yet")
 		return ctrl.Result{}, nil
 	}
 
 	ctx = auth.AppendWorkerAuthorization(ctx)
 	if _, err := n.wsClient.UpdateNotebookState(ctx, &v1.UpdateNotebookStateRequest{
-		Id:    req.Name,
-		State: v1.NotebookState_RUNNING,
+		Id:     req.Name,
+		State:  state,
+		Reason: reason,
 	}); err != nil {
 		log.Error(err, "Failed to update the notebook state")
 		return ctrl.Result{}, err
@@ -179,7 +210,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	baseURL := fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s/%s", nb.Notebook.ClusterId, nb.Notebook.Id, nb.Notebook.KubernetesNamespace)
 
 	containerConf := corev1apply.Container().
-		WithName("jupyterlab").
+		WithName(nbContainerName).
 		WithImage(nb.Notebook.Image).
 		WithImagePullPolicy(corev1.PullIfNotPresent).
 		// TODO: rethink authentication method

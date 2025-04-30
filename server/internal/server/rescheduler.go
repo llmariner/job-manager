@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/job-manager/server/internal/store"
 )
+
+const pullingImageReason = "Pulling"
 
 // RunRescheduler requeues and reschedules the jobs.
 func (s *S) RunRescheduler(ctx context.Context, interval, maxQueuedTime time.Duration) error {
@@ -36,6 +39,11 @@ func (s *S) rescheduleNotebooks(ctx context.Context, maxQueuedTime time.Duration
 	}
 	now := time.Now()
 	for _, nb := range nbs {
+		// When a pod is in the stage of downloading image, it may take a long time before
+		// it is ready to run. Avoid re-schedule the pod to another cluster.
+		if strings.Contains(nb.Reason, pullingImageReason) {
+			continue
+		}
 		if nb.UpdatedAt.Add(maxQueuedTime).Before(now) {
 			nb.State = store.NotebookStateQueued
 			nb.QueuedAction = store.NotebookQueuedActionRequeue
@@ -65,6 +73,7 @@ func (s *S) rescheduleNotebooks(ctx context.Context, maxQueuedTime time.Duration
 			s.logger.Error(err, fmt.Sprintf("reschedule a notebook %s", nb.NotebookID))
 			continue
 		}
+		nb.Reason = ""
 		nb.State = store.NotebookStateQueued
 		nb.QueuedAction = store.NotebookQueuedActionStart
 		nb.ClusterID = sresult.ClusterID

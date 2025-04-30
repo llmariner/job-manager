@@ -77,6 +77,8 @@ type Notebook struct {
 	// QueuedAction is the action of the queued notebook. This field is only used when
 	// the state is NotebookStateQueued, and processed by the dispatcher.
 	QueuedAction NotebookQueuedAction
+	// Reason explains why the notebook is in the current state
+	Reason string
 
 	Version int
 }
@@ -310,6 +312,7 @@ func (s *S) SetNotebookQueuedAction(id string, currentVersion int, newAction Not
 		Updates(map[string]interface{}{
 			"state":         NotebookStateQueued,
 			"queued_action": newAction,
+			"reason":        "",
 			"version":       currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
@@ -328,6 +331,7 @@ func (s *S) SetState(id string, currentVersion int, newState NotebookState) erro
 		Where("version = ?", currentVersion).
 		Updates(map[string]interface{}{
 			"state":   newState,
+			"reason":  "",
 			"version": currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
@@ -340,7 +344,7 @@ func (s *S) SetState(id string, currentVersion int, newState NotebookState) erro
 }
 
 // SetNonQueuedStateAndMessage sets a non-queued state and message.
-func (s *S) SetNonQueuedStateAndMessage(id string, currentVersion int, newState NotebookState, message []byte) error {
+func (s *S) SetNonQueuedStateAndMessage(id string, currentVersion int, newState NotebookState, message []byte, reason string) error {
 	result := s.db.Model(&Notebook{}).
 		Where("notebook_id = ?", id).
 		Where("version = ?", currentVersion).
@@ -348,6 +352,7 @@ func (s *S) SetNonQueuedStateAndMessage(id string, currentVersion int, newState 
 			"state":         newState,
 			"queued_action": "",
 			"message":       message,
+			"reason":        reason,
 			"version":       currentVersion + 1,
 		})
 	if err := result.Error; err != nil {
@@ -369,6 +374,7 @@ func (s *S) UpdateNotebookForRescheduling(nb *Notebook) error {
 			"state":         nb.State,
 			"queued_action": nb.QueuedAction,
 			"message":       nb.Message,
+			"reason":        nb.Reason,
 			"version":       nb.Version + 1,
 		})
 	if err := result.Error; err != nil {

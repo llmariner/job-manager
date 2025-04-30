@@ -16,10 +16,10 @@ func TestRescheduleNotebooks(t *testing.T) {
 		name       string
 		prevState  store.NotebookState
 		prevAction store.NotebookQueuedAction
+		reason     string
 		wantError  bool
 		wantState  store.NotebookState
 		wantAction store.NotebookQueuedAction
-		waitTime   time.Duration
 	}{
 
 		{
@@ -28,6 +28,14 @@ func TestRescheduleNotebooks(t *testing.T) {
 			prevAction: store.NotebookQueuedActionStart,
 			wantState:  store.NotebookStateQueued,
 			wantAction: store.NotebookQueuedActionRequeue,
+		},
+		{
+			name:       "initializing image pull",
+			prevState:  store.NotebookStateInitializing,
+			prevAction: store.NotebookQueuedActionStart,
+			reason:     pullingImageReason,
+			wantState:  store.NotebookStateInitializing,
+			wantAction: store.NotebookQueuedActionStart,
 		},
 		{
 			name:       "reschedule",
@@ -59,6 +67,7 @@ func TestRescheduleNotebooks(t *testing.T) {
 				TenantID:       defaultTenantID,
 				State:          test.prevState,
 				QueuedAction:   test.prevAction,
+				Reason:         test.reason,
 				ProjectMessage: proj,
 			})
 			assert.NoError(t, err)
