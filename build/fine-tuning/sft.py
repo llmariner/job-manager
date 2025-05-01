@@ -23,6 +23,14 @@ from trl import (
 # For progress bars.
 tqdm.pandas()
 
+def add_eos(example, eos_id):
+    """Ensure every example ends with exactly one EOS token."""
+    ids = example["input_ids"] if "input_ids" in example else []
+    if ids and ids[-1] != eos_id:
+        ids.append(eos_id)
+    example["input_ids"] = ids
+    return example
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("sft.py", description="A script to train a model using SFT.")
     parser.add_argument("--model", help="Model path.", type=str)
@@ -112,7 +120,19 @@ if __name__ == "__main__":
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token = "<|finetune_right_pad_id|>"
+    tokenizer.padding_side = "right"
+
+    from transformers.utils import logging as hf_logging
+    hf_logging.set_verbosity_error()  # quieten HF weight‑loading logs
+
+    model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
+    model.config.pad_token_id = tokenizer.pad_token_id 
+
+    eos_id = tokenizer.eos_token_id
+    train_dataset = train_dataset.map(lambda ex: add_eos(ex, eos_id))
+    if eval_dataset is not None:
+        eval_dataset = eval_dataset.map(lambda ex: add_eos(ex, eos_id))
 
     # TODO(kenji): Revisit these parameters.
     peft_config = LoraConfig(
