@@ -9,7 +9,12 @@ import argparse
 import torch
 
 from datasets import load_dataset
-from transformers import AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoTokenizer, 
+    AutoModelForCausalLM, 
+    BitsAndBytesConfig,
+)
+
 from peft import LoraConfig
 
 from tqdm.rich import tqdm
