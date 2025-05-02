@@ -7,7 +7,6 @@ import os
 import argparse
 
 import torch
-import pyarrow as pa
 
 from datasets import load_dataset
 from transformers import (
@@ -120,16 +119,11 @@ if __name__ == "__main__":
     eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
 
     preprocess_fn = build_chat_preprocessor(tokenizer)
-    num_proc = min(4, os.cpu_count())
+    num_proc = min(4, os.cpu_count() or 1)
 
     train_dataset = train_dataset.map(preprocess_fn, remove_columns=train_dataset.column_names, num_proc=num_proc)
     if eval_dataset is not None:
         eval_dataset = eval_dataset.map(preprocess_fn, remove_columns=eval_dataset.column_names, num_proc=num_proc)
-
-    # Cast to int64 for safety
-    train_dataset = train_dataset.cast_column("input_ids", pa.list_(pa.int64()))
-    if eval_dataset is not None:
-        eval_dataset = eval_dataset.cast_column("input_ids", pa.list_(pa.int64()))
 
     # TODO(kenji): Revisit these parameters.
     training_args = SFTConfig(
