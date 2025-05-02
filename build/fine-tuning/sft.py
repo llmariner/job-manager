@@ -49,14 +49,6 @@ def build_chat_preprocessor(tokenizer):
 
     return _preprocess
 
-def add_eos(example, eos_id):
-    """Ensure every example ends with exactly one EOS token."""
-    ids = example["input_ids"] if "input_ids" in example else []
-    if ids and ids[-1] != eos_id:
-        ids.append(eos_id)
-    example["input_ids"] = ids
-    return example
-
 # --------------------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------------------
@@ -105,7 +97,7 @@ if __name__ == "__main__":
         torch_dtype="auto",
         use_cache=False,
         device_map=get_kbit_device_map(),
-        quantization_config=quant_cfg,
+        quantization_config=quantization_config,
     )
     model.config.pad_token_id = tokenizer.pad_token_id
 
@@ -138,31 +130,6 @@ if __name__ == "__main__":
     train_dataset = train_dataset.cast_column("input_ids", pa.list_(pa.int64()))
     if eval_dataset is not None:
         eval_dataset = eval_dataset.cast_column("input_ids", pa.list_(pa.int64()))
-
-    # tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
-    # if tokenizer.pad_token is None:
-    #     tokenizer.pad_token = "<|finetune_right_pad_id|>"
-    # tokenizer.padding_side = "right"
-
-    # from transformers.utils import logging as hf_logging
-    # hf_logging.set_verbosity_error()  # quieten HF weight‑loading logs
-
-    # model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
-    # model.config.pad_token_id = tokenizer.pad_token_id 
-
-    # eos_id = tokenizer.eos_token_id
-
-    # def cast_to_int(example):
-    #     # Ensure every token ID is an int so torch -> int64
-    #     example["input_ids"] = [int(x) for x in example["input_ids"]]
-    #     return example
-
-    # train_dataset = train_dataset.map(cast_to_int, num_proc=4)
-    # train_dataset = train_dataset.map(lambda ex: add_eos(ex, eos_id))
-    # if eval_dataset is not None:
-    #     eval_dataset = eval_dataset.map(cast_to_int, num_proc=4)
-    #     eval_dataset = eval_dataset.map(lambda ex: add_eos(ex, eos_id))
-
 
     # TODO(kenji): Revisit these parameters.
     training_args = SFTConfig(
