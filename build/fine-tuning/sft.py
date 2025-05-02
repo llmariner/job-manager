@@ -7,6 +7,7 @@ import os
 import argparse
 
 import torch
+import pyarrow as pa
 
 from datasets import load_dataset
 from transformers import (
@@ -28,6 +29,26 @@ from trl import (
 # For progress bars.
 tqdm.pandas()
 
+# --------------------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------------------
+
+def build_chat_preprocessor(tokenizer):
+    eos_id = tokenizer.eos_token_id
+
+    def _preprocess(example):
+        """Turn a list‑of‑messages into input_ids + single EOS."""
+        text = tokenizer.apply_chat_template(
+            example["messages"],  # expects list[dict]
+            add_generation_prompt=False,
+            tokenize=False,
+        )
+        ids = tokenizer(text, add_special_tokens=False)["input_ids"]
+        ids.append(eos_id)
+        return {"input_ids": ids}
+
+    return _preprocess
+
 def add_eos(example, eos_id):
     """Ensure every example ends with exactly one EOS token."""
     ids = example["input_ids"] if "input_ids" in example else []
@@ -36,6 +57,9 @@ def add_eos(example, eos_id):
     example["input_ids"] = ids
     return example
 
+# --------------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("sft.py", description="A script to train a model using SFT.")
     parser.add_argument("--model", help="Model path.", type=str)
@@ -56,6 +80,17 @@ if __name__ == "__main__":
     if args.report_to == "wandb":
         os.environ["WANDB_PROJECT"] = args.wandb_project
 
+    # ------------------------------------------------------------------
+    # Tokenizer – set distinct PAD and right‑pad
+    # ------------------------------------------------------------------
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = "<|finetune_right_pad_id|>"
+    tokenizer.padding_side = "right"
+
+    # ------------------------------------------------------------------
+    # Load model (with optional 4‑bit quant)
+    # ------------------------------------------------------------------
     quantization_config = None
     if args.use_bnb_quantization:
         quantization_config = BitsAndBytesConfig(
@@ -64,18 +99,70 @@ if __name__ == "__main__":
             bnb_4bit_quant_type="nf4"
         )
 
-    model_kwargs = dict(
-        # Which attention implementation to use; you can run --attn_implementation=flash_attention_2,
-        # in which case you must install this manually by running `pip install flash-attn --no-build-isolation`
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model,
         attn_implementation=None,
-        # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
-        # the dtype will be automatically derived from the model's weights."
-        torch_dtype='auto',
-        # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
+        torch_dtype="auto",
         use_cache=False,
         device_map=get_kbit_device_map(),
-        quantization_config=quantization_config,
+        quantization_config=quant_cfg,
     )
+    model.config.pad_token_id = tokenizer.pad_token_id
+
+    # model_kwargs = dict(
+    #     # Which attention implementation to use; you can run --attn_implementation=flash_attention_2,
+    #     # in which case you must install this manually by running `pip install flash-attn --no-build-isolation`
+    #     attn_implementation=None,
+    #     # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
+    #     # the dtype will be automatically derived from the model's weights."
+    #     torch_dtype='auto',
+    #     # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
+    #     use_cache=False,
+    #     device_map=get_kbit_device_map(),
+    #     quantization_config=quantization_config,
+    # )
+
+
+    raw_datasets = load_dataset(args.dataset)
+    train_dataset = raw_datasets["train"]
+    eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
+
+    preprocess_fn = build_chat_preprocessor(tokenizer)
+    num_proc = min(4, os.cpu_count())
+
+    train_dataset = train_dataset.map(preprocess_fn, remove_columns=train_dataset.column_names, num_proc=num_proc)
+    if eval_dataset is not None:
+        eval_dataset = eval_dataset.map(preprocess_fn, remove_columns=eval_dataset.column_names, num_proc=num_proc)
+
+    # Cast to int64 for safety
+    train_dataset = train_dataset.cast_column("input_ids", pa.list_(pa.int64()))
+    if eval_dataset is not None:
+        eval_dataset = eval_dataset.cast_column("input_ids", pa.list_(pa.int64()))
+
+    # tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+    # if tokenizer.pad_token is None:
+    #     tokenizer.pad_token = "<|finetune_right_pad_id|>"
+    # tokenizer.padding_side = "right"
+
+    # from transformers.utils import logging as hf_logging
+    # hf_logging.set_verbosity_error()  # quieten HF weight‑loading logs
+
+    # model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
+    # model.config.pad_token_id = tokenizer.pad_token_id 
+
+    # eos_id = tokenizer.eos_token_id
+
+    # def cast_to_int(example):
+    #     # Ensure every token ID is an int so torch -> int64
+    #     example["input_ids"] = [int(x) for x in example["input_ids"]]
+    #     return example
+
+    # train_dataset = train_dataset.map(cast_to_int, num_proc=4)
+    # train_dataset = train_dataset.map(lambda ex: add_eos(ex, eos_id))
+    # if eval_dataset is not None:
+    #     eval_dataset = eval_dataset.map(cast_to_int, num_proc=4)
+    #     eval_dataset = eval_dataset.map(lambda ex: add_eos(ex, eos_id))
+
 
     # TODO(kenji): Revisit these parameters.
     training_args = SFTConfig(
@@ -118,34 +205,6 @@ if __name__ == "__main__":
         # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
         max_seq_length=1024,
     )
-
-    raw_datasets = load_dataset(args.dataset)
-    train_dataset = raw_datasets["train"]
-    eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
-
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = "<|finetune_right_pad_id|>"
-    tokenizer.padding_side = "right"
-
-    from transformers.utils import logging as hf_logging
-    hf_logging.set_verbosity_error()  # quieten HF weight‑loading logs
-
-    model = AutoModelForCausalLM.from_pretrained(args.model, **model_kwargs)
-    model.config.pad_token_id = tokenizer.pad_token_id 
-
-    eos_id = tokenizer.eos_token_id
-
-    def cast_to_int(example):
-        # Ensure every token ID is an int so torch -> int64
-        example["input_ids"] = [int(x) for x in example["input_ids"]]
-        return example
-
-    train_dataset = train_dataset.map(cast_to_int, num_proc=4)
-    train_dataset = train_dataset.map(lambda ex: add_eos(ex, eos_id))
-    if eval_dataset is not None:
-        eval_dataset = eval_dataset.map(cast_to_int, num_proc=4)
-        eval_dataset = eval_dataset.map(lambda ex: add_eos(ex, eos_id))
 
     # TODO(kenji): Revisit these parameters.
     peft_config = LoraConfig(
