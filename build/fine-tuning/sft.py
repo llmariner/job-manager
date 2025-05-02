@@ -10,8 +10,8 @@ import torch
 
 from datasets import load_dataset
 from transformers import (
-    AutoTokenizer, 
-    AutoModelForCausalLM, 
+    AutoTokenizer,
+    AutoModelForCausalLM,
     BitsAndBytesConfig,
 )
 
@@ -135,8 +135,16 @@ if __name__ == "__main__":
     model.config.pad_token_id = tokenizer.pad_token_id 
 
     eos_id = tokenizer.eos_token_id
+
+    def cast_to_int(example):
+        # Ensure every token ID is an int so torch -> int64
+        example["input_ids"] = [int(x) for x in example["input_ids"]]
+        return example
+
+    train_dataset = train_dataset.map(cast_to_int, num_proc=4)
     train_dataset = train_dataset.map(lambda ex: add_eos(ex, eos_id))
     if eval_dataset is not None:
+        eval_dataset = eval_dataset.map(cast_to_int, num_proc=4)
         eval_dataset = eval_dataset.map(lambda ex: add_eos(ex, eos_id))
 
     # TODO(kenji): Revisit these parameters.
@@ -151,8 +159,7 @@ if __name__ == "__main__":
     )
 
     trainer = SFTTrainer(
-        model=args.model,
-        model_init_kwargs=model_kwargs,
+        model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
