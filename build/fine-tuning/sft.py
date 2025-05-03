@@ -100,20 +100,6 @@ if __name__ == "__main__":
     )
     model.config.pad_token_id = tokenizer.pad_token_id
 
-    # model_kwargs = dict(
-    #     # Which attention implementation to use; you can run --attn_implementation=flash_attention_2,
-    #     # in which case you must install this manually by running `pip install flash-attn --no-build-isolation`
-    #     attn_implementation=None,
-    #     # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
-    #     # the dtype will be automatically derived from the model's weights."
-    #     torch_dtype='auto',
-    #     # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
-    #     use_cache=False,
-    #     device_map=get_kbit_device_map(),
-    #     quantization_config=quantization_config,
-    # )
-
-
     raw_datasets = load_dataset(args.dataset)
     train_dataset = raw_datasets["train"]
     eval_dataset = raw_datasets["test"] if "test" in raw_datasets else None
