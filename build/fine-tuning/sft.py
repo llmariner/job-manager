@@ -32,9 +32,11 @@ tqdm.pandas()
 # Helpers
 # --------------------------------------------------------------------------------
 
+# Create preprocessor to ensure training data is well-formed
 def build_chat_preprocessor(tokenizer):
     eos_id = tokenizer.eos_token_id
 
+    # Create a closure with tokenizer and eos to preprocess the dataset on the specific tokenizer
     def _preprocess(example):
         """Turn a list‑of‑messages into input_ids + single EOS."""
         text = tokenizer.apply_chat_template(
