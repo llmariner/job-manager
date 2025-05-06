@@ -72,7 +72,8 @@ if __name__ == "__main__":
         os.environ["WANDB_PROJECT"] = args.wandb_project
 
     # ------------------------------------------------------------------
-    # Tokenizer – set distinct PAD and right‑pad
+    # Tokenizer – set distinct PAD and right-pad. This isn't strictly necessary for all models, but
+    # it is for some models (e.g. Llama). It also sets the padding side to "right" for all models to be consistent
     # ------------------------------------------------------------------
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
     if tokenizer.pad_token is None:
@@ -93,11 +94,15 @@ if __name__ == "__main__":
     model = AutoModelForCausalLM.from_pretrained(
         args.model,
         attn_implementation=None,
+        # Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed,
+        # the dtype will be automatically derived from the model's weights."
         torch_dtype="auto",
+        # Setting this to False as `use_cache=True` is incompatible with gradient checkpointing.
         use_cache=False,
         device_map=get_kbit_device_map(),
         quantization_config=quantization_config,
     )
+    # Ensure the model and tokenizer agree on the pad token.
     model.config.pad_token_id = tokenizer.pad_token_id
 
     raw_datasets = load_dataset(args.dataset)
@@ -107,6 +112,8 @@ if __name__ == "__main__":
     preprocess_fn = build_chat_preprocessor(tokenizer)
     num_proc = min(4, os.cpu_count() or 1)
 
+    # Preprocess the datasets with eos_id at the end so even if a model doesn't do it by default we can still train it
+    # and it will learn to stop at the right time.
     train_dataset = train_dataset.map(preprocess_fn, remove_columns=train_dataset.column_names, num_proc=num_proc)
     if eval_dataset is not None:
         eval_dataset = eval_dataset.map(preprocess_fn, remove_columns=eval_dataset.column_names, num_proc=num_proc)
