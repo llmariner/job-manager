@@ -132,6 +132,7 @@ export type ListQueuedInternalNotebooksResponse = {
 export type UpdateNotebookStateRequest = {
   id?: string
   state?: NotebookState
+  reason?: string
 }
 
 export type UpdateNotebookStateResponse = {
