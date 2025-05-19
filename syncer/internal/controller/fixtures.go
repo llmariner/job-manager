@@ -31,7 +31,7 @@ func jobFixture(mutators ...func(job *batchv1.Job)) *batchv1.Job {
 				},
 			},
 			Template: podTemplateSpecFixture(func(spec *corev1.PodTemplateSpec) {
-				spec.ObjectMeta.Labels = labels
+				spec.Labels = labels
 			}),
 		},
 	}
