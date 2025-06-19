@@ -190,8 +190,9 @@ func (s *S) scheduleNotebook(ctx context.Context, nb *store.Notebook, gpuCount i
 		return sresult, status.Errorf(codes.Internal, "create k8s client: %s", err)
 	}
 	if err := kclient.CreateSecret(ctx, nb.NotebookID, sresult.Namespace, map[string][]byte{
-		"OPENAI_API_KEY": []byte(apiKey),
-		"NOTEBOOK_TOKEN": []byte(token),
+		"OPENAI_API_KEY":    []byte(apiKey),
+		"NOTEBOOK_TOKEN":    []byte(token),
+		"LLMARINER_API_KEY": []byte(apiKey),
 	}); err != nil {
 		return sresult, status.Errorf(codes.Internal, "create secret: %s", err)
 	}
