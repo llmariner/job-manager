@@ -60,8 +60,9 @@ func (m *Manager) Start(ctx context.Context) error {
 		return err
 	}
 
+	tick := time.NewTicker(m.updateInterval)
+	defer tick.Stop()
 	for {
-		tick := time.NewTicker(m.updateInterval)
 		select {
 		case <-tick.C:
 			if err := m.updateClusterStaus(ctx); err != nil {
