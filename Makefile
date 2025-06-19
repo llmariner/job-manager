@@ -49,6 +49,10 @@ build-docker-fine-tuning:
 build-docker-fake-job:
 	docker build --build-arg TARGETARCH=amd64 -t llmariner/fake-job:latest -f build/fake-job/Dockerfile build/fake-job
 
+.PHONY: build-docker-customized-notebook
+build-docker-customized-notebook:
+	docker build --build-arg TARGETARCH=amd64 -t llmariner/customized-notebook:latest -f build/customized-notebook/Dockerfile build/customized-notebook
+
 .PHONY: check-helm-tool
 check-helm-tool:
 	@command -v helm-tool >/dev/null 2>&1 || $(MAKE) install-helm-tool
