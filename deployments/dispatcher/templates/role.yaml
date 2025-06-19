@@ -1,0 +1,21 @@
+{{- if .Values.kubernetesManager.enableLeaderElection }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "job-manager-dispatcher.fullname" . }}
+  labels:
+    {{- include "job-manager-dispatcher.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+{{- end -}}
