@@ -324,7 +324,7 @@ kms:
 
 # Additional environment variables for the job-manager-server container.
 # +docs:property
-# job-manager-server:
+# jobManagerServer:
 #   env: []
 #   envFrom: []
 

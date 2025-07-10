@@ -23,7 +23,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-      - name: job-manager-syncer
+      - name: jobManagerSyncer
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ default .Chart.Version .Values.version }}"
@@ -48,20 +48,22 @@ spec:
         - name: health
           containerPort: {{ include "job-manager-syncer.healthPort" . }}
           protocol: TCP
-        {{- with .Values.tenant.apiKeySecret }}
         env:
+        {{- with .Values.tenant.apiKeySecret }}
         - name: LLMARINER_SYNCER_API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ .name }}
               key: {{ .key }}
-        {{- with .Values.jobManagerSyncer.env }}
+        {{- end }}
+        {{- with .Values.jobManagerSyncer}}
+          {{- with .env }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
-        {{- end }}
-        {{- with .Values.jobManagerSyncer.envFrom }}
+          {{- end }}
+          {{- with .envFrom }}
         envFrom:
         {{- toYaml . | nindent 8 }}
+          {{- end }}
         {{- end }}
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:

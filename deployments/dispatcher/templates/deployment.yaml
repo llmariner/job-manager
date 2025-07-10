@@ -23,7 +23,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-      - name: job-manager-dispatcher
+      - name: jobManagerDispatcher
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ default .Chart.Version .Values.version }}"
@@ -72,7 +72,7 @@ spec:
               key: {{ .key }}
         {{- end }}
         {{- end }}
-        {{- with index .Values "job-manager-dispatcher" }}
+        {{- with .Values.jobManagerDispatcher }}
           {{- with .env }}
         {{- toYaml . | nindent 8 }}
           {{- end }}
