@@ -22,7 +22,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-      - name: job-manager-server
+      - name: jobManagerServer
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         image: "{{ .Values.image.repository }}:{{ default .Chart.Version .Values.version }}"
@@ -59,6 +59,15 @@ spec:
             secretKeyRef:
               name: {{ .Values.global.databaseSecret.name }}
               key: {{ .Values.global.databaseSecret.key }}
+        {{- with .Values.jobManagerServer }}
+          {{- with .env }}
+        {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .envFrom }}
+        envFrom:
+        {{- toYaml . | nindent 8 }}
+          {{- end }}
+        {{- end }}
         {{- if .Values.livenessProbe.enabled }}
         livenessProbe:
           httpGet:
