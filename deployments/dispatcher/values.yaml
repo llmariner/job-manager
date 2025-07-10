@@ -301,7 +301,7 @@ securityContext:
 
 # Additional environment variables for the job-manager-dispatcher container.
 # +docs:property
-# jobManagerDispatcher:
+# job-manager-dispatcher:
 #   env: []
 #   envFrom: []
 
