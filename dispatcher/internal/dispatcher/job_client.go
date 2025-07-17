@@ -120,9 +120,17 @@ func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1app
 					WithKey(s.Key))))
 	}
 
+	volName := "tmp-volume"
+
+	container = container.WithVolumeMounts(corev1apply.VolumeMount().WithName(volName).WithMountPath("/tmp"))
+
 	podSpec := corev1apply.PodSpec().
 		WithContainers(container).
 		WithRestartPolicy(corev1.RestartPolicyNever)
+
+	podSpec = podSpec.WithVolumes(corev1apply.Volume().WithName(volName).WithEmptyDir(
+		corev1apply.EmptyDirVolumeSource().WithMedium("Memory")))
+
 	jobSpec := batchv1apply.JobSpec().
 		WithTTLSecondsAfterFinished(int32(jobTTL.Seconds())).
 		// Do not allow retries to simplify the failure handling.

@@ -2,6 +2,7 @@ set -euo pipefail
 set -x
 
 # Download the model and the training file.
+cd /tmp
 mkdir base-model
 
 {{ range $path, $url := .BaseModelURLs }}
@@ -23,12 +24,12 @@ accelerate launch \
   --num_machines=1 \
   --num_cpu_threads_per_process=1 \
   --dynamo_backend=no \
-  ./sft.py \
+  /build/sft.py \
   --model=./base-model \
   --dataset=./dataset \
   --output=./output {{ .AdditionalSFTArgs }}
 
-python ./convert-lora-to-ggml.py ./output
+python /build/convert-lora-to-ggml.py ./output
 
 # We don't need the checkpoint files.
 rm -rf output/checkpoint-*
