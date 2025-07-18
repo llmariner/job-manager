@@ -71,7 +71,7 @@ type NotebookManager struct {
 	storageSize      string
 	mountPath        string
 
-	workloadCofig config.WorkloadConfig
+	workloadConfig config.WorkloadConfig
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
