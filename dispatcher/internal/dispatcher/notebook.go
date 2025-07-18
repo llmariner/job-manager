@@ -246,7 +246,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 
 	podSpec := corev1apply.PodSpec().
 		WithContainers(containerConf)
-	podSpec = applyWorkloadConfig(podSpec, n.workloadCofig)
+	podSpec = applyWorkloadConfig(podSpec, n.workloadConfig)
 
 	if n.enablePVC {
 		podSpec = podSpec.
