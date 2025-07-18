@@ -257,7 +257,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	}
 
 	podTemplateSpec := corev1apply.PodTemplateSpec().
-		WithAnnotations(n.workloadCofig.PodAnnotations).
+		WithAnnotations(n.workloadConfig.PodAnnotations).
 		WithLabels(labels).
 		WithSpec(podSpec)
 
