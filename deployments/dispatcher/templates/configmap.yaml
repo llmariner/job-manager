@@ -30,7 +30,7 @@ data:
     workloadConfig:
       {{- with .Values.podAnnotations }}
       podAnnotations:
-        {{- toYaml . | nindent 8 }}R
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
