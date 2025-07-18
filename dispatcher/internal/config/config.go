@@ -8,6 +8,7 @@ import (
 	"github.com/llmariner/cluster-manager/pkg/status"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
+	kyaml "sigs.k8s.io/yaml"
 )
 
 // AssumeRoleConfig is the assume role configuration.
@@ -141,6 +142,25 @@ func (c *NotebooksConfig) validate() error {
 	return nil
 }
 
+// TolerationConfig is the toleration configuration.
+type TolerationConfig struct {
+	Key               string `yaml:"key"`
+	Operator          string `yaml:"operator"`
+	Value             string `yaml:"value"`
+	Effect            string `yaml:"effect"`
+	TolerationSeconds int64  `yaml:"tolerationSeconds"`
+}
+
+// WorkloadConfig is the workload configuration.
+type WorkloadConfig struct {
+	PodAnnotations map[string]string `yaml:"podAnnotations"`
+
+	NodeSelector         map[string]string  `yaml:"nodeSelector"`
+	Tolerations          []TolerationConfig `yaml:"tolerations"`
+	UnstructuredAffinity any                `yaml:"affinity"`
+	Affinity             *corev1.Affinity   `yaml:"-"`
+}
+
 // KueueConfig is the Kueue configuration.
 type KueueConfig struct {
 	Enable bool `yaml:"enable"`
@@ -175,6 +195,8 @@ type Config struct {
 
 	Job      JobConfig       `yaml:"job"`
 	Notebook NotebooksConfig `yaml:"notebook"`
+
+	Workload WorkloadConfig `yaml:"workloadConfig"`
 
 	JobManagerServerWorkerServiceAddr   string `yaml:"jobManagerServerWorkerServiceAddr"`
 	FileManagerServerWorkerServiceAddr  string `yaml:"fileManagerServerWorkerServiceAddr"`
@@ -256,5 +278,18 @@ func Parse(path string) (Config, error) {
 	if err = yaml.Unmarshal(b, &config); err != nil {
 		return config, fmt.Errorf("config: unmarshal: %s", err)
 	}
+
+	if a := config.Workload.UnstructuredAffinity; a != nil {
+		data, err := yaml.Marshal(a)
+		if err != nil {
+			return config, fmt.Errorf("config: marshal affinity: %s", err)
+		}
+		var affinity corev1.Affinity
+		if err := kyaml.Unmarshal(data, &affinity); err != nil {
+			return config, fmt.Errorf("config: unmarshal affinity: %s", err)
+		}
+		config.Workload.Affinity = &affinity
+	}
+
 	return config, nil
 }

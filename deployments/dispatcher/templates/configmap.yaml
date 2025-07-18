@@ -27,6 +27,23 @@ data:
       storageClassName: {{ .Values.notebook.storageClassName }}
       storageSize: {{ .Values.notebook.storageSize }}
       mountPath: {{ .Values.notebook.mountPath }}
+    workloadConfig:
+      {{- with .Values.podAnnotations }}
+      podAnnotations:
+        {{- toYaml . | nindent 8 }}R
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     jobManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.jobManagerServerWorkerServiceAddr }}
     fileManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.fileManagerServerWorkerServiceAddr }}
     modelManagerServerWorkerServiceAddr: {{ .Values.global.worker.controlPlaneAddr | default .Values.modelManagerServerWorkerServiceAddr }}

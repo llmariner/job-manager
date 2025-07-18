@@ -86,6 +86,7 @@ func run(ctx context.Context, c *config.Config) error {
 		mgr.GetClient(),
 		c.Job,
 		c.KueueIntegration,
+		c.Workload,
 	)
 
 	option := grpcOption(c)
@@ -124,20 +125,21 @@ func run(ctx context.Context, c *config.Config) error {
 	wsClient := v1.NewWorkspaceWorkerServiceClient(jconn)
 	bwClient := v1.NewBatchWorkerServiceClient(jconn)
 
-	nbm := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook)
+	nbm := dispatcher.NewNotebookManager(mgr.GetClient(), wsClient, c.Notebook, c.Workload)
 	if err := nbm.SetupWithManager(mgr); err != nil {
 		return err
 	}
 
 	bjm := dispatcher.NewBatchJobManager(dispatcher.BatchJobManagerOptions{
-		K8sClient:   mgr.GetClient(),
-		S3Client:    s3Client,
-		FileClient:  fclient,
-		BwClient:    bwClient,
-		LlmaBaseURL: c.Notebook.LLMarinerBaseURL,
-		WandbConfig: c.Job.WandbAPIKeySecret,
-		KueueConfig: c.KueueIntegration,
-		S3Bucket:    c.ObjectStore.S3.Bucket,
+		K8sClient:      mgr.GetClient(),
+		S3Client:       s3Client,
+		FileClient:     fclient,
+		BwClient:       bwClient,
+		LlmaBaseURL:    c.Notebook.LLMarinerBaseURL,
+		WandbConfig:    c.Job.WandbAPIKeySecret,
+		KueueConfig:    c.KueueIntegration,
+		WorkloadConfig: c.Workload,
+		S3Bucket:       c.ObjectStore.S3.Bucket,
 	})
 	if err := bjm.SetupWithManager(mgr); err != nil {
 		return err

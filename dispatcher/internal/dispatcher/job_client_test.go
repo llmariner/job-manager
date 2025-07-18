@@ -67,7 +67,7 @@ func TestJobCmd(t *testing.T) {
 				},
 			})
 
-			jc := NewJobClient(kc, tc.jobConfig, config.KueueConfig{})
+			jc := NewJobClient(kc, tc.jobConfig, config.KueueConfig{}, config.WorkloadConfig{})
 
 			presult := &PreProcessResult{
 				BaseModelURLs: map[string]string{
