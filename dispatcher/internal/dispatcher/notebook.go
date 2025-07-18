@@ -55,7 +55,7 @@ func NewNotebookManager(
 		storageSize:      config.StorageSize,
 		mountPath:        config.MountPath,
 
-		workloadCofig: workloadCofig,
+		workloadConfig: workloadConfig,
 	}
 }
 
