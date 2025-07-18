@@ -67,8 +67,9 @@ type BatchJobManagerOptions struct {
 
 	LlmaBaseURL string
 
-	WandbConfig config.WandbAPIKeySecretConfig
-	KueueConfig config.KueueConfig
+	WandbConfig    config.WandbAPIKeySecretConfig
+	KueueConfig    config.KueueConfig
+	WorkloadConfig config.WorkloadConfig
 
 	S3Bucket string
 }
@@ -76,14 +77,15 @@ type BatchJobManagerOptions struct {
 // NewBatchJobManager returns a new batch job manager.
 func NewBatchJobManager(opts BatchJobManagerOptions) *BatchJobManager {
 	return &BatchJobManager{
-		k8sClient:   opts.K8sClient,
-		s3Client:    opts.S3Client,
-		fileClient:  opts.FileClient,
-		bwClient:    opts.BwClient,
-		llmaBaseURL: opts.LlmaBaseURL,
-		wandbConfig: opts.WandbConfig,
-		kueueConfig: opts.KueueConfig,
-		s3Bucket:    opts.S3Bucket,
+		k8sClient:      opts.K8sClient,
+		s3Client:       opts.S3Client,
+		fileClient:     opts.FileClient,
+		bwClient:       opts.BwClient,
+		llmaBaseURL:    opts.LlmaBaseURL,
+		wandbConfig:    opts.WandbConfig,
+		kueueConfig:    opts.KueueConfig,
+		workloadConfig: opts.WorkloadConfig,
+		s3Bucket:       opts.S3Bucket,
 	}
 }
 
@@ -96,8 +98,9 @@ type BatchJobManager struct {
 
 	llmaBaseURL string
 
-	wandbConfig config.WandbAPIKeySecretConfig
-	kueueConfig config.KueueConfig
+	wandbConfig    config.WandbAPIKeySecretConfig
+	kueueConfig    config.KueueConfig
+	workloadConfig config.WorkloadConfig
 
 	s3Bucket string
 }
@@ -325,6 +328,36 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 		corev1apply.VolumeMount().WithName("scripts-volume").WithMountPath(scriptsPath),
 	}
 
+	podSpec := corev1apply.PodSpec().
+		WithSubdomain(subdomain).
+		WithRestartPolicy(corev1.RestartPolicyNever).
+		WithInitContainers(corev1apply.Container().
+			WithName("init").
+			WithImage(initImage).
+			WithCommand("/bin/sh", "-c", initScript.String()).
+			WithEnv(initEnvs...).
+			WithVolumeMounts(volumeMounts...)).
+		WithContainers(corev1apply.Container().
+			WithName("main").
+			WithImage(ibjob.Job.Image).
+			WithCommand("/bin/bash", "-c", boostrapScript.String()).
+			WithResources(resources).
+			WithPorts(ports...).
+			WithEnv(envs...).
+			WithEnvFrom(corev1apply.EnvFromSource().
+				WithSecretRef(corev1apply.SecretEnvSource().
+					WithName(name))).
+			WithVolumeMounts(volumeMounts...)).
+		WithVolumes(
+			corev1apply.Volume().
+				WithName("share-volume").
+				WithEmptyDir(corev1apply.EmptyDirVolumeSource()),
+			corev1apply.Volume().
+				WithName("scripts-volume").
+				WithConfigMap(corev1apply.ConfigMapVolumeSource().
+					WithName(name)))
+	podSpec = applyWorkloadConfig(podSpec, m.workloadConfig)
+
 	jobConf := batchv1apply.
 		Job(name, ibjob.Job.KubernetesNamespace).
 		WithLabels(labels).
@@ -338,34 +371,8 @@ func (m *BatchJobManager) createBatchJob(ctx context.Context, ibjob *v1.Internal
 			WithParallelism(replicas).
 			WithBackoffLimit(0).
 			WithTemplate(corev1apply.PodTemplateSpec().
-				WithSpec(corev1apply.PodSpec().
-					WithSubdomain(subdomain).
-					WithRestartPolicy(corev1.RestartPolicyNever).
-					WithInitContainers(corev1apply.Container().
-						WithName("init").
-						WithImage(initImage).
-						WithCommand("/bin/sh", "-c", initScript.String()).
-						WithEnv(initEnvs...).
-						WithVolumeMounts(volumeMounts...)).
-					WithContainers(corev1apply.Container().
-						WithName("main").
-						WithImage(ibjob.Job.Image).
-						WithCommand("/bin/bash", "-c", boostrapScript.String()).
-						WithResources(resources).
-						WithPorts(ports...).
-						WithEnv(envs...).
-						WithEnvFrom(corev1apply.EnvFromSource().
-							WithSecretRef(corev1apply.SecretEnvSource().
-								WithName(name))).
-						WithVolumeMounts(volumeMounts...)).
-					WithVolumes(
-						corev1apply.Volume().
-							WithName("share-volume").
-							WithEmptyDir(corev1apply.EmptyDirVolumeSource()),
-						corev1apply.Volume().
-							WithName("scripts-volume").
-							WithConfigMap(corev1apply.ConfigMapVolumeSource().
-								WithName(name))))))
+				WithAnnotations(m.workloadConfig.PodAnnotations).
+				WithSpec(podSpec)))
 
 	kjob, err := m.applyObject(ctx, jobConf)
 	if err != nil {

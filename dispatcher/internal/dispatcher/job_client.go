@@ -45,19 +45,22 @@ func NewJobClient(
 	k8sClient client.Client,
 	jobConfig config.JobConfig,
 	kueueConfig config.KueueConfig,
+	workloadConfig config.WorkloadConfig,
 ) *JobClient {
 	return &JobClient{
-		k8sClient:   k8sClient,
-		jobConfig:   jobConfig,
-		kueueConfig: kueueConfig,
+		k8sClient:      k8sClient,
+		jobConfig:      jobConfig,
+		kueueConfig:    kueueConfig,
+		workloadConfig: workloadConfig,
 	}
 }
 
 // JobClient operates a Kubernetes Job resource for a job.
 type JobClient struct {
-	k8sClient   client.Client
-	jobConfig   config.JobConfig
-	kueueConfig config.KueueConfig
+	k8sClient      client.Client
+	jobConfig      config.JobConfig
+	kueueConfig    config.KueueConfig
+	workloadConfig config.WorkloadConfig
 }
 
 func (p *JobClient) createJob(ctx context.Context, ijob *v1.InternalJob, presult *PreProcessResult) error {
@@ -123,12 +126,15 @@ func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1app
 	podSpec := corev1apply.PodSpec().
 		WithContainers(container).
 		WithRestartPolicy(corev1.RestartPolicyNever)
+	podSpec = applyWorkloadConfig(podSpec, p.workloadConfig)
+
 	jobSpec := batchv1apply.JobSpec().
 		WithTTLSecondsAfterFinished(int32(jobTTL.Seconds())).
 		// Do not allow retries to simplify the failure handling.
 		// TODO(kenji): Revisit.
 		WithBackoffLimit(0).
 		WithTemplate(corev1apply.PodTemplateSpec().
+			WithAnnotations(p.workloadConfig.PodAnnotations).
 			WithSpec(podSpec))
 	return jobSpec, nil
 }

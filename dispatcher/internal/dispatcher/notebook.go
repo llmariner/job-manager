@@ -44,6 +44,7 @@ func NewNotebookManager(
 	k8sClient client.Client,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	config config.NotebooksConfig,
+	workloadConfig config.WorkloadConfig,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
@@ -53,6 +54,8 @@ func NewNotebookManager(
 		storageClassName: config.StorageClassName,
 		storageSize:      config.StorageSize,
 		mountPath:        config.MountPath,
+
+		workloadConfig: workloadConfig,
 	}
 }
 
@@ -67,6 +70,8 @@ type NotebookManager struct {
 	storageClassName string
 	storageSize      string
 	mountPath        string
+
+	workloadConfig config.WorkloadConfig
 }
 
 // SetupWithManager registers the LifecycleManager with the manager.
@@ -232,25 +237,29 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 				WithName(nb.Notebook.Id))).
 		WithResources(resources)
 
-	podTemplateSpec := corev1apply.PodTemplateSpec().
-		WithLabels(labels).
-		WithSpec(corev1apply.PodSpec().
-			WithContainers(containerConf))
-
 	if n.enablePVC {
 		containerConf = containerConf.
 			WithVolumeMounts(corev1apply.VolumeMount().
 				WithName(pvcMountName).
 				WithMountPath(n.mountPath))
-		podTemplateSpec = corev1apply.PodTemplateSpec().
-			WithLabels(labels).
-			WithSpec(corev1apply.PodSpec().
-				WithContainers(containerConf).
-				WithVolumes(corev1apply.Volume().
-					WithName(pvcMountName).
-					WithPersistentVolumeClaim(corev1apply.PersistentVolumeClaimVolumeSource().
-						WithClaimName(name))))
 	}
+
+	podSpec := corev1apply.PodSpec().
+		WithContainers(containerConf)
+	podSpec = applyWorkloadConfig(podSpec, n.workloadConfig)
+
+	if n.enablePVC {
+		podSpec = podSpec.
+			WithVolumes(corev1apply.Volume().
+				WithName(pvcMountName).
+				WithPersistentVolumeClaim(corev1apply.PersistentVolumeClaimVolumeSource().
+					WithClaimName(name)))
+	}
+
+	podTemplateSpec := corev1apply.PodTemplateSpec().
+		WithAnnotations(n.workloadConfig.PodAnnotations).
+		WithLabels(labels).
+		WithSpec(podSpec)
 
 	deployConf := appsv1apply.
 		Deployment(name, nb.Notebook.KubernetesNamespace).

@@ -171,7 +171,7 @@ func TestReconcileNotebook(t *testing.T) {
 				updatedState: map[string]v1.NotebookState{},
 			}
 
-			mgr := NewNotebookManager(k8sClient, wsClient, config.NotebooksConfig{})
+			mgr := NewNotebookManager(k8sClient, wsClient, config.NotebooksConfig{}, config.WorkloadConfig{})
 			_, err := mgr.Reconcile(context.Background(), req)
 			assert.NoError(t, err)
 
