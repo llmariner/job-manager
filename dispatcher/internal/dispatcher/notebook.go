@@ -44,7 +44,7 @@ func NewNotebookManager(
 	k8sClient client.Client,
 	wsClient v1.WorkspaceWorkerServiceClient,
 	config config.NotebooksConfig,
-	workloadCofig config.WorkloadConfig,
+	workloadConfig config.WorkloadConfig,
 ) *NotebookManager {
 	return &NotebookManager{
 		k8sClient:        k8sClient,
