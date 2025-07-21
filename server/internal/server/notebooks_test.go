@@ -50,6 +50,17 @@ func TestCreateNotebook(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "negative port",
+			req: &v1.CreateNotebookRequest{
+				Name: "nb0",
+				Image: &v1.CreateNotebookRequest_Image{
+					Image: &v1.CreateNotebookRequest_Image_Type{Type: "t0"},
+				},
+				AdditionalExposedPorts: []int32{-1},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range tcs {

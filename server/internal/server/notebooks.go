@@ -31,6 +31,12 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
+	for i, p := range req.AdditionalExposedPorts {
+		if p <= 0 || p > 65535 {
+			return nil, status.Errorf(codes.InvalidArgument, "exposed port[%d] must be in the range 1-65535, but got: %d", i, p)
+		}
+	}
+
 	if req.Image == nil {
 		return nil, status.Error(codes.InvalidArgument, "image is required")
 	}
@@ -126,6 +132,8 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 		OrganizationTitle: userInfo.OrganizationTitle,
 		ProjectTitle:      userInfo.ProjectTitle,
 		ClusterName:       sresult.ClusterName,
+
+		AdditionalExposedPorts: req.AdditionalExposedPorts,
 	}
 	msg, err := proto.Marshal(nbProto)
 	if err != nil {

@@ -49,6 +49,7 @@ export type Notebook = {
     organization_title?: string;
     project_title?: string;
     cluster_name?: string;
+    additional_exposed_ports?: number[];
 };
 export type ResourcesQuantity = {
     requests?: number;
@@ -72,6 +73,7 @@ export type CreateNotebookRequest = {
     envs?: {
         [key: string]: string;
     };
+    additional_exposed_ports?: number[];
 };
 export type ListNotebooksRequest = {
     after?: string;
