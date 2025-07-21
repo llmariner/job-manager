@@ -291,6 +291,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	}
 	for _, p := range nb.Notebook.AdditionalExposedPorts {
 		svcPorts = append(svcPorts, corev1apply.ServicePort().
+			WithName(fmt.Sprintf("port-%d", p)).
 			WithPort(p).
 			WithTargetPort(intstr.FromInt(int(p))).
 			WithProtocol(corev1.ProtocolTCP))
