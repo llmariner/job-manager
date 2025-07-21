@@ -214,6 +214,18 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 	)
 	baseURL := fmt.Sprintf("/v1/sessions/%s/v1/services/notebooks/%s/%s", nb.Notebook.ClusterId, nb.Notebook.Id, nb.Notebook.KubernetesNamespace)
 
+	ports := []*corev1apply.ContainerPortApplyConfiguration{
+		corev1apply.ContainerPort().
+			WithName(portName).
+			WithContainerPort(appPort).
+			WithProtocol(corev1.ProtocolTCP),
+	}
+	for _, p := range nb.Notebook.AdditionalExposedPorts {
+		ports = append(ports, corev1apply.ContainerPort().
+			WithContainerPort(p).
+			WithProtocol(corev1.ProtocolTCP))
+	}
+
 	containerConf := corev1apply.Container().
 		WithName(nbContainerName).
 		WithImage(nb.Notebook.Image).
@@ -227,10 +239,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 			// via Session Manager/Agent and internal ingress controller.
 			// TODO(kenji): Tighten this.
 			"--NotebookApp.allow_origin=*").
-		WithPorts(corev1apply.ContainerPort().
-			WithName(portName).
-			WithContainerPort(appPort).
-			WithProtocol(corev1.ProtocolTCP)).
+		WithPorts(ports...).
 		WithEnv(envs...).
 		WithEnvFrom(corev1apply.EnvFromSource().
 			WithSecretRef(corev1apply.SecretEnvSource().
@@ -273,6 +282,20 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 				WithMatchLabels(labels)).
 			WithTemplate(podTemplateSpec))
 
+	svcPorts := []*corev1apply.ServicePortApplyConfiguration{
+		corev1apply.ServicePort().
+			WithName(portName).
+			WithPort(appPort).
+			WithTargetPort(intstr.FromString(portName)).
+			WithProtocol(corev1.ProtocolTCP),
+	}
+	for _, p := range nb.Notebook.AdditionalExposedPorts {
+		svcPorts = append(svcPorts, corev1apply.ServicePort().
+			WithPort(p).
+			WithTargetPort(intstr.FromInt(int(p))).
+			WithProtocol(corev1.ProtocolTCP))
+	}
+
 	svcConf := corev1apply.Service(name, nb.Notebook.KubernetesNamespace).
 		WithLabels(labels).
 		WithAnnotations(map[string]string{
@@ -281,11 +304,7 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		WithSpec(corev1apply.ServiceSpec().
 			WithType(corev1.ServiceTypeClusterIP).
 			WithSelector(labels).
-			WithPorts(corev1apply.ServicePort().
-				WithName(portName).
-				WithPort(appPort).
-				WithTargetPort(intstr.FromString(portName)).
-				WithProtocol(corev1.ProtocolTCP)))
+			WithPorts(svcPorts...))
 
 	patchOpts := &client.PatchOptions{FieldManager: nbManagerName, Force: ptr.To(true)}
 	deploy, err := n.applyObject(ctx, deployConf, patchOpts)
