@@ -36,6 +36,8 @@ message Notebook {
   string organization_title = 20;
   string project_title = 21;
   string cluster_name = 22;
+
+  repeated int32 additional_exposed_ports = 23;
 }
 
 message Resources {
@@ -65,6 +67,8 @@ message CreateNotebookRequest {
   Image image = 2;
   Resources resources = 3;
   map<string, string> envs = 4;
+
+  repeated int32 additional_exposed_ports = 5;
 }
 
 message ListNotebooksRequest {

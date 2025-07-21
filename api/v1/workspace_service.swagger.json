@@ -296,6 +296,13 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "additionalExposedPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
         }
       }
     },
@@ -409,6 +416,13 @@
         },
         "clusterName": {
           "type": "string"
+        },
+        "additionalExposedPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
         }
       }
     },

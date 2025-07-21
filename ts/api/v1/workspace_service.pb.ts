@@ -58,6 +58,7 @@ export type Notebook = {
   organization_title?: string
   project_title?: string
   cluster_name?: string
+  additional_exposed_ports?: number[]
 }
 
 export type ResourcesQuantity = {
@@ -84,6 +85,7 @@ export type CreateNotebookRequest = {
   image?: CreateNotebookRequestImage
   resources?: Resources
   envs?: {[key: string]: string}
+  additional_exposed_ports?: number[]
 }
 
 export type ListNotebooksRequest = {
