@@ -32,8 +32,8 @@ func (s *S) CreateNotebook(ctx context.Context, req *v1.CreateNotebookRequest) (
 	}
 
 	for i, p := range req.AdditionalExposedPorts {
-		if p <= 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "exposed port[%d] must be greater than 0, but got: %d", i, p)
+		if p <= 0 || p > 65535 {
+			return nil, status.Errorf(codes.InvalidArgument, "exposed port[%d] must be in the range 1-65535, but got: %d", i, p)
 		}
 	}
 
