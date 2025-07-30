@@ -3,11 +3,13 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/llmariner/cluster-manager/pkg/status"
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	kyaml "sigs.k8s.io/yaml"
 )
 
@@ -135,8 +137,15 @@ func (c *NotebooksConfig) validate() error {
 		if c.StorageSize == "" {
 			return fmt.Errorf("storage size must be set")
 		}
+		if _, err := resource.ParseQuantity(c.StorageSize); err != nil {
+			return fmt.Errorf("invalid storage size: %s", err)
+		}
+
 		if c.MountPath == "" {
 			return fmt.Errorf("mount path must be set")
+		}
+		if !strings.HasPrefix(c.MountPath, "/") {
+			return fmt.Errorf("mount path must start with a slash")
 		}
 	}
 	return nil
