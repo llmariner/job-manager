@@ -133,6 +133,8 @@ notebook:
   storageSize: "100Gi"
   # The path where the notebook volume will be attached.
   mountPath: ""
+  # Whether we allow users to run sudo. Currently a container user becomes root.
+  grantSudo: false
 
 # Specify how frequently cluster status is updated.
 clusterStatusUpdateInterval: 1m

@@ -47,13 +47,15 @@ func NewNotebookManager(
 	workloadConfig config.WorkloadConfig,
 ) *NotebookManager {
 	return &NotebookManager{
-		k8sClient:        k8sClient,
-		wsClient:         wsClient,
+		k8sClient: k8sClient,
+		wsClient:  wsClient,
+
 		llmaBaseURL:      config.LLMarinerBaseURL,
 		enablePVC:        config.EnablePVC,
 		storageClassName: config.StorageClassName,
 		storageSize:      config.StorageSize,
 		mountPath:        config.MountPath,
+		grantSudo:        config.GrantSudo,
 
 		workloadConfig: workloadConfig,
 	}
@@ -70,6 +72,7 @@ type NotebookManager struct {
 	storageClassName string
 	storageSize      string
 	mountPath        string
+	grantSudo        bool
 
 	workloadConfig config.WorkloadConfig
 }
@@ -175,6 +178,11 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		corev1apply.EnvVar().WithName("OPENAI_ORG_ID").WithValue(nb.Notebook.OrganizationId),
 		corev1apply.EnvVar().WithName("OPENAI_PROJECT_ID").WithValue(nb.Notebook.ProjectId),
 	)
+	if n.grantSudo {
+		// We don't need to set GRANT_SUDO=yes here as the user runs as a root.
+		// TODO(kenji): Revisit if we change.
+		envs = append(envs, corev1apply.EnvVar().WithName("NOTEBOOK_ARGS").WithValue("--allow-root"))
+	}
 
 	req := corev1.ResourceList{}
 	limit := corev1.ResourceList{}
@@ -245,6 +253,14 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 			WithSecretRef(corev1apply.SecretEnvSource().
 				WithName(nb.Notebook.Id))).
 		WithResources(resources)
+
+	if n.grantSudo {
+		containerConf = containerConf.
+			WithSecurityContext(corev1apply.SecurityContext().
+				WithRunAsUser(0).
+				WithRunAsGroup(0).
+				WithRunAsNonRoot(false))
+	}
 
 	if n.enablePVC {
 		containerConf = containerConf.
