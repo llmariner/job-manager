@@ -179,7 +179,8 @@ func (n *NotebookManager) createNotebook(ctx context.Context, nb *v1.InternalNot
 		corev1apply.EnvVar().WithName("OPENAI_PROJECT_ID").WithValue(nb.Notebook.ProjectId),
 	)
 	if n.grantSudo {
-		// We don't need to set GRANT_SUDO=yes here as the user runs as a root.
+		// GRANT_SUDO is a Jupyter environment variable that grants sudo access to non-root users.
+		// We don't need to set GRANT_SUDO=yes here because the user is already running as root.
 		// TODO(kenji): Revisit if we change.
 		envs = append(envs, corev1apply.EnvVar().WithName("NOTEBOOK_ARGS").WithValue("--allow-root"))
 	}
