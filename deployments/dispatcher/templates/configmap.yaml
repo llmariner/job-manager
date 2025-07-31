@@ -27,6 +27,7 @@ data:
       storageClassName: {{ .Values.notebook.storageClassName }}
       storageSize: {{ .Values.notebook.storageSize }}
       mountPath: {{ .Values.notebook.mountPath }}
+      grantSudo: {{ .Values.notebook.grantSudo }}
     workloadConfig:
       {{- with .Values.podAnnotations }}
       podAnnotations:

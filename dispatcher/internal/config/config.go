@@ -123,6 +123,7 @@ type NotebooksConfig struct {
 	StorageClassName string `yaml:"storageClassName"`
 	StorageSize      string `yaml:"storageSize"`
 	MountPath        string `yaml:"mountPath"`
+	GrantSudo        bool   `yaml:"grantSudo"`
 }
 
 // validate validates the notebooks configuration.
