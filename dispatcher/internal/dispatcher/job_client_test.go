@@ -57,6 +57,20 @@ func TestJobCmd(t *testing.T) {
 			goldenFile:  "testdata/command.multi-gpu.golden",
 			expGPUCount: 4,
 		},
+		{
+			name: "curl flags",
+			jobConfig: config.JobConfig{
+				CurlFlags: "--insecure",
+			},
+			job: &v1.Job{
+				Model: "model-id",
+				Resources: &v1.Job_Resources{
+					GpuCount: 2,
+				},
+			},
+			goldenFile:  "testdata/command.curl_flags.golden",
+			expGPUCount: 2,
+		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {

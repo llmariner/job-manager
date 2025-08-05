@@ -1,0 +1,37 @@
+set -euo pipefail
+set -x
+
+# Download the model and the training file.
+mkdir base-model
+
+
+mkdir -p $(dirname base-model/config.json)
+curl --insecure --fail --no-progress-meter --output base-model/config.json "https://example.com/config.json"
+
+
+mkdir dataset/
+curl --insecure --fail --no-progress-meter --output dataset/train.json "https://example.com/training-file"
+
+curl --insecure --fail --no-progress-meter --output dataset/test.json "https://example.com/validation-file"
+
+
+mkdir output
+
+accelerate launch \
+  --mixed_precision=no \
+  --num_processes=2 \
+  --num_machines=1 \
+  --num_cpu_threads_per_process=1 \
+  --dynamo_backend=no \
+  ./sft.py \
+  --model=./base-model \
+  --dataset=./dataset \
+  --output=./output 
+
+python ./convert-lora-to-ggml.py ./output
+
+# We don't need the checkpoint files.
+rm -rf output/checkpoint-*
+
+# Upload all files under the "output" directory.
+find output -type f -exec curl --insecure --fail --no-progress-meter --request POST -F 'key=value' -F file=@{} "https://example.com/output-model" \;
