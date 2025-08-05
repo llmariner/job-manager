@@ -110,6 +110,8 @@ job:
   # Specify whether the BitsAndBytes quantization is used by fine-tuning jobs.
   # Set this to false when the quantization config is obtained from model files.
   useBitsAndBytesQuantization: true
+  # Specify flags that are passed to curl when downloading models (e.g., --insecure).
+  curlFlags: ""
 
 # Configuration for the [Kueue](https://kueue.sigs.k8s.io/) integration.
 kueueIntegration:

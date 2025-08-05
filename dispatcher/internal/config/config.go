@@ -96,6 +96,10 @@ type JobConfig struct {
 
 	// UseBitsAndBytesQuantization is a flag to enable bits and bytes quantization.
 	UseBitsAndBytesQuantization bool `yaml:"useBitsAndBytesQuantization"`
+
+	// CurlFlags specifies flags that are passed to curl when downloading
+	// models (e.g., --insecure).
+	CurlFlags string `yaml:"curlFlags"`
 }
 
 // validate validates the job configuration.

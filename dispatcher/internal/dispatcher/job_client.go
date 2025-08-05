@@ -161,6 +161,8 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, er
 
 		NumProcessors     int
 		AdditionalSFTArgs string
+
+		CurlFlags string
 	}
 	numProcessors, err := getGpuCount(job)
 	if err != nil {
@@ -169,6 +171,11 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, er
 	additionalSFTArgs, err := toAddtionalSFTArgs(job, p.jobConfig)
 	if err != nil {
 		return "", 0, err
+	}
+
+	curlFlags := "--fail --no-progress-meter"
+	if cf := p.jobConfig.CurlFlags; cf != "" {
+		curlFlags = fmt.Sprintf("%s %s", cf, curlFlags)
 	}
 
 	params := Params{
@@ -181,6 +188,8 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, er
 
 		NumProcessors:     numProcessors,
 		AdditionalSFTArgs: additionalSFTArgs,
+
+		CurlFlags: curlFlags,
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, &params); err != nil {
