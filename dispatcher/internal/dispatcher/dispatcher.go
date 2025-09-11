@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/avast/retry-go"
 	v1 "github.com/llmariner/job-manager/api/v1"
 	"github.com/llmariner/rbac-manager/pkg/auth"
 	"golang.org/x/sync/errgroup"
@@ -99,7 +100,11 @@ func (d *D) Start(ctx context.Context) error {
 				case <-ctx.Done():
 					return ctx.Err()
 				case <-ticker.C:
-					if err := fn(ctx); err != nil {
+					if err := retry.Do(func() error { return fn(ctx) },
+						retry.Context(ctx),
+						retry.Attempts(5),
+						retry.Delay(30*time.Second),
+					); err != nil {
 						return err
 					}
 				}
