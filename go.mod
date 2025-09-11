@@ -5,6 +5,7 @@ go 1.23.2
 toolchain go1.23.4
 
 require (
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go-v2 v1.32.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.63.2
 	github.com/go-logr/logr v1.4.2
