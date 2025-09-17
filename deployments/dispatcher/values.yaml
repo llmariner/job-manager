@@ -138,6 +138,13 @@ notebook:
   # Whether we allow users to run sudo. Currently a container user becomes root.
   grantSudo: false
 
+# Optional S3 configs used to download training files.
+# +docs:property
+# optionalS3s:
+# - region: ""
+#   bucket: ""
+#   secretFilePath: ""
+
 # Specify how frequently cluster status is updated.
 clusterStatusUpdateInterval: 1m
 
