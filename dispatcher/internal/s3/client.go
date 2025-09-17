@@ -26,6 +26,13 @@ func NewClient(ctx context.Context, c config.S3Config) (*Client, error) {
 			ExternalID: ar.ExternalID,
 		}
 	}
+	if s := c.Secret; s != nil {
+		opts.Secret = &laws.Secret{
+			AccessKeyID:     s.AccessKeyID,
+			SecretAccessKey: s.SecretAccessKey,
+		}
+	}
+
 	svc, err := laws.NewS3Client(ctx, opts)
 	if err != nil {
 		return nil, err
