@@ -46,6 +46,8 @@ type S3Config struct {
 // ObjectStoreConfig is the object store configuration.
 type ObjectStoreConfig struct {
 	S3 S3Config `yaml:"s3"`
+
+	OptionalS3s []S3Config `yaml:"optionalS3s"`
 }
 
 // validate validates the object store configuration.

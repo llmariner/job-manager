@@ -29,7 +29,7 @@ func TestPreProcess(t *testing.T) {
 	}
 	sc := &fakeS3Client{}
 
-	p := NewPreProcessor(fc, mc, sc, "my-bucket")
+	p := NewPreProcessor(fc, mc, sc, "my-bucket", nil)
 
 	job := &v1.InternalJob{
 		Job: &v1.Job{
