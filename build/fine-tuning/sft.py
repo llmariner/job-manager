@@ -156,10 +156,6 @@ if __name__ == "__main__":
         # Used only in case `dataset_text_field` is passed. This argument is used by the `ConstantLengthDataset`
         # to pack the sequences of the dataset.
         packing=False,
-        # The maximum sequence length to use for the `ConstantLengthDataset`
-        # and for automatically creating the Dataset.
-        # Defaults to min of the smaller of the `tokenizer.model_max_length` and `1024`.
-        max_seq_length=1024,
     )
 
     # TODO(kenji): Revisit these parameters.
@@ -178,7 +174,7 @@ if __name__ == "__main__":
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         peft_config=peft_config,
         callbacks=None,
     )
