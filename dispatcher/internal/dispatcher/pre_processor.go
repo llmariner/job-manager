@@ -38,23 +38,23 @@ type s3Client interface {
 func NewPreProcessor(
 	fileClient fileClient,
 	modelClient modelClient,
-	s3Client s3Client,
-	s3Bucket string,
+	defaultS3Client s3Client,
+	defaultS3Bucket string,
 ) *PreProcessor {
 	return &PreProcessor{
-		fileClient:  fileClient,
-		modelClient: modelClient,
-		s3Client:    s3Client,
-		s3Bucket:    s3Bucket,
+		fileClient:      fileClient,
+		modelClient:     modelClient,
+		defaultS3Client: defaultS3Client,
+		defaultS3Bucket: defaultS3Bucket,
 	}
 }
 
 // PreProcessor is a pre-processor.
 type PreProcessor struct {
-	fileClient  fileClient
-	modelClient modelClient
-	s3Client    s3Client
-	s3Bucket    string
+	fileClient      fileClient
+	modelClient     modelClient
+	defaultS3Client s3Client
+	defaultS3Bucket string
 }
 
 // PreProcessResult is the result of the pre-process.
@@ -85,7 +85,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	var paths []string
 	for {
 		// Append "/" to avoid listing models whose prefix is the same as the target model.
-		result, err := p.s3Client.ListObjectsPages(ctx, p.s3Bucket, mresp.Path+"/")
+		result, err := p.defaultS3Client.ListObjectsPages(ctx, p.defaultS3Bucket, mresp.Path+"/")
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 
 	baseModelURLs := map[string]string{}
 	for _, path := range paths {
-		url, err := p.s3Client.GeneratePresignedURL(ctx, p.s3Bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
+		url, err := p.defaultS3Client.GeneratePresignedURL(ctx, p.defaultS3Bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
 		if err != nil {
 			return nil, fmt.Errorf("generate presigned url: %s", err)
 		}
@@ -136,7 +136,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 	}
 	outputModelID := rresp.Id
 
-	presignRequest, err := p.s3Client.GeneratePresignedURLForPost(ctx, p.s3Bucket, rresp.Path, preSignedURLExpire)
+	presignRequest, err := p.defaultS3Client.GeneratePresignedURLForPost(ctx, p.defaultS3Bucket, rresp.Path, preSignedURLExpire)
 	if err != nil {
 		return nil, fmt.Errorf("generate presigned post url: %s", err)
 	}
@@ -165,7 +165,7 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 		return "", fmt.Errorf("get file path: %s", err)
 	}
 
-	bucket := p.s3Bucket
+	bucket := p.defaultS3Bucket
 	path := fresp.Path
 	if strings.HasPrefix(path, "s3://") {
 		// The path contains a bucket name. Use it instead of the default bucket.
@@ -176,7 +176,9 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 		path = strings.TrimPrefix(path, "s3://"+bucket+"/")
 	}
 
-	url, err := p.s3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
+	// Use a non-default one depending on the bucket configured.
+
+	url, err := p.defaultS3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", fmt.Errorf("generate presigned url: %s", err)
 	}
