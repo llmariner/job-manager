@@ -117,6 +117,15 @@ func run(ctx context.Context, c *config.Config) error {
 		return err
 	}
 
+	optionalS3Clients := map[string]dispatcher.S3Client{}
+	for _, optS3 := range c.ObjectStore.OptionalS3s {
+		s3Client, err := s3.NewClient(ctx, optS3)
+		if err != nil {
+			return err
+		}
+		optionalS3Clients[optS3.Bucket] = s3Client
+	}
+
 	jconn, err := grpc.NewClient(c.JobManagerServerWorkerServiceAddr, option)
 	if err != nil {
 		return err
@@ -156,7 +165,7 @@ func run(ctx context.Context, c *config.Config) error {
 		preProcessor = &dispatcher.NoopPreProcessor{}
 		postProcessor = &dispatcher.NoopPostProcessor{}
 	} else {
-		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client, c.ObjectStore.S3.Bucket)
+		preProcessor = dispatcher.NewPreProcessor(fclient, mclient, s3Client, c.ObjectStore.S3.Bucket, optionalS3Clients)
 		postProcessor = dispatcher.NewPostProcessor(mclient)
 	}
 	if err := dispatcher.New(ftClient, wsClient, bwClient, jc, preProcessor, nbm, bjm, c.PollingInterval).

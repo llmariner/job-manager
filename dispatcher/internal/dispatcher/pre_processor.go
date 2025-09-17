@@ -28,7 +28,8 @@ type modelClient interface {
 	GetBaseModelPath(ctx context.Context, in *mv1.GetBaseModelPathRequest, opts ...grpc.CallOption) (*mv1.GetBaseModelPathResponse, error)
 }
 
-type s3Client interface {
+// S3Client is a minimal interface for S3 client.
+type S3Client interface {
 	GeneratePresignedURL(ctx context.Context, bucket, key string, expire time.Duration, requestType is3.RequestType) (string, error)
 	GeneratePresignedURLForPost(ctx context.Context, bucket, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error)
 	ListObjectsPages(ctx context.Context, bucket, prefix string) (*s3.ListObjectsV2Output, error)
@@ -38,14 +39,17 @@ type s3Client interface {
 func NewPreProcessor(
 	fileClient fileClient,
 	modelClient modelClient,
-	defaultS3Client s3Client,
+	defaultS3Client S3Client,
 	defaultS3Bucket string,
+	optionalS3Clients map[string]S3Client,
 ) *PreProcessor {
 	return &PreProcessor{
 		fileClient:      fileClient,
 		modelClient:     modelClient,
 		defaultS3Client: defaultS3Client,
 		defaultS3Bucket: defaultS3Bucket,
+
+		optionalS3Clients: optionalS3Clients,
 	}
 }
 
@@ -53,8 +57,10 @@ func NewPreProcessor(
 type PreProcessor struct {
 	fileClient      fileClient
 	modelClient     modelClient
-	defaultS3Client s3Client
+	defaultS3Client S3Client
 	defaultS3Bucket string
+
+	optionalS3Clients map[string]S3Client
 }
 
 // PreProcessResult is the result of the pre-process.
@@ -177,8 +183,12 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 	}
 
 	// Use a non-default one depending on the bucket configured.
+	s3Client := p.defaultS3Client
+	if c, ok := p.optionalS3Clients[bucket]; ok {
+		s3Client = c
+	}
 
-	url, err := p.defaultS3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
+	url, err := s3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
 	if err != nil {
 		return "", fmt.Errorf("generate presigned url: %s", err)
 	}

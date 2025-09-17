@@ -61,7 +61,7 @@ done
 // BatchJobManagerOptions contains the options for the BatchJobManager.
 type BatchJobManagerOptions struct {
 	K8sClient  client.Client
-	S3Client   s3Client
+	S3Client   S3Client
 	FileClient fileClient
 	BwClient   v1.BatchWorkerServiceClient
 
@@ -92,7 +92,7 @@ func NewBatchJobManager(opts BatchJobManagerOptions) *BatchJobManager {
 // BatchJobManager is a manager of batch jobs.
 type BatchJobManager struct {
 	k8sClient  client.Client
-	s3Client   s3Client
+	s3Client   S3Client
 	fileClient fileClient
 	bwClient   v1.BatchWorkerServiceClient
 
