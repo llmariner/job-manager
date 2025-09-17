@@ -26,6 +26,12 @@ func (c *AssumeRoleConfig) validate() error {
 	return nil
 }
 
+// AWSSecretConfig is the AWS secret configuration.
+type AWSSecretConfig struct {
+	AccessKeyID     string `yaml:"accessKeyId"`
+	SecretAccessKey string `yaml:"secretAccessKey"`
+}
+
 // S3Config is the S3 configuration.
 type S3Config struct {
 	EndpointURL        string `yaml:"endpointUrl"`
@@ -34,6 +40,7 @@ type S3Config struct {
 	Bucket             string `yaml:"bucket"`
 
 	AssumeRole *AssumeRoleConfig `yaml:"assumeRole"`
+	Secret     *AWSSecretConfig  `yaml:"secret"`
 }
 
 // ObjectStoreConfig is the object store configuration.
