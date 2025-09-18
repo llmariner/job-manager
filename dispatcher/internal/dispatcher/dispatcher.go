@@ -167,7 +167,16 @@ func (d *D) createJob(ctx context.Context, job *v1.InternalJob) error {
 	log.Info("Started pre-processing")
 	presult, err := d.preProcessor.Process(ctx, job)
 	if err != nil {
-		return err
+		// Report the error to the server as it can be caused by a user misconfiguration (e.g.,
+		// a training file points to an S3 object that doesn't exist).
+		if _, uerr := d.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
+			Id:      job.Job.Id,
+			Phase:   v1.UpdateJobPhaseRequest_FAILED,
+			Message: fmt.Sprintf("Pre-processing failed: %s", err),
+		}); uerr != nil {
+			return fmt.Errorf("pre-processing failed (also failed to update job phase: %s): %s", uerr, err)
+		}
+		return nil
 	}
 	if _, err := d.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
 		Id:      job.Job.Id,
