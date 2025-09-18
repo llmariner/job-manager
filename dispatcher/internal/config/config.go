@@ -40,7 +40,9 @@ type S3Config struct {
 	Bucket             string `yaml:"bucket"`
 
 	AssumeRole *AssumeRoleConfig `yaml:"assumeRole"`
-	Secret     *AWSSecretConfig  `yaml:"secret"`
+
+	// SecretFilePath is the path to a file containing AWS credentials as an YAML of AWSSecretConfig.
+	SecretFilePath string `yaml:"secretFilePath"`
 }
 
 // ObjectStoreConfig is the object store configuration.

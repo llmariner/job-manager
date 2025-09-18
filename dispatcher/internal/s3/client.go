@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	laws "github.com/llmariner/common/pkg/aws"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 // NewClient returns a new S3 client.
@@ -26,10 +28,18 @@ func NewClient(ctx context.Context, c config.S3Config) (*Client, error) {
 			ExternalID: ar.ExternalID,
 		}
 	}
-	if s := c.Secret; s != nil {
+	if c.SecretFilePath != "" {
+		sec, err := os.ReadFile(c.SecretFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("read S3 secret file: %w", err)
+		}
+		var secConfig config.AWSSecretConfig
+		if err := yaml.Unmarshal(sec, &secConfig); err != nil {
+			return nil, fmt.Errorf("unmarshal S3 secret file: %s", err)
+		}
 		opts.Secret = &laws.Secret{
-			AccessKeyID:     s.AccessKeyID,
-			SecretAccessKey: s.SecretAccessKey,
+			AccessKeyID:     secConfig.AccessKeyID,
+			SecretAccessKey: secConfig.SecretAccessKey,
 		}
 	}
 
