@@ -189,7 +189,7 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 		s3Client = c
 	}
 
-	// Check if the object exists to catch an error ealier. This can happen when a user creates a File with a wrong path.
+	// Check if the object exists to catch an error earlier. This can happen when a user creates a File with a wrong path.
 	if ok, err := s3Client.CheckObjectExists(ctx, bucket, path); err != nil {
 		return "", fmt.Errorf("check if the object exists: %s", err)
 	} else if !ok {
