@@ -134,6 +134,51 @@ func TestCreateJob(t *testing.T) {
 	}
 }
 
+func TestCreateJob_GPUInMetadata(t *testing.T) {
+	const (
+		tFileID = "tFile0"
+		vFileID = "vFile0"
+		modelID = "model0"
+	)
+
+	st, tearDown := store.NewTest(t)
+	defer tearDown()
+
+	srv := New(
+		st,
+		&noopFileGetClient{
+			ids: map[string]bool{
+				tFileID: true,
+				vFileID: true,
+			},
+		},
+		&noopModelClient{
+			id: modelID,
+		},
+		nil,
+		&fakeScheduler{},
+		&fakeCache{},
+		nil,
+		nil,
+		testr.New(t),
+		nil)
+
+	job, err := srv.CreateJob(
+		fakeAuthInto(context.Background()),
+		&v1.CreateJobRequest{
+			Model:        modelID,
+			TrainingFile: tFileID,
+			Suffix:       "suffix0",
+			Metadata: map[string]string{
+				metadataKeyResourceGPU: "4",
+			},
+		},
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(4), job.Resources.GpuCount)
+}
+
 func TestListJobs(t *testing.T) {
 	st, tearDown := store.NewTest(t)
 	defer tearDown()

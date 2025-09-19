@@ -100,6 +100,7 @@ export type CreateJobRequest = {
   integrations?: Integration[]
   seed?: number
   resources?: JobResources
+  metadata?: {[key: string]: string}
 }
 
 export type ListJobsRequest = {

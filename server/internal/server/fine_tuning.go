@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/llmariner/common/pkg/id"
@@ -16,6 +17,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
+)
+
+const (
+	metadataKeyResourceGPU = "resources.gpu"
 )
 
 // CreateJob creates a new job.
@@ -115,6 +120,22 @@ func (s *S) CreateJob(
 			BatchSize:              rhp.BatchSize,
 			LearningRateMultiplier: rhp.LearningRateMultiplier,
 			NEpochs:                rhp.NEpochs,
+		}
+	}
+
+	if s, ok := req.Metadata[metadataKeyResourceGPU]; ok {
+		v, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be an integer", metadataKeyResourceGPU)
+		}
+		if v <= 0 {
+			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be positive", metadataKeyResourceGPU)
+		}
+		if req.Resources != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot specify gpu in both resources and metadata")
+		}
+		req.Resources = &v1.Job_Resources{
+			GpuCount: int32(v),
 		}
 	}
 
