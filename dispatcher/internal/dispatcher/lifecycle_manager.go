@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -161,14 +163,10 @@ func (s *LifecycleManager) Reconcile(
 	}
 
 	if job.Status.Failed > 0 {
-		var message string
-		for _, cond := range job.Status.Conditions {
-			if cond.Type == batchv1.JobFailed {
-				// TODO(kenji): Revisit as this doesn't give a clear error message.
-				// Currently we just get "Job has reached the specified backoff limit".
-				message = fmt.Sprintf("%s: %s", cond.Reason, cond.Message)
-				break
-			}
+		message, err := s.getTerminationLog(ctx, req.Name, req.Namespace)
+		if err != nil {
+			log.Error(err, "Failed to get termination log")
+			return ctrl.Result{}, err
 		}
 		if _, err = s.ftClient.UpdateJobPhase(ctx, &v1.UpdateJobPhaseRequest{
 			Id:      jobID,
@@ -200,4 +198,36 @@ func (s *LifecycleManager) Reconcile(
 	}
 	log.Info("Finished processing job")
 	return ctrl.Result{}, nil
+}
+
+func (s *LifecycleManager) getTerminationLog(ctx context.Context, jobName, namespace string) (string, error) {
+	// Find a pod that has a label job-name = jobName
+	var podList corev1.PodList
+	if err := s.k8sClient.List(ctx, &podList,
+		client.InNamespace(namespace),
+		client.MatchingLabels{"job-name": jobName},
+	); err != nil {
+		return "", err
+	}
+
+	if len(podList.Items) == 0 {
+		// Empty error message
+		return "", nil
+	}
+	pod := podList.Items[0]
+	for _, c := range pod.Status.ContainerStatuses {
+		if t := c.State.Terminated; t != nil && t.ExitCode != 0 {
+			// Only return the last few lines of the log to avoid large logs.
+			// TODO(kenji): Have a better way to get the error message.
+			l := strings.Split(t.Message, "\n")
+			const maxLines = 3
+			if len(l) > maxLines {
+				return strings.Join(l[len(l)-maxLines:], "\n"), nil
+			}
+			return t.Message, nil
+		}
+	}
+
+	// Empty error message
+	return "", nil
 }
