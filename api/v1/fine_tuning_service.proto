@@ -97,7 +97,7 @@ message CreateJobRequest {
   Job.Resources resources = 8;
 
   // metadata is not part of the OpenAI API spec, but if the key is "resources.gpu", the value
-  // specify the number of GPUs allocated to the job. This is a workaround that allows users
+  // specifies the number of GPUs allocated to the job. This is a workaround that allows users
   // to specify the number of GPUs with the OpenAI API Python client.
   map<string, string> metadata = 9;
 }

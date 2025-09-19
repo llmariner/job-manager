@@ -490,7 +490,7 @@ type CreateJobRequest struct {
 	Seed           int32          `protobuf:"varint,7,opt,name=seed,proto3" json:"seed,omitempty"`
 	Resources      *Job_Resources `protobuf:"bytes,8,opt,name=resources,proto3" json:"resources,omitempty"`
 	// metadata is not part of the OpenAI API spec, but if the key is "resources.gpu", the value
-	// specify the number of GPUs allocated to the job. This is a workaround that allows users
+	// specifies the number of GPUs allocated to the job. This is a workaround that allows users
 	// to specify the number of GPUs with the OpenAI API Python client.
 	Metadata map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
