@@ -153,3 +153,7 @@ func (c *fakeS3Client) ListObjectsPages(ctx context.Context, bucket, prefix stri
 		IsTruncated: proto.Bool(false),
 	}, nil
 }
+
+func (c *fakeS3Client) CheckObjectExists(ctx context.Context, bucket string, key string) (bool, error) {
+	return true, nil
+}

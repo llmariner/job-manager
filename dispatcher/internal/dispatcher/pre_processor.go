@@ -33,6 +33,7 @@ type S3Client interface {
 	GeneratePresignedURL(ctx context.Context, bucket, key string, expire time.Duration, requestType is3.RequestType) (string, error)
 	GeneratePresignedURLForPost(ctx context.Context, bucket, keyPrefix string, expire time.Duration) (*s3.PresignedPostRequest, error)
 	ListObjectsPages(ctx context.Context, bucket, prefix string) (*s3.ListObjectsV2Output, error)
+	CheckObjectExists(ctx context.Context, bucket string, key string) (bool, error)
 }
 
 // NewPreProcessor creates a new pre-processor.
@@ -186,6 +187,13 @@ func (p *PreProcessor) getPresignedURLForFile(ctx context.Context, fileID string
 	s3Client := p.defaultS3Client
 	if c, ok := p.optionalS3Clients[bucket]; ok {
 		s3Client = c
+	}
+
+	// Check if the object exists to catch an error ealier. This can happen when a user creates a File with a wrong path.
+	if ok, err := s3Client.CheckObjectExists(ctx, bucket, path); err != nil {
+		return "", fmt.Errorf("check if the object exists: %s", err)
+	} else if !ok {
+		return "", fmt.Errorf("the object does not exist: s3://%s/%s", bucket, path)
 	}
 
 	url, err := s3Client.GeneratePresignedURL(ctx, bucket, path, preSignedURLExpire, is3.RequestTypeGetObject)
