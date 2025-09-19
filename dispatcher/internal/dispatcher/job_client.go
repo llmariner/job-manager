@@ -106,7 +106,8 @@ func (p *JobClient) jobSpec(job *v1.Job, presult *PreProcessResult) (*batchv1app
 		WithImage(fmt.Sprintf("%s:%s", p.jobConfig.Image, p.jobConfig.Version)).
 		WithImagePullPolicy(p.jobConfig.ImagePullPolicy).
 		WithCommand("/bin/bash", "-c", cmd).
-		WithResources(p.res(gpuCount))
+		WithResources(p.res(gpuCount)).
+		WithTerminationMessagePolicy(corev1.TerminationMessageFallbackToLogsOnError)
 
 	if s := p.jobConfig.WandbAPIKeySecret; s.Name != "" {
 		if s.Key == "" {
