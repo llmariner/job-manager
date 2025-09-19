@@ -126,10 +126,10 @@ func (s *S) CreateJob(
 	if s, ok := req.Metadata[metadataKeyResourceGPU]; ok {
 		v, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "the value of 'resources.gpu' must be an integer")
+			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be an integer", metadataKeyResourceGPU)
 		}
 		if v <= 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "the value of 'resources.gpu' must be positive")
+			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be positive", metadataKeyResourceGPU)
 		}
 		if req.Resources != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot specify gpu in both resources and metadata")
