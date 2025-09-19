@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	laws "github.com/llmariner/common/pkg/aws"
 	"github.com/llmariner/job-manager/dispatcher/internal/config"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -161,4 +163,26 @@ func (c *Client) ListObjectsPages(
 		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
 	})
+}
+
+// CheckObjectExists checks if an object exists in S3.
+func (c *Client) CheckObjectExists(
+	ctx context.Context,
+	bucket string,
+	key string,
+) (bool, error) {
+	if _, err := c.svc.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}); err != nil {
+		var notFound *types.NotFound
+		if !errors.As(err, &notFound) {
+			return false, err
+		}
+
+		return false, nil
+
+	}
+
+	return true, nil
 }

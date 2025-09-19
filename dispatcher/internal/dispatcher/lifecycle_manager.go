@@ -164,6 +164,8 @@ func (s *LifecycleManager) Reconcile(
 		var message string
 		for _, cond := range job.Status.Conditions {
 			if cond.Type == batchv1.JobFailed {
+				// TODO(kenji): Revisit as this doesn't give a clear error message.
+				// Currently we just get "Job has reached the specified backoff limit".
 				message = fmt.Sprintf("%s: %s", cond.Reason, cond.Message)
 				break
 			}
