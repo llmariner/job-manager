@@ -11,4 +11,3 @@ RUN \
 COPY accelerate /bin/accelerate
 COPY sft.py .
 COPY convert-lora-to-ggml.py .
-COPY ft-output ft-output
