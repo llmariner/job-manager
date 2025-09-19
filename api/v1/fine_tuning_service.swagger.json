@@ -241,6 +241,13 @@
         },
         "resources": {
           "$ref": "#/definitions/v1JobResources"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "metadata is not part of the OpenAI API spec, but if the key is \"resources.gpu\", the value\nspecify the number of GPUs allocated to the job. This is a workaround that allows users\nto specify the number of GPUs with the OpenAI API Python client."
         }
       }
     },
