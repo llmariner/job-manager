@@ -91,6 +91,7 @@ func TestJobCmd(t *testing.T) {
 				ValidationFileURL:       "https://example.com/validation-file",
 				OutputModelURL:          "https://example.com/output-model",
 				OutputModelPresignFlags: "-F 'key=value'",
+				Method:                  "supervised",
 			}
 			got, gpuCount, err := jc.cmd(tc.job, presult)
 			assert.NoError(t, err)

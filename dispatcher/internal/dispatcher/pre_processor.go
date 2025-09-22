@@ -76,6 +76,8 @@ type PreProcessResult struct {
 	OutputModelURL string
 
 	OutputModelPresignFlags string
+
+	Method string
 }
 
 // Process runs the pre-process.
@@ -154,6 +156,11 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 		flags = append(flags, fmt.Sprintf("-F '%s=%s'", k, v))
 	}
 
+	method := "supervised"
+	if m := job.Job.Method; m != nil {
+		method = m.Type
+	}
+
 	return &PreProcessResult{
 		BaseModelURLs:           baseModelURLs,
 		TrainingFileURL:         trainingFileURL,
@@ -161,6 +168,7 @@ func (p *PreProcessor) Process(ctx context.Context, job *v1.InternalJob) (*PrePr
 		OutputModelID:           outputModelID,
 		OutputModelURL:          presignRequest.URL,
 		OutputModelPresignFlags: strings.Join(flags, " "),
+		Method:                  method,
 	}, nil
 }
 

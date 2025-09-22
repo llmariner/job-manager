@@ -52,6 +52,7 @@ func TestPreProcess(t *testing.T) {
 		OutputModelID:           "generated-model-id",
 		OutputModelURL:          "http://example.com",
 		OutputModelPresignFlags: "-F 'key0=value0'",
+		Method:                  "supervised",
 	}
 	assert.Equal(t, want, got)
 }

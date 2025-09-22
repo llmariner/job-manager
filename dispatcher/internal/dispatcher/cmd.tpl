@@ -23,8 +23,9 @@ accelerate launch \
   --num_machines=1 \
   --num_cpu_threads_per_process=1 \
   --dynamo_backend=no \
-  ./sft.py \
+  ./train.py \
   --model=./base-model \
+  --method={{ .Method }} \
   --dataset=./dataset \
   --output=./output {{ .AdditionalSFTArgs }}
 

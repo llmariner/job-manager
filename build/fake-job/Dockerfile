@@ -9,6 +9,6 @@ RUN \
     curl
 
 COPY accelerate /bin/accelerate
-COPY sft.py .
+COPY train.py .
 COPY convert-lora-to-ggml.py .
 COPY ft-output ft-output
