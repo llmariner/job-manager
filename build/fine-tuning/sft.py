@@ -38,15 +38,24 @@ def build_chat_preprocessor(tokenizer):
 
     # Create a closure with tokenizer and eos to preprocess the dataset on the specific tokenizer
     def _preprocess(example):
-        """Turn a list‑of‑messages into input_ids + single EOS."""
+        # From https://qwen.readthedocs.io/en/v1.5/training/SFT/example.html
         text = tokenizer.apply_chat_template(
             example["messages"],  # expects list[dict]
             add_generation_prompt=False,
             tokenize=False,
+            padding=True,
+            truncation=True,
         )
-        ids = tokenizer(text, add_special_tokens=False)["input_ids"]
-        ids.append(eos_id)
-        return {"input_ids": ids}
+
+        t = tokenizer(text, add_special_tokens=False)
+        input_ids = t["input_ids"]
+        attention_mask = t["attention_mask"]
+
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+        }
+
 
     return _preprocess
 
@@ -68,6 +77,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_train_epochs", help="Number of training epocs.", default=3, type=int, nargs="?")
     parser.add_argument("--per_device_train_batch_size", help="Batch size per training.", default=2, type=int, nargs="?")
 
+    parser.add_argument("--tweak-padding-for-llama", default=False, type=bool)
+
     args = parser.parse_args()
 
     if args.report_to == "wandb":
@@ -78,9 +89,10 @@ if __name__ == "__main__":
     # it is for some models (e.g. Llama). It also sets the padding side to "right" for all models to be consistent
     # ------------------------------------------------------------------
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = "<|finetune_right_pad_id|>"
-    tokenizer.padding_side = "right"
+    if args.tweak_padding_for_llama:
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = "<|finetune_right_pad_id|>"
+            tokenizer.padding_side = "right"
 
     # ------------------------------------------------------------------
     # Load model (with optional 4‑bit quant)
