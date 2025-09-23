@@ -37,6 +37,46 @@
           "JobService"
         ]
       }
+    },
+    "/v1/jobs/summaries": {
+      "get": {
+        "operationId": "JobService_ListJobSummaries",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListJobSummariesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "filter.startTimestamp",
+            "description": "start_timestamp specifies the start time of the snapshot histories (inclusive). Unix timestamp in seconds.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "filter.endTimestamp",
+            "description": "end_timestamp specifies the end time of the snapshot histories (exclusive). Unix timestamp in seconds.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "JobService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -54,6 +94,54 @@
         "gpuPodCount": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "ListJobSummariesResponseDatapoint": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "int64",
+          "description": "timestamp is the Unix timestamp in seconds."
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListJobSummariesResponseValue"
+          }
+        }
+      }
+    },
+    "ListJobSummariesResponseValue": {
+      "type": "object",
+      "properties": {
+        "jobType": {
+          "$ref": "#/definitions/v1JobType"
+        },
+        "totalCreated": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalCompleted": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalCancelled": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalFailed": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalDeleted": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalRunning": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -157,6 +245,16 @@
         }
       }
     },
+    "v1JobType": {
+      "type": "string",
+      "enum": [
+        "JOB_TYPE_UNSPECIFIED",
+        "JOB_TYPE_BATCH",
+        "JOB_TYPE_FINE_TUNING",
+        "JOB_TYPE_NOTEBOOK"
+      ],
+      "default": "JOB_TYPE_UNSPECIFIED"
+    },
     "v1ListClustersResponse": {
       "type": "object",
       "properties": {
@@ -164,6 +262,17 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/v1Cluster"
+          }
+        }
+      }
+    },
+    "v1ListJobSummariesResponse": {
+      "type": "object",
+      "properties": {
+        "datapoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListJobSummariesResponseDatapoint"
           }
         }
       }
@@ -179,6 +288,21 @@
         }
       },
       "description": "ProvisionableResource represents GPU instances that a cluster can provision\n(e.g., Karpenter nodepool configuration)."
+    },
+    "v1RequestFilter": {
+      "type": "object",
+      "properties": {
+        "startTimestamp": {
+          "type": "string",
+          "format": "int64",
+          "description": "start_timestamp specifies the start time of the snapshot histories (inclusive). Unix timestamp in seconds."
+        },
+        "endTimestamp": {
+          "type": "string",
+          "format": "int64",
+          "description": "end_timestamp specifies the end time of the snapshot histories (exclusive). Unix timestamp in seconds."
+        }
+      }
     }
   }
 }
