@@ -31,12 +31,57 @@ message ListClustersResponse {
   repeated Cluster clusters = 1;
 }
 
+message RequestFilter {
+  // start_timestamp specifies the start time of the snapshot histories (inclusive). Unix timestamp in seconds.
+  int64 start_timestamp = 1;
+  // end_timestamp specifies the end time of the snapshot histories (exclusive). Unix timestamp in seconds.
+  int64 end_timestamp = 2;
+}
+
+enum JobType {
+  JOB_TYPE_UNSPECIFIED = 0;
+  JOB_TYPE_BATCH = 1;
+  JOB_TYPE_FINE_TUNING = 2;
+  JOB_TYPE_NOTEBOOK = 3;
+}
+
+message ListJobSummariesRequest {
+  RequestFilter filter = 1;
+}
+
+message ListJobSummariesResponse {
+  message Value {
+    JobType job_type = 1;
+
+    int64 total_created = 2;
+    int64 total_completed = 3;
+    int64 total_cancelled = 4;
+    int64 total_failed = 5;
+    int64 total_deleted = 6;
+    int64 total_running = 7;
+  }
+
+  message Datapoint {
+    // timestamp is the Unix timestamp in seconds.
+    int64 timestamp = 1;
+    repeated Value values = 2;
+  }
+
+  repeated Datapoint datapoints = 1;
+}
+
 // JobService is a generic service for fine-tuning jobs, batch jobs, and workspaces.
 // Currently this is mainly for debug.
 service JobService {
   rpc ListClusters(ListClustersRequest) returns (ListClustersResponse) {
     option (google.api.http) = {
       get: "/v1/jobs/clusters"
+    };
+  }
+
+  rpc ListJobSummaries(ListJobSummariesRequest) returns (ListJobSummariesResponse) {
+    option (google.api.http) = {
+      get: "/v1/jobs/summaries"
     };
   }
 }
