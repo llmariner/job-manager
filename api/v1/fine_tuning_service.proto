@@ -19,6 +19,20 @@ message Integration {
   Wandb wandb = 2;
 }
 
+message FineTuningJobMethod {
+  message Hyperparameters {
+    int32 batch_size = 1;
+    double beta  = 2;
+    double learning_rate_multiplier = 3;
+    int32 n_epochs = 4;
+  }
+
+  string type = 1;
+  Hyperparameters hyperparameters = 2;
+
+  // TODO(kenji): Support the parameters for "reinforcement" method.
+}
+
 message Job {
   string id = 1;
   int64 created_at = 2;
@@ -43,6 +57,9 @@ message Job {
     int32 n_epochs = 3;
   }
   Hyperparameters hyperparameters = 6;
+
+  FineTuningJobMethod method = 24;
+
   // The base model that is being fine-tuned.
   string model = 7;
   string object = 8;
@@ -71,6 +88,8 @@ message Job {
     int32 gpu_count = 1;
   }
   Resources resources = 23;
+
+  // Next ID: 25
 }
 
 message CreateJobRequest {
@@ -85,6 +104,7 @@ message CreateJobRequest {
     int32 n_epochs = 3;
   }
   Hyperparameters hyperparameters = 3;
+  FineTuningJobMethod method = 10;
   // A string of up to 18 characters that will be added to your fine-tuned model name.
   //
   // For example, a suffix of "custom-model-name" would produce a
@@ -100,6 +120,8 @@ message CreateJobRequest {
   // specifies the number of GPUs allocated to the job. This is a workaround that allows users
   // to specify the number of GPUs with the OpenAI API Python client.
   map<string, string> metadata = 9;
+
+  // Next field number: 11
 }
 
 message ListJobsRequest {

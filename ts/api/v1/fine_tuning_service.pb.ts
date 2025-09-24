@@ -43,6 +43,18 @@ export type Integration = {
   wandb?: IntegrationWandb
 }
 
+export type FineTuningJobMethodHyperparameters = {
+  batch_size?: number
+  beta?: number
+  learning_rate_multiplier?: number
+  n_epochs?: number
+}
+
+export type FineTuningJobMethod = {
+  type?: string
+  hyperparameters?: FineTuningJobMethodHyperparameters
+}
+
 export type JobError = {
   code?: string
   message?: string
@@ -66,6 +78,7 @@ export type Job = {
   fine_tuned_model?: string
   finished_at?: string
   hyperparameters?: JobHyperparameters
+  method?: FineTuningJobMethod
   model?: string
   object?: string
   organization_id?: string
@@ -95,6 +108,7 @@ export type CreateJobRequest = {
   model?: string
   training_file?: string
   hyperparameters?: CreateJobRequestHyperparameters
+  method?: FineTuningJobMethod
   suffix?: string
   validation_file?: string
   integrations?: Integration[]
