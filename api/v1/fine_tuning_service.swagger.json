@@ -222,6 +222,9 @@
         "hyperparameters": {
           "$ref": "#/definitions/v1CreateJobRequestHyperparameters"
         },
+        "method": {
+          "$ref": "#/definitions/v1FineTuningJobMethod"
+        },
         "suffix": {
           "type": "string",
           "description": "A string of up to 18 characters that will be added to your fine-tuned model name.\n\nFor example, a suffix of \"custom-model-name\" would produce a\nmodel name like\nft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel."
@@ -268,6 +271,38 @@
           "type": "integer",
           "format": "int32",
           "description": "Note: OpenAI API supports string or interger."
+        }
+      }
+    },
+    "v1FineTuningJobMethod": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "hyperparameters": {
+          "$ref": "#/definitions/v1FineTuningJobMethodHyperparameters"
+        }
+      }
+    },
+    "v1FineTuningJobMethodHyperparameters": {
+      "type": "object",
+      "properties": {
+        "batchSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "beta": {
+          "type": "number",
+          "format": "double"
+        },
+        "learningRateMultiplier": {
+          "type": "number",
+          "format": "double"
+        },
+        "nEpochs": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -347,6 +382,9 @@
         },
         "hyperparameters": {
           "$ref": "#/definitions/v1JobHyperparameters"
+        },
+        "method": {
+          "$ref": "#/definitions/v1FineTuningJobMethod"
         },
         "model": {
           "type": "string",

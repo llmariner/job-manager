@@ -60,6 +60,27 @@ func (s *S) CreateJob(
 		}
 	}
 
+	if m := req.Method; m != nil {
+		switch m.Type {
+		case "supervised", "dpo":
+			if hp := m.Hyperparameters; hp != nil {
+				if hp.BatchSize < 0 {
+					return nil, status.Errorf(codes.InvalidArgument, "batch size must be non-negative")
+				}
+				if hp.LearningRateMultiplier < 0.0 {
+					return nil, status.Errorf(codes.InvalidArgument, "learning rate multiplier must be non-negative")
+				}
+				if hp.NEpochs < 0 {
+					return nil, status.Errorf(codes.InvalidArgument, "n epochs must be non-negative")
+				}
+			}
+			// TODO(kenji): Validate the value of "beta" for DPO.
+		default:
+			// TODO(kenji): Support "reinforcement".
+			return nil, status.Errorf(codes.InvalidArgument, "unsupported method type: %q", m.Type)
+		}
+	}
+
 	// Pass the Authorization to the context for downstream gRPC calls.
 	ctx = auth.CarryMetadata(ctx)
 	model, err := s.modelClient.GetModel(ctx, &mv1.GetModelRequest{
@@ -126,10 +147,10 @@ func (s *S) CreateJob(
 	if s, ok := req.Metadata[metadataKeyResourceGPU]; ok {
 		v, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be an integer", metadataKeyResourceGPU)
+			return nil, status.Errorf(codes.InvalidArgument, "the value of %q must be an integer", metadataKeyResourceGPU)
 		}
 		if v <= 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "the value of '%s' must be positive", metadataKeyResourceGPU)
+			return nil, status.Errorf(codes.InvalidArgument, "the value of %q must be positive", metadataKeyResourceGPU)
 		}
 		if req.Resources != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot specify gpu in both resources and metadata")
@@ -165,6 +186,7 @@ func (s *S) CreateJob(
 		TrainingFile:    req.TrainingFile,
 		ValidationFile:  req.ValidationFile,
 		Hyperparameters: hp,
+		Method:          req.Method,
 		Object:          "fine_tuning.job",
 		Status:          string(store.JobStateQueued),
 		OrganizationId:  userInfo.OrganizationID,
