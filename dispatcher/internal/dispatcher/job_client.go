@@ -160,6 +160,8 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, er
 		OutputModelURL          string
 		OutputModelPresignFlags string
 
+		Method string
+
 		NumProcessors     int
 		AdditionalSFTArgs string
 
@@ -186,6 +188,8 @@ func (p *JobClient) cmd(job *v1.Job, presult *PreProcessResult) (string, int, er
 		ValidationFileURL:       presult.ValidationFileURL,
 		OutputModelURL:          presult.OutputModelURL,
 		OutputModelPresignFlags: presult.OutputModelPresignFlags,
+
+		Method: presult.Method,
 
 		NumProcessors:     numProcessors,
 		AdditionalSFTArgs: additionalSFTArgs,

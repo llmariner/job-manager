@@ -12,5 +12,5 @@ RUN \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY sft.py .
+COPY train.py .
 COPY convert-lora-to-ggml.py .
