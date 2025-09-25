@@ -150,7 +150,7 @@ func (s *S) CreateJob(
 			return nil, status.Errorf(codes.InvalidArgument, "the value of %q must be an integer", metadataKeyResourceGPU)
 		}
 		if v <= 0 {
-			return nil, status.Errorf(codes.InvalidArgument, "the value of %q x must be positive", metadataKeyResourceGPU)
+			return nil, status.Errorf(codes.InvalidArgument, "the value of %q must be positive", metadataKeyResourceGPU)
 		}
 		if req.Resources != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "cannot specify gpu in both resources and metadata")
