@@ -39,6 +39,11 @@ const (
 type Job struct {
 	gorm.Model
 
+	// Use unix nano seconds as creating time, so we can truncate the timestamp
+	// to any specified duration (e.g., hour, day) easily in the query to summarize
+	// job stats.
+	Created int64 `gorm:"autoCreateTime:nano"`
+
 	JobID string `gorm:"uniqueIndex"`
 
 	ProjectID string `gorm:"index:idx_job_project_id_state"`

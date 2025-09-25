@@ -71,6 +71,13 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "filter.duration",
+            "description": "duration specifies the duration for each data point.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -142,6 +149,19 @@
         "totalRunning": {
           "type": "string",
           "format": "int64"
+        },
+        "totalQueued": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalStopped": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalUnfinished": {
+          "type": "string",
+          "format": "int64",
+          "description": "total_unfinished tracks the number of job in unfinished status, such as initializing, queued, or running."
         }
       }
     },
@@ -301,6 +321,10 @@
           "type": "string",
           "format": "int64",
           "description": "end_timestamp specifies the end time of the snapshot histories (exclusive). Unix timestamp in seconds."
+        },
+        "duration": {
+          "type": "string",
+          "description": "duration specifies the duration for each data point."
         }
       }
     }

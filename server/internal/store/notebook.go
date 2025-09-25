@@ -51,6 +51,11 @@ const (
 type Notebook struct {
 	gorm.Model
 
+	// Use unix nano seconds as creating time, so we can truncate the timestamp
+	// to any specified duration (e.g., hour, day) easily in the query to summarize
+	// notebook job stats.
+	Created int64 `gorm:"autoCreateTime:nano"`
+
 	NotebookID string `gorm:"uniqueIndex"`
 
 	// We do not use a unique index here since the same notebook name can be used if there is only one active noteobook.
