@@ -71,7 +71,7 @@ func (s *S) CreateJob(
 					return nil, status.Errorf(codes.InvalidArgument, "learning rate multiplier must be non-negative")
 				}
 				if hp.NEpochs < 0 {
-					return nil, status.Errorf(codes.InvalidArgument, "n epoch must be non-negative")
+					return nil, status.Errorf(codes.InvalidArgument, "n epochs must be non-negative")
 				}
 			}
 			// TODO(kenji): Validate the value of "beta" for DPO.
