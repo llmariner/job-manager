@@ -5,6 +5,7 @@
 */
 
 import * as fm from "../../fetch.pb"
+import * as GoogleProtobufDuration from "../../google/protobuf/duration.pb"
 import * as LlmarinerJobsServerV1Job_manager_server_worker from "./job_manager_server_worker.pb"
 
 export enum JobType {
@@ -38,6 +39,7 @@ export type ListClustersResponse = {
 export type RequestFilter = {
   start_timestamp?: string
   end_timestamp?: string
+  duration?: GoogleProtobufDuration.Duration
 }
 
 export type ListJobSummariesRequest = {
@@ -52,6 +54,9 @@ export type ListJobSummariesResponseValue = {
   total_failed?: string
   total_deleted?: string
   total_running?: string
+  total_queued?: string
+  total_stopped?: string
+  total_unfinished?: string
 }
 
 export type ListJobSummariesResponseDatapoint = {

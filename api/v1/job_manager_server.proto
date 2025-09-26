@@ -4,6 +4,7 @@ package llmariner.jobs.server.v1;
 
 import "google/api/annotations.proto";
 import "api/v1/job_manager_server_worker.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/llmariner/job-manager/api/v1";
 
@@ -36,6 +37,8 @@ message RequestFilter {
   int64 start_timestamp = 1;
   // end_timestamp specifies the end time of the snapshot histories (exclusive). Unix timestamp in seconds.
   int64 end_timestamp = 2;
+  // duration specifies the duration for each data point.
+  google.protobuf.Duration duration = 3;
 }
 
 enum JobType {
@@ -59,6 +62,10 @@ message ListJobSummariesResponse {
     int64 total_failed = 5;
     int64 total_deleted = 6;
     int64 total_running = 7;
+    int64 total_queued = 8;
+    int64 total_stopped = 9;
+    // total_unfinished tracks the number of job in unfinished status, such as initializing, queued, or running.
+    int64 total_unfinished = 10;
   }
 
   message Datapoint {
